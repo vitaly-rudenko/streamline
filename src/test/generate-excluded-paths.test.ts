@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { generateExcludesList } from '../generate-excludes-list';
+import { generateExcludedPaths } from '../generate-excluded-paths';
 
 const paths = [
   'A/',
@@ -33,10 +33,10 @@ async function readDirectory(path: string): Promise<string[]> {
   });
 }
 
-suite('generateExcludesList()', () => {
-  test('generates exclude list (empty)', async () => {
+suite('generateExcludedPaths()', () => {
+  test('empty', async () => {
     assert.deepStrictEqual(
-      await generateExcludesList(
+      await generateExcludedPaths(
         [],
         readDirectory
       ),
@@ -44,9 +44,9 @@ suite('generateExcludesList()', () => {
     );
   });
 
-  test('generates exclude list (single directory)', async () => {
+  test('single directory', async () => {
     assert.deepStrictEqual(
-      await generateExcludesList(
+      await generateExcludedPaths(
         ["A/"],
         readDirectory
       ),
@@ -57,7 +57,7 @@ suite('generateExcludesList()', () => {
     );
 
     assert.deepStrictEqual(
-      await generateExcludesList(
+      await generateExcludedPaths(
         ["G/H/J/"],
         readDirectory
       ),
@@ -73,9 +73,9 @@ suite('generateExcludesList()', () => {
     );
   });
 
-  test('generates exclude list (single file)', async () => {
+  test('single file', async () => {
     assert.deepStrictEqual(
-      await generateExcludesList(
+      await generateExcludedPaths(
         ["A/F"],
         readDirectory
       ),
@@ -88,9 +88,9 @@ suite('generateExcludesList()', () => {
     );
   });
 
-  test('generates exclude list (multiple directories)', async () => {
+  test('multiple directories', async () => {
     assert.deepStrictEqual(
-      await generateExcludesList(
+      await generateExcludedPaths(
         ["A/C/D/", "A/C/", "G/H/J/", "G/H/M/"],
         readDirectory
       ),
