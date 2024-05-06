@@ -1,13 +1,13 @@
 export function serializeExcludes(input: { includedPaths: string[], excludedPaths: string[] }): Record<string, boolean> {
-  const excludes: Record<string, boolean> = {};
+  const excludes: Record<string, boolean> = {}
 
   for (const excludedPath of input.excludedPaths) {
-    excludes[serializePathExclude(excludedPath)] = true;
+    excludes[serializePathExclude(excludedPath)] = true
   }
 
-  return excludes;
+  return excludes
 }
 
 function serializePathExclude(path: string) {
-  return path.endsWith('/') ? `${path}**` : path;
+  return path.endsWith('/') ? `${path}**` : path
 }

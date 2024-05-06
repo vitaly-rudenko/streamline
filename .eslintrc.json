@@ -16,8 +16,9 @@
                 "format": [ "camelCase", "PascalCase" ]
             }
         ],
-        "@typescript-eslint/semi": "warn",
-        "curly": "warn",
+        "@typescript-eslint/semi": ["warn", "never"],
+        "quotes": ["warn", "single"],
+        "curly": "off",
         "eqeqeq": "warn",
         "no-throw-literal": "warn",
         "semi": "off"

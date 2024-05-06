@@ -67,6 +67,14 @@
           },
           "default": [],
           "description": "Scoped paths"
+        },
+        "streamline.highlightedPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Highlighted paths"
         }
       }
     }

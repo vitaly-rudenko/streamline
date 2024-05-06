@@ -1,5 +1,5 @@
-import assert from 'assert';
-import { generateExcludedPaths } from '../generate-excluded-paths';
+import assert from 'assert'
+import { generateExcludedPaths } from '../generate-excluded-paths'
 
 const paths = [
   'A/',
@@ -19,18 +19,18 @@ const paths = [
     'G/O',
     'G/P',
   'Q',
-];
+]
 
 async function readDirectory(path: string): Promise<string[]> {
   return paths.filter((p) => {
     if (!p.startsWith(path)) {
-      return false;
+      return false
     }
     if (p.endsWith('/')) {
-      return p.split('/').length === path.split('/').length + 1;
+      return p.split('/').length === path.split('/').length + 1
     }
-    return p.split('/').length === path.split('/').length;
-  });
+    return p.split('/').length === path.split('/').length
+  })
 }
 
 suite('generateExcludedPaths()', () => {
@@ -41,24 +41,24 @@ suite('generateExcludedPaths()', () => {
         readDirectory
       ),
       []
-    );
-  });
+    )
+  })
 
   test('single directory', async () => {
     assert.deepStrictEqual(
       await generateExcludedPaths(
-        ["A/"],
+        ['A/'],
         readDirectory
       ),
       [
         'G/',
         'Q',
       ]
-    );
+    )
 
     assert.deepStrictEqual(
       await generateExcludedPaths(
-        ["G/H/J/"],
+        ['G/H/J/'],
         readDirectory
       ),
       [
@@ -70,13 +70,13 @@ suite('generateExcludedPaths()', () => {
         'A/',
         'Q',
       ]
-    );
-  });
+    )
+  })
 
   test('single file', async () => {
     assert.deepStrictEqual(
       await generateExcludedPaths(
-        ["A/F"],
+        ['A/F'],
         readDirectory
       ),
       [
@@ -85,13 +85,13 @@ suite('generateExcludedPaths()', () => {
         'G/',
         'Q',
       ]
-    );
-  });
+    )
+  })
 
   test('multiple directories', async () => {
     assert.deepStrictEqual(
       await generateExcludedPaths(
-        ["A/C/D/", "A/C/", "G/H/J/", "G/H/M/"],
+        ['A/C/D/', 'A/C/', 'G/H/J/', 'G/H/M/'],
         readDirectory
       ),
       [
@@ -103,6 +103,6 @@ suite('generateExcludedPaths()', () => {
         'G/O',
         'G/P',
       ]
-    );
-  });
-});
+    )
+  })
+})
