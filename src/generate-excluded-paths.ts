@@ -1,9 +1,10 @@
-export async function generateExcludedPaths(includedPaths: string[], readDirectory: (path: string) => Promise<string[]>) {
+export async function generateExcludedPaths(includedPaths: string[], readDirectory: (path: string) => Promise<string[]>): Promise<string[]> {
   const includedPathsWithParents = new Set(includedPaths.flatMap((includedPath) => [
     includedPath,
     ...getParents(includedPath),
   ]));
-  const excludes = new Set();
+
+  const excludes = new Set<string>();
 
   for (const includedPath of includedPaths) {
     const parents = getParents(includedPath);

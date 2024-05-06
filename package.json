@@ -9,15 +9,67 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:fileExplorer"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "streamline.helloWorld",
-        "title": "Hello World"
+        "command": "streamline.scope",
+        "title": "Scope",
+        "icon": "$(circle-large-outline)"
+      },
+      {
+        "command": "streamline.unscope",
+        "title": "Unscope",
+        "icon": "$(pass-filled)"
+      },
+      {
+        "command": "streamline.toggle-scope-for-file",
+        "title": "Toggle Scope for this File"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "streamline.unscope",
+          "group": "navigation",
+          "when": "view == 'workbench.explorer.fileView' && streamline.scoped"
+        },
+        {
+          "command": "streamline.scope",
+          "group": "navigation",
+          "when": "view == 'workbench.explorer.fileView' && !streamline.scoped"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "streamline.toggle-scope-for-file",
+          "group": "2_workspace@1",
+          "when": "activeViewlet == 'workbench.view.explorer'"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Streamline",
+      "properties": {
+        "streamline.scopeEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Is Scope enabled"
+        },
+        "streamline.scopedPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Scoped paths"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
