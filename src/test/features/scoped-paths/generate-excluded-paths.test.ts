@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { generateExcludedPaths } from '../generate-excluded-paths'
+import { generateExcludedPaths } from '../../../features/scoped-paths/generate-excluded-paths'
 
 const paths = [
   'A/',

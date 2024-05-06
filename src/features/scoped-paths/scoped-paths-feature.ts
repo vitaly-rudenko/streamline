@@ -1,9 +1,9 @@
 import { config } from 'process'
 import * as vscode from 'vscode'
 import { generateExcludedPaths } from './generate-excluded-paths'
-import { readDirectory } from './read-directory'
+import { readDirectory } from '../../utils/read-directory'
 import { serializeExcludes } from './serialize-excludes'
-import { unique } from './unique'
+import { unique } from '../../utils/unique'
 
 export async function createScopedPathsFeature(input: {
   context: vscode.ExtensionContext

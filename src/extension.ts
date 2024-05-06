@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { createHighlightedPathsFeature } from './highlighted-paths-feature'
-import { createScopedPathsFeature } from './scoped-paths-feature'
+import { createHighlightedPathsFeature } from './features/highlighted-paths/highlighted-paths-feature'
+import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-feature'
 
 export async function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()

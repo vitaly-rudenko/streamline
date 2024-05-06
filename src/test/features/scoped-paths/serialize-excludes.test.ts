@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { serializeExcludes } from '../serialize-excludes'
+import { serializeExcludes } from '../../../features/scoped-paths/serialize-excludes'
 
 suite('serializeExcludes()', () => {
   test('multiple files', () => {
