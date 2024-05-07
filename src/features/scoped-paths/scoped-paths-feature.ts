@@ -2,8 +2,8 @@ import * as vscode from 'vscode'
 import { generateExcludedPaths } from './generate-excluded-paths'
 import { readDirectory } from '../../utils/read-directory'
 import { serializeExcludes } from './serialize-excludes'
-import { unique } from '../../utils/unique'
 import { getParents } from '../../utils/get-parents'
+import { uriToPath } from '../../utils/uri'
 
 export async function createScopedPathsFeature(input: {
   context: vscode.ExtensionContext
@@ -12,15 +12,15 @@ export async function createScopedPathsFeature(input: {
   const { context, onScopeChanged } = input
 	const workspaceFilesConfig = vscode.workspace.getConfiguration('files', null)
 
-  let cachedUncertainScopedPaths: Set<string> = new Set()
-  let cachedUncertainParentScopedPaths: Set<string> = new Set()
+  let cachedScopedPaths: Set<string> = new Set()
+  let cachedParentScopedPaths: Set<string> = new Set()
 
-  function isScoped(uncertainPath: string) {
-    return cachedUncertainScopedPaths.has(uncertainPath)
+  function isScoped(path: string) {
+    return cachedScopedPaths.has(path)
   }
 
-  function isParentOfScoped(uncertainPath: string) {
-    return cachedUncertainParentScopedPaths.has(uncertainPath)
+  function isParentOfScoped(path: string) {
+    return cachedParentScopedPaths.has(path)
   }
 
   async function toggleScopeForFile(path: string) {
@@ -39,35 +39,14 @@ export async function createScopedPathsFeature(input: {
     const scopedPaths = config.get<string[]>('scopedPaths', [])
     const scopeEnabled = config.get<boolean>('scopeEnabled', false)
 
-    const uncertainScopedPaths = scopedPaths.map(scopedPath => scopedPath.endsWith('/') ? scopedPath.slice(0, -1) : scopedPath)
-    cachedUncertainScopedPaths = new Set(uncertainScopedPaths)
-    cachedUncertainParentScopedPaths = new Set(
-      uncertainScopedPaths
-        .flatMap(
-          scopedPath => scopedPath
-            .split('/')
-            .map((_, i, parts) => parts.slice(0, i).join('/'))
-        )
-        .filter(Boolean)
-    )
+    cachedScopedPaths = new Set(scopedPaths)
+    cachedParentScopedPaths = new Set(scopedPaths.flatMap(scopedPath => getParents(scopedPath)))
+
+    const excludedPaths = await generateExcludedPaths(scopedPaths, readDirectory)
+    const excludes = scopeEnabled ? serializeExcludes({ excludedPaths }) : {}
+    await workspaceFilesConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
 
     await vscode.commands.executeCommand('setContext', 'streamline.scoped', scopeEnabled)
-
-    let excludes = {}
-    if (scopeEnabled) {
-      const excludedPaths = await generateExcludedPaths(scopedPaths, readDirectory)
-
-      // TODO: VS Code doesn't support excluding files in a specific workspace folder using workspace configuration.
-      //       See https://github.com/microsoft/vscode/issues/82145.
-      const excludedPathsWithoutWorkspaceFolder = unique(
-        excludedPaths
-          .map(excludedPath => excludedPath.split('/').slice(1).join('/'))
-          .filter(Boolean)
-      )
-
-      excludes = serializeExcludes({ includedPaths: scopedPaths, excludedPaths: excludedPathsWithoutWorkspaceFolder })
-    }
-    await workspaceFilesConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
 
     onScopeChanged(undefined)
   }
@@ -90,35 +69,40 @@ export async function createScopedPathsFeature(input: {
       file ||= vscode.window.activeTextEditor?.document.uri
       if (!file) return
 
-      const workspaceFolder = vscode.workspace.workspaceFolders?.find(workspaceFolder => workspaceFolder.uri.path === file.path)
+      const path = uriToPath(file)
+      if (!path) return
 
-			const path = workspaceFolder
-        ? workspaceFolder.name + '/'
-        : vscode.workspace.asRelativePath(file) + ((await vscode.workspace.fs.stat(file)).type === vscode.FileType.Directory ? '/' : '')
+      console.log('Generating scope suggestions for', path)
 
       const parents = getParents(path)
 
-      const suggestions = [...parents, path].filter(Boolean).sort((a, b) => b.length - a.length)
-      if (suggestions.length === 0) return
+      const suggestedPaths = [...parents, path].filter(Boolean).sort((a, b) => b.length - a.length)
+      if (suggestedPaths.length === 0) return
 
-      const suggestion = await vscode.window.showQuickPick(suggestions, { title: 'Select path to Scope' })
-      if (!suggestion) return
+      const suggestedPath = await vscode.window.showQuickPick(suggestedPaths, { title: 'Select path to include into the scope' })
+      if (!suggestedPath) return
 
-      await toggleScopeForFile(suggestion)
+      console.log('Toggling scope for', suggestedPath)
+
+      await toggleScopeForFile(suggestedPath)
     })
   )
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.toggle-scope-for-file', async (file: vscode.Uri) => {
-			const workspaceFolder = vscode.workspace.workspaceFolders?.find(workspaceFolder => workspaceFolder.uri.path === file.path)
-			const path = workspaceFolder
-        ? workspaceFolder.name + '/'
-        : vscode.workspace.asRelativePath(file) + ((await vscode.workspace.fs.stat(file)).type === vscode.FileType.Directory ? '/' : '')
+		vscode.commands.registerCommand('streamline.toggle-scope-for-file', async (file: vscode.Uri | undefined) => {
+      file ||= vscode.window.activeTextEditor?.document.uri
+      if (!file) return
+
+			const path = uriToPath(file)
+      if (!path) return
+
+      console.log('Toggling scope for', path)
 
       await toggleScopeForFile(path)
       await refresh()
 		})
 	)
+
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async (event) => {

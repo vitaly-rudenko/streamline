@@ -15,6 +15,12 @@ suite('serializeExcludes()', () => {
     assert.deepStrictEqual(
       serializeExcludes({ excludedPaths }),
       {
+        '**/.git': true,
+        '**/.svn': true,
+        '**/.hg': true,
+        '**/CVS': true,
+        '**/.DS_Store': true,
+        '**/Thumbs.db': true,
         'B/**': true,
         'F/**': true,
         'H/I/**': true,

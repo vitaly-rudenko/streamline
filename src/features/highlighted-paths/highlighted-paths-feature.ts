@@ -8,8 +8,8 @@ export function createHighlightedPathsFeature(input: {
 
   let cachedHighlightedPathsRegExps: RegExp[] = []
 
-  function isHighlighted(uncertainPath: string): boolean {
-    return cachedHighlightedPathsRegExps.some(regExp => regExp.test(uncertainPath))
+  function isHighlighted(path: string): boolean {
+    return cachedHighlightedPathsRegExps.some(regExp => regExp.test(path))
   }
 
   function refresh() {

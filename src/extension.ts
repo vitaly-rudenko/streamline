@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import { createHighlightedPathsFeature } from './features/highlighted-paths/highlighted-paths-feature'
 import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-feature'
 import { createRelatedFilesFeature } from './features/related-files/related-files-feature'
+import { uriToPath } from './utils/uri'
 
 export async function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
@@ -22,13 +23,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const fileDecorationProvider: vscode.FileDecorationProvider = {
 		onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,
-		provideFileDecoration: (file: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> => {
-			const workspaceFolder = vscode.workspace.workspaceFolders?.find(workspaceFolder => workspaceFolder.uri.path === file.path)
-			const uncertainPath = workspaceFolder ? workspaceFolder.name : vscode.workspace.asRelativePath(file)
+		provideFileDecoration: (uri: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> => {
+			const path = uriToPath(uri)
+			if (!path) return undefined
 
-			const isScoped = scopedPathsFeature.isScoped(uncertainPath)
-			const isParentOfScoped = scopedPathsFeature.isParentOfScoped(uncertainPath)
-			const isHighlighted = highlightedPathsFeature.isHighlighted(uncertainPath)
+			const isScoped = scopedPathsFeature.isScoped(path)
+			const isParentOfScoped = scopedPathsFeature.isParentOfScoped(path)
+			const isHighlighted = highlightedPathsFeature.isHighlighted(path)
 
 			if (isHighlighted || isParentOfScoped || isScoped) {
 				return new vscode.FileDecoration(
