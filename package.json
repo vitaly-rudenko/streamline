@@ -28,11 +28,15 @@
       },
       {
         "command": "streamline.toggle-scope-for-file",
-        "title": "Toggle Scope for this File"
+        "title": "Toggle Scope for File"
       },
       {
-        "command": "streamline.suggest-scope-for-file",
-        "title": "Suggest Scope for this File"
+        "command": "streamline.suggest-scopes-for-file",
+        "title": "Suggest Scopes for File"
+      },
+      {
+        "command": "streamline.quick-open-related-files",
+        "title": "Quick Open Related Files"
       }
     ],
     "menus": {
@@ -55,7 +59,7 @@
           "when": "activeViewlet == 'workbench.view.explorer'"
         },
         {
-          "command": "streamline.suggest-scope-for-file",
+          "command": "streamline.suggest-scopes-for-file",
           "group": "2_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
         }

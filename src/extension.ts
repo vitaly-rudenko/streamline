@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import { createHighlightedPathsFeature } from './features/highlighted-paths/highlighted-paths-feature'
 import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-feature'
+import { createRelatedFilesFeature } from './features/related-files/related-files-feature'
 
 export async function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
@@ -13,6 +14,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	const scopedPathsFeature = await createScopedPathsFeature({
 		context,
 		onScopeChanged: (payload) => onDidChangeFileDecorationsEmitter.fire(payload),
+	})
+
+	await createRelatedFilesFeature({
+		context,
 	})
 
 	const fileDecorationProvider: vscode.FileDecorationProvider = {

@@ -1,4 +1,3 @@
-import { config } from 'process'
 import * as vscode from 'vscode'
 import { generateExcludedPaths } from './generate-excluded-paths'
 import { readDirectory } from '../../utils/read-directory'
@@ -87,7 +86,7 @@ export async function createScopedPathsFeature(input: {
 	)
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.suggest-scope-for-file', async (file: vscode.Uri | undefined) => {
+    vscode.commands.registerCommand('streamline.suggest-scopes-for-file', async (file: vscode.Uri | undefined) => {
       file ||= vscode.window.activeTextEditor?.document.uri
       if (!file) return
 
