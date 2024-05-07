@@ -42,9 +42,13 @@ export async function createScopedPathsFeature(input: {
     cachedScopedPaths = new Set(scopedPaths)
     cachedParentScopedPaths = new Set(scopedPaths.flatMap(scopedPath => getParents(scopedPath)))
 
-    const excludedPaths = await generateExcludedPaths(scopedPaths, readDirectory)
-    const excludes = scopeEnabled ? serializeExcludes({ excludedPaths }) : {}
-    await workspaceFilesConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
+    if (scopeEnabled) {
+      const excludedPaths = await generateExcludedPaths(scopedPaths, readDirectory)
+      const excludes = serializeExcludes({ excludedPaths })
+      await workspaceFilesConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
+    } else {
+      await workspaceFilesConfig.update('exclude', undefined, vscode.ConfigurationTarget.Workspace)
+    }
 
     await vscode.commands.executeCommand('setContext', 'streamline.scoped', scopeEnabled)
 
