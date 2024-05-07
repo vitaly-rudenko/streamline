@@ -57,11 +57,6 @@
           "command": "streamline.toggle-scope-for-file",
           "group": "2_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
-        },
-        {
-          "command": "streamline.suggest-scopes-for-file",
-          "group": "2_workspace@1",
-          "when": "activeViewlet == 'workbench.view.explorer'"
         }
       ]
     },
