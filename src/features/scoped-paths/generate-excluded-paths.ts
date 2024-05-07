@@ -1,4 +1,5 @@
 import { getParents } from '../../utils/get-parents'
+import { unique } from '../../utils/unique'
 
 export async function generateExcludedPaths(includedPaths: string[], readDirectory: (path: string) => Promise<string[]>): Promise<string[]> {
   const includedPathsWithParents = new Set(includedPaths.flatMap((includedPath) => [
@@ -6,7 +7,7 @@ export async function generateExcludedPaths(includedPaths: string[], readDirecto
     ...getParents(includedPath),
   ]))
 
-  const excludes = new Set<string>()
+  const excludedPaths = new Set<string>()
 
   for (const includedPath of includedPaths) {
     const parents = getParents(includedPath)
@@ -19,11 +20,11 @@ export async function generateExcludedPaths(includedPaths: string[], readDirecto
       )
 
       for (const filteredChild of filteredChildren) {
-        excludes.add(filteredChild)
+        excludedPaths.add(filteredChild)
       }
     }
   }
 
-  return [...excludes]
+  return [...excludedPaths]
 }
 

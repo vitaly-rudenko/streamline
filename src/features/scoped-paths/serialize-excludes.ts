@@ -1,7 +1,17 @@
-export function serializeExcludes(input: { includedPaths: string[], excludedPaths: string[] }): Record<string, boolean> {
+import { unique } from '../../utils/unique'
+
+export function serializeExcludes(input: { excludedPaths: string[] }): Record<string, boolean> {
   const excludes: Record<string, boolean> = {}
 
-  for (const excludedPath of input.excludedPaths) {
+  // TODO: VS Code doesn't support excluding files in a specific workspace folder using workspace configuration
+  //       See https://github.com/microsoft/vscode/issues/82145
+  const excludedPaths = unique(
+    input.excludedPaths
+      .filter(path => path.includes('/'))
+      .map(excludedPath => excludedPath.replace(/^.+?\//, ''))
+  )
+
+  for (const excludedPath of excludedPaths) {
     excludes[serializePathExclude(excludedPath)] = true
   }
 
@@ -9,5 +19,5 @@ export function serializeExcludes(input: { includedPaths: string[], excludedPath
 }
 
 function serializePathExclude(path: string) {
-  return path.endsWith('/') ? `${path}**` : path
+  return `${path}/**`
 }

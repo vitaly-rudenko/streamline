@@ -3,25 +3,23 @@ import { serializeExcludes } from '../../../features/scoped-paths/serialize-excl
 
 suite('serializeExcludes()', () => {
   test('multiple files', () => {
-    const includedPaths = ['A/C/D/', 'A/C/', 'G/P', 'G/H/J/', 'G/H/M/']
     const excludedPaths = [
-      'A/B/',
+      'A/B',
       'A/F',
       'Q',
-      'G/H/I/',
+      'G/H/I',
       'G/H/N',
       'G/O',
     ]
 
     assert.deepStrictEqual(
-      serializeExcludes({ includedPaths, excludedPaths }),
+      serializeExcludes({ excludedPaths }),
       {
-        'A/B/**': true,
-        'A/F': true,
-        'Q': true,
-        'G/H/I/**': true,
-        'G/H/N': true,
-        'G/O': true,
+        'B/**': true,
+        'F/**': true,
+        'H/I/**': true,
+        'H/N/**': true,
+        'O/**': true,
       }
     )
   })
