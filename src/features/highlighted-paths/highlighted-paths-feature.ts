@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 
-export function createHighlightedPathsFeature(input: {
+export async function createHighlightedPathsFeature(input: {
   context: vscode.ExtensionContext
   onHighlightChanged: (payload: vscode.Uri | vscode.Uri[] | undefined) => unknown
 }) {
@@ -12,7 +12,7 @@ export function createHighlightedPathsFeature(input: {
     return cachedHighlightedPathsRegExps.some(regExp => regExp.test(path))
   }
 
-  function refresh() {
+  async function refresh() {
     const config = vscode.workspace.getConfiguration('streamline')
     const highlightedPaths = config.get<string[]>('highlightedPaths', [])
 
@@ -29,7 +29,7 @@ export function createHighlightedPathsFeature(input: {
     })
   )
 
-  refresh()
+  await refresh()
 
   return { isHighlighted }
 }
