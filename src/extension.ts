@@ -19,7 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,
 		provideFileDecoration: (file: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> => {
 			const workspaceFolder = vscode.workspace.workspaceFolders?.find(workspaceFolder => workspaceFolder.uri.path === file.path)
-			const uncertainPath = workspaceFolder ? workspaceFolder.name :vscode.workspace.asRelativePath(file)
+			const uncertainPath = workspaceFolder ? workspaceFolder.name : vscode.workspace.asRelativePath(file)
 
 			const isScoped = scopedPathsFeature.isScoped(uncertainPath)
 			const isParentOfScoped = scopedPathsFeature.isParentOfScoped(uncertainPath)

@@ -29,6 +29,10 @@
       {
         "command": "streamline.toggle-scope-for-file",
         "title": "Toggle Scope for this File"
+      },
+      {
+        "command": "streamline.suggest-scope-for-file",
+        "title": "Suggest Scope for this File"
       }
     ],
     "menus": {
@@ -47,6 +51,11 @@
       "explorer/context": [
         {
           "command": "streamline.toggle-scope-for-file",
+          "group": "2_workspace@1",
+          "when": "activeViewlet == 'workbench.view.explorer'"
+        },
+        {
+          "command": "streamline.suggest-scope-for-file",
           "group": "2_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
         }
@@ -98,6 +107,7 @@
     "@vscode/test-cli": "^0.0.8",
     "@vscode/test-electron": "^2.3.9"
   },
+  "publisher": "vitaly-rudenko",
   "repository": {
     "url": "https://github.com/vitaly-rudenko/streamline"
   }
