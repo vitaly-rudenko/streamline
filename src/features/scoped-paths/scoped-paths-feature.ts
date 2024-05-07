@@ -91,16 +91,20 @@ export async function createScopedPathsFeature(input: {
       if (!file) return
 
       const workspaceFolder = vscode.workspace.workspaceFolders?.find(workspaceFolder => workspaceFolder.uri.path === file.path)
+
 			const path = workspaceFolder
         ? workspaceFolder.name + '/'
         : vscode.workspace.asRelativePath(file) + ((await vscode.workspace.fs.stat(file)).type === vscode.FileType.Directory ? '/' : '')
 
-      // TODO: Cannot scope workspace folder, so exclude it from the list
-      const parents = getParents(path).filter(Boolean).sort((a, b) => b.length - a.length).slice(0, -1)
-      const parent = await vscode.window.showQuickPick(parents, { title: 'Select path to Scope' })
-      if (!parent) return
+      const parents = getParents(path)
 
-      await toggleScopeForFile(parent)
+      const suggestions = [...parents, path].filter(Boolean).sort((a, b) => b.length - a.length)
+      if (suggestions.length === 0) return
+
+      const suggestion = await vscode.window.showQuickPick(suggestions, { title: 'Select path to Scope' })
+      if (!suggestion) return
+
+      await toggleScopeForFile(suggestion)
     })
   )
 
