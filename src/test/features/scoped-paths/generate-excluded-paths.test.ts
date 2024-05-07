@@ -1,7 +1,7 @@
 import assert from 'assert'
 import { generateExcludedPaths } from '../../../features/scoped-paths/generate-excluded-paths'
 
-const paths = [
+const defaultPaths = [
   'A',
     'A/B',
     'A/C',
@@ -21,16 +21,18 @@ const paths = [
   'Q',
 ]
 
-async function readDirectory(path: string): Promise<string[]> {
-  if (path === '') {
-    return paths.filter((p) => !p.includes('/'))
-  }
+function createDirectoryReader(paths = defaultPaths) {
+  return async (path: string): Promise<string[]> => {
+    if (path === '') {
+      return paths.filter((p) => !p.includes('/'))
+    }
 
-  return paths.filter((p) =>
-    p.startsWith(path)
-      ? p.split('/').length === path.split('/').length + 1
-      : false,
-  )
+    return paths.filter((p) =>
+      p.startsWith(path)
+        ? p.split('/').length === path.split('/').length + 1
+        : false,
+    )
+  }
 }
 
 suite('generateExcludedPaths()', () => {
@@ -38,7 +40,7 @@ suite('generateExcludedPaths()', () => {
     assert.deepStrictEqual(
       await generateExcludedPaths(
         [],
-        readDirectory
+        createDirectoryReader()
       ),
       []
     )
@@ -48,7 +50,7 @@ suite('generateExcludedPaths()', () => {
     assert.deepStrictEqual(
       await generateExcludedPaths(
         ['A'],
-        readDirectory
+        createDirectoryReader()
       ),
       [
         'G',
@@ -59,7 +61,7 @@ suite('generateExcludedPaths()', () => {
     assert.deepStrictEqual(
       await generateExcludedPaths(
         ['G/H/J'],
-        readDirectory
+        createDirectoryReader()
       ),
       [
         'G/H/I',
@@ -77,7 +79,7 @@ suite('generateExcludedPaths()', () => {
     assert.deepStrictEqual(
       await generateExcludedPaths(
         ['A/F'],
-        readDirectory
+        createDirectoryReader()
       ),
       [
         'A/B',
@@ -92,7 +94,7 @@ suite('generateExcludedPaths()', () => {
     assert.deepStrictEqual(
       await generateExcludedPaths(
         ['A/C/D', 'A/C', 'G/H/J', 'G/H/M'],
-        readDirectory
+        createDirectoryReader()
       ),
       [
         'A/B',
@@ -104,5 +106,30 @@ suite('generateExcludedPaths()', () => {
         'G/P',
       ]
     )
+  })
+
+  suite('edge cases', () => {
+    test('handles files with similar names correctly', async () => {
+      const paths = [
+        'A',
+          'A/B',
+            'A/B/C',
+          'A/B.js',
+          'A/BC',
+          'A/AB',
+      ]
+
+      assert.deepStrictEqual(
+        await generateExcludedPaths(
+          ['A/B'],
+          createDirectoryReader(paths)
+        ),
+        [
+          'A/B.js',
+          'A/BC',
+          'A/AB',
+        ]
+      )
+    })
   })
 })

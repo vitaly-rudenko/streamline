@@ -14,7 +14,7 @@ export async function generateExcludedPaths(includedPaths: string[], readDirecto
       .flat()
       .filter((child) =>
         !includedPathsWithParents.has(child) &&
-        includedPaths.every((includedPath) => !child.startsWith(includedPath)),
+        includedPaths.every((includedPath) => !child.startsWith(`${includedPath}/`) && child !== includedPath),
       )
 
     for (const child of children) {
