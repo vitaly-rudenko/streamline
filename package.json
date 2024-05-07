@@ -112,6 +112,7 @@
     "@vscode/test-electron": "^2.3.9"
   },
   "publisher": "vitaly-rudenko",
+  "icon": "./icon.png",
   "repository": {
     "url": "https://github.com/vitaly-rudenko/streamline"
   }
