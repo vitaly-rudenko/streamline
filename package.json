@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -17,38 +17,53 @@
   "contributes": {
     "commands": [
       {
+        "command": "streamline.select-scope",
+        "title": "Streamline: Select Scope",
+        "icon": "$(chevron-down)"
+      },
+      {
         "command": "streamline.scope",
-        "title": "Scope",
+        "title": "Streamline: Scope",
         "icon": "$(circle-large-outline)"
       },
       {
         "command": "streamline.unscope",
-        "title": "Unscope",
+        "title": "Streamline: Unscope",
         "icon": "$(pass-filled)"
       },
       {
+        "command": "streamline.clear-scope",
+        "title": "Streamline: Clear Current Scope",
+        "icon": "$(circle-slash)"
+      },
+      {
+        "command": "streamline.toggle-scope",
+        "title": "Streamline: Toggle Scope",
+        "icon": "$(activate-breakpoints)"
+      },
+      {
         "command": "streamline.toggle-scope-for-file",
-        "title": "Toggle Scope for File"
+        "title": "Streamline: Toggle Scope for File"
       },
       {
         "command": "streamline.suggest-scopes-for-file",
-        "title": "Suggest Scopes for File"
+        "title": "Streamline: Suggest Scopes for File"
       },
       {
         "command": "streamline.quick-open-related-files",
-        "title": "Quick Open Related Files"
+        "title": "Streamline: Quick Open Related Files"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "streamline.unscope",
-          "group": "navigation",
+          "group": "navigation@1",
           "when": "view == 'workbench.explorer.fileView' && streamline.scoped"
         },
         {
           "command": "streamline.scope",
-          "group": "navigation",
+          "group": "navigation@1",
           "when": "view == 'workbench.explorer.fileView' && !streamline.scoped"
         }
       ],
@@ -66,15 +81,23 @@
         "streamline.scopeEnabled": {
           "type": "boolean",
           "default": false,
-          "description": "Is Scope enabled"
+          "description": "Scope enabled"
         },
-        "streamline.scopedPaths": {
-          "type": "array",
-          "items": {
-            "type": "string"
+        "streamline.currentScope": {
+          "type": "string",
+          "default": "default",
+          "description": "Current scope"
+        },
+        "streamline.scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
-          "default": [],
-          "description": "Scoped paths"
+          "default": {"default": []},
+          "description": "Scopes"
         },
         "streamline.highlightedPaths": {
           "type": "array",
