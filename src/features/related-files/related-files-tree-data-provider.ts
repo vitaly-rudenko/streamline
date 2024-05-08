@@ -46,31 +46,30 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     for (const uri of bestFilesWithoutExcludes) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-      children.push(new RelatedFileTreeItem(uri, 'best'))
+      children.push(new RelatedFileTreeItem(uri, true))
     }
     for (const uri of worstFilesWithoutExcludes) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-      children.push(new RelatedFileTreeItem(uri, 'worst'))
+      children.push(new RelatedFileTreeItem(uri))
     }
 
     return children
   }
 }
 
-const iconPaths = {
-  best: new vscode.ThemeIcon('star-full'),
-  good: new vscode.ThemeIcon('star-half'),
-  bad: new vscode.ThemeIcon('star-empty'),
-  worst: undefined
-}
-
 class RelatedFileTreeItem extends vscode.TreeItem {
   constructor(
     public readonly uri: vscode.Uri,
-    public readonly match: 'best' | 'good' | 'bad' | 'worst',
+    public readonly isBestMatch?: boolean,
   ) {
     super(vscode.workspace.asRelativePath(uri.path), vscode.TreeItemCollapsibleState.None)
-    this.iconPath = iconPaths[match]
+    this.iconPath = isBestMatch ? new vscode.ThemeIcon('star-full') : undefined
+    this.resourceUri = uri
+    this.command = {
+      command: 'vscode.open',
+      arguments: [uri],
+      title: 'Open file'
+    }
   }
 }
