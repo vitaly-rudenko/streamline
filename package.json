@@ -16,7 +16,7 @@
   "main": "./out/extension.js",
   "contributes": {
     "views": {
-      "streamline": [
+      "explorer": [
         {
           "id": "relatedFiles",
           "name": "Related files",
