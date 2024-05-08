@@ -12,13 +12,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		onHighlightChanged: (payload) => onDidChangeFileDecorationsEmitter.fire(payload),
 	})
 
-	const scopedPathsFeature = await createScopedPathsFeature({
+	const relatedFilesFeature = await createRelatedFilesFeature({
 		context,
-		onScopeChanged: (payload) => onDidChangeFileDecorationsEmitter.fire(payload),
 	})
 
-	await createRelatedFilesFeature({
+	const scopedPathsFeature = await createScopedPathsFeature({
 		context,
+		onScopeChanged: async (payload) => {
+			onDidChangeFileDecorationsEmitter.fire(payload)
+			await relatedFilesFeature.refresh()
+		},
 	})
 
 	const fileDecorationProvider: vscode.FileDecorationProvider = {
