@@ -12,7 +12,7 @@ export async function createRelatedFilesFeature(input: {
 	vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider)
 
   async function refresh() {
-    relatedFilesTreeDataProvider.refresh()
+    relatedFilesTreeDataProvider.clearCacheAndRefresh()
   }
 
   context.subscriptions.push(
@@ -33,6 +33,9 @@ export async function createRelatedFilesFeature(input: {
     vscode.window.onDidChangeActiveTextEditor(() => {
       relatedFilesTreeDataProvider.refresh()
     })
+    vscode.workspace.onDidCreateFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
+    vscode.workspace.onDidDeleteFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
+    vscode.workspace.onDidRenameFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
   )
 
   return { refresh }

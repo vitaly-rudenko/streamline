@@ -20,7 +20,8 @@
         {
           "id": "relatedFiles",
           "name": "Related files",
-          "visibility": "visible"
+          "visibility": "visible",
+          "when": "editorIsOpen"
         }
       ]
     },
@@ -68,12 +69,12 @@
         {
           "command": "streamline.unscope",
           "group": "navigation@1",
-          "when": "view == 'workbench.explorer.fileView' && streamline.scoped"
+          "when": "view == 'workbench.explorer.fileView' && streamline.scopeEnabled"
         },
         {
           "command": "streamline.scope",
           "group": "navigation@1",
-          "when": "view == 'workbench.explorer.fileView' && !streamline.scoped"
+          "when": "view == 'workbench.explorer.fileView' && !streamline.scopeEnabled"
         }
       ],
       "explorer/context": [
@@ -146,5 +147,8 @@
   "icon": "./icon.png",
   "repository": {
     "url": "https://github.com/vitaly-rudenko/streamline"
+  },
+  "dependencies": {
+    "lru-cache": "^10.2.2"
   }
 }

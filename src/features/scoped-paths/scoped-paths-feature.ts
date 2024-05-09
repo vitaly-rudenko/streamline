@@ -16,6 +16,7 @@ export async function createScopedPathsFeature(input: {
   textStatusBarItem.command = 'streamline.select-scope'
   context.subscriptions.push(textStatusBarItem)
 
+  let cachedScopeEnabled = false
   let cachedScopedPaths: Set<string> = new Set()
   let cachedParentScopedPaths: Set<string> = new Set()
 
@@ -48,6 +49,7 @@ export async function createScopedPathsFeature(input: {
     const scopeEnabled = config.get<boolean>('scopeEnabled', false)
 
     const scopedPaths = scopes[currentScope] ?? []
+    cachedScopeEnabled = scopeEnabled
     cachedScopedPaths = new Set(scopedPaths)
     cachedParentScopedPaths = new Set(scopedPaths.flatMap(scopedPath => getParents(scopedPath)))
 
@@ -64,7 +66,7 @@ export async function createScopedPathsFeature(input: {
       console.warn('Could not update workspace configuration', err)
     }
 
-    await vscode.commands.executeCommand('setContext', 'streamline.scoped', scopeEnabled)
+    await vscode.commands.executeCommand('setContext', 'streamline.scopeEnabled', scopeEnabled)
 
     textStatusBarItem.text = `Scope: ${currentScope}`
     textStatusBarItem.backgroundColor = scopeEnabled ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
@@ -174,7 +176,12 @@ export async function createScopedPathsFeature(input: {
       ) {
         await refresh()
       }
-    })
+    }),
+    vscode.workspace.onDidCreateFiles(async () => {
+      if (cachedScopeEnabled) {
+        await refresh()
+      }
+    }),
   )
 
   await refresh()

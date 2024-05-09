@@ -22,11 +22,13 @@ export async function createHighlightedPathsFeature(input: {
   }
 
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((event) => {
+    vscode.workspace.onDidChangeConfiguration(async (event) => {
       if (event.affectsConfiguration('streamline.highlightedPaths')) {
-        refresh()
+        await refresh()
       }
-    })
+    }),
+    vscode.workspace.onDidCreateFiles((event) => onHighlightChanged(event.files.map(uri => uri))),
+    vscode.workspace.onDidRenameFiles((event) => onHighlightChanged(event.files.map(file => file.newUri))),
   )
 
   await refresh()
