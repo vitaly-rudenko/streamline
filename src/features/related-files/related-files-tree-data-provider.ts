@@ -50,6 +50,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
 
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
+    // TODO: Exclude files from search.exclude and files.exclude configurations
     const [
       bestFilesWithoutExcludes,
       worstFilesWithoutExcludes,
