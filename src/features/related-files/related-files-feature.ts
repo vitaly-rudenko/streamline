@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
-import { RelatedFilesTreeDataProvider } from './related-files-tree-data-provider'
+import { RelatedFilesTreeDataProvider, type RelatedFileTreeItem } from './related-files-tree-data-provider'
 import { getPathQuery } from './get-path-query'
 
 export async function createRelatedFilesFeature(input: {
@@ -46,6 +46,12 @@ export async function createRelatedFilesFeature(input: {
 
       await config.update('useRelativePathsInRelatedFiles', !useRelativePathsInRelatedFiles)
       await refresh()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.copy-related-file-path', async (relatedFileTreeItem: RelatedFileTreeItem) => {
+      await vscode.env.clipboard.writeText(relatedFileTreeItem.label)
     })
   )
 

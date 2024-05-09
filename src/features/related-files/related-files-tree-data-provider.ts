@@ -90,7 +90,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   }
 }
 
-class RelatedFileTreeItem extends vscode.TreeItem {
+export class RelatedFileTreeItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly uri: vscode.Uri,
@@ -99,6 +99,7 @@ class RelatedFileTreeItem extends vscode.TreeItem {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.iconPath = isBestMatch ? new vscode.ThemeIcon('star-full') : undefined
     this.resourceUri = uri
+    this.contextValue = 'relatedFile'
     this.command = {
       command: 'vscode.open',
       arguments: [uri],

@@ -62,6 +62,11 @@
         "icon": "$(selection)"
       },
       {
+        "command": "streamline.copy-related-file-path",
+        "title": "Streamline: Copy Path of Related File",
+        "icon": "$(files)"
+      },
+      {
         "command": "streamline.toggle-scope-for-file",
         "title": "Streamline: Toggle Scope for File"
       },
@@ -95,6 +100,13 @@
           "command": "streamline.refresh-related-files",
           "group": "navigation@2",
           "when": "view == relatedFiles"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "streamline.copy-related-file-path",
+          "when": "view == relatedFiles && viewItem == relatedFile",
+          "group": "inline"
         }
       ],
       "explorer/context": [
