@@ -52,6 +52,16 @@
         "icon": "$(activate-breakpoints)"
       },
       {
+        "command": "streamline.refresh-related-files",
+        "title": "Streamline: Refresh Related Files",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "streamline.toggle-use-relative-paths-in-related-files",
+        "title": "Streamline: Toggle Use Relative Paths Related Files",
+        "icon": "$(selection)"
+      },
+      {
         "command": "streamline.toggle-scope-for-file",
         "title": "Streamline: Toggle Scope for File"
       },
@@ -75,6 +85,16 @@
           "command": "streamline.scope",
           "group": "navigation@1",
           "when": "view == 'workbench.explorer.fileView' && !streamline.scopeEnabled"
+        },
+        {
+          "command": "streamline.toggle-use-relative-paths-in-related-files",
+          "group": "navigation@1",
+          "when": "view == relatedFiles"
+        },
+        {
+          "command": "streamline.refresh-related-files",
+          "group": "navigation@2",
+          "when": "view == relatedFiles"
         }
       ],
       "explorer/context": [
@@ -118,6 +138,11 @@
           },
           "default": [],
           "description": "Highlighted paths"
+        },
+        "streamline.useRelativePathsInRelatedFiles": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use relative paths in related files view"
         }
       }
     }

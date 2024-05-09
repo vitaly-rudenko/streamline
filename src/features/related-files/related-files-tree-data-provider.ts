@@ -1,4 +1,6 @@
 import * as vscode from 'vscode'
+import * as path from 'path'
+import { LRUCache } from 'lru-cache'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
 import { getPathQuery } from './get-path-query'
 
@@ -6,10 +8,15 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
+  private _useRelativePaths = false
   private _cache = new LRUCache<string, RelatedFileTreeItem[]>({
     max: 100,
     ttl: 15 * 60_000, // 15 minutes
   })
+
+  setUseRelativePaths(value: boolean) {
+    this._useRelativePaths = value
+  }
 
   refresh(): void {
 		this._onDidChangeTreeData.fire()
@@ -73,7 +80,9 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
 
   createRelatedFileTreeItem(originalUri: vscode.Uri, relatedUri: vscode.Uri, isBestMatch?: boolean) {
     return new RelatedFileTreeItem(
-      vscode.workspace.asRelativePath(relatedUri),
+      this._useRelativePaths
+        ? path.relative(originalUri.path, relatedUri.path)
+        : vscode.workspace.asRelativePath(relatedUri),
       relatedUri,
       isBestMatch,
     )

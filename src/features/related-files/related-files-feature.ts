@@ -12,6 +12,10 @@ export async function createRelatedFilesFeature(input: {
 	vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider)
 
   async function refresh() {
+    const config = vscode.workspace.getConfiguration('streamline')
+    const useRelativePathsInRelatedFiles = config.get<boolean>('useRelativePathsInRelatedFiles', false)
+
+    relatedFilesTreeDataProvider.setUseRelativePaths(useRelativePathsInRelatedFiles)
     relatedFilesTreeDataProvider.clearCacheAndRefresh()
   }
 
@@ -30,9 +34,28 @@ export async function createRelatedFilesFeature(input: {
   )
 
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => {
-      relatedFilesTreeDataProvider.refresh()
+    vscode.commands.registerCommand('streamline.refresh-related-files', async () => {
+      await refresh()
     })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.toggle-use-relative-paths-in-related-files', async () => {
+      const config = vscode.workspace.getConfiguration('streamline')
+      const useRelativePathsInRelatedFiles = config.get<boolean>('useRelativePathsInRelatedFiles', false)
+
+      await config.update('useRelativePathsInRelatedFiles', !useRelativePathsInRelatedFiles)
+      await refresh()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(async (event) => {
+      if (event.affectsConfiguration('streamline.useRelativePathsInRelatedFiles')) {
+        await refresh()
+      }
+    }),
+    vscode.window.onDidChangeActiveTextEditor(() => relatedFilesTreeDataProvider.refresh()),
     vscode.workspace.onDidCreateFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
     vscode.workspace.onDidDeleteFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
     vscode.workspace.onDidRenameFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
