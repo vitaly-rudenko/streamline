@@ -13,7 +13,7 @@ export async function createRelatedFilesFeature(input: {
 
   async function refresh() {
     const config = vscode.workspace.getConfiguration('streamline')
-    const useRelativePathsInRelatedFiles = config.get<boolean>('useRelativePathsInRelatedFiles', false)
+    const useRelativePathsInRelatedFiles = config.get<boolean>('useRelativePathsInRelatedFiles', true)
 
     relatedFilesTreeDataProvider.setUseRelativePaths(useRelativePathsInRelatedFiles)
     relatedFilesTreeDataProvider.clearCacheAndRefresh()
@@ -42,7 +42,7 @@ export async function createRelatedFilesFeature(input: {
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.toggle-use-relative-paths-in-related-files', async () => {
       const config = vscode.workspace.getConfiguration('streamline')
-      const useRelativePathsInRelatedFiles = config.get<boolean>('useRelativePathsInRelatedFiles', false)
+      const useRelativePathsInRelatedFiles = config.get<boolean>('useRelativePathsInRelatedFiles', true)
 
       await config.update('useRelativePathsInRelatedFiles', !useRelativePathsInRelatedFiles)
       await refresh()

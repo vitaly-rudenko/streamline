@@ -57,7 +57,15 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     ] = (await Promise.all([
       vscode.workspace.findFiles(bestInclude, undefined, 10),
       vscode.workspace.findFiles(worstInclude, undefined, 10),
-    ])).map(uris => uris.sort((a, b) => a.path.length - b.path.length))
+    ]))
+
+    // Show "closest" files first
+    if (this._useRelativePaths) {
+      [
+        bestFilesWithoutExcludes,
+        worstFilesWithoutExcludes,
+      ].map(uris => uris.sort((a, b) => a.path.split('/').length - b.path.split('/').length))
+    }
 
     const ignoredPaths = new Set()
     ignoredPaths.add(originalUri.path) // Ignore current file
@@ -69,6 +77,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       ignoredPaths.add(relatedUri.path)
       children.push(this.createRelatedFileTreeItem(originalUri, relatedUri, true))
     }
+
     for (const relatedUri of worstFilesWithoutExcludes) {
       if (ignoredPaths.has(relatedUri.path)) continue
       ignoredPaths.add(relatedUri.path)
@@ -80,13 +89,15 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   }
 
   createRelatedFileTreeItem(originalUri: vscode.Uri, relatedUri: vscode.Uri, isBestMatch?: boolean) {
-    return new RelatedFileTreeItem(
-      this._useRelativePaths
-        ? path.relative(originalUri.path, relatedUri.path)
-        : vscode.workspace.asRelativePath(relatedUri),
-      relatedUri,
-      isBestMatch,
-    )
+    let label: string
+    if (this._useRelativePaths) {
+      label = path.relative(originalUri.path, relatedUri.path).replace('../', '')
+      if (!label.startsWith('../')) label = './' + label
+    } else {
+      label = vscode.workspace.asRelativePath(relatedUri)
+    }
+
+    return new RelatedFileTreeItem(label, relatedUri, isBestMatch)
   }
 }
 
