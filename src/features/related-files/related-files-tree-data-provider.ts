@@ -48,6 +48,11 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     const worstPathQuery = getPathQuery(originalUri.path, { includeSingleFolder: false })
     const worstInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, `**/${worstPathQuery}*`) : `**/${worstPathQuery}*`
 
+    const searchExclude = vscode.workspace.getConfiguration('search').get<Record<string, boolean>>('exclude')
+    const excludePattern = searchExclude
+      ? `{${Object.entries(searchExclude).filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
+      : undefined
+
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
     // TODO: Exclude files from search.exclude and files.exclude configurations
@@ -55,8 +60,8 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       bestFilesWithoutExcludes,
       worstFilesWithoutExcludes,
     ] = (await Promise.all([
-      vscode.workspace.findFiles(bestInclude, undefined, 10),
-      vscode.workspace.findFiles(worstInclude, undefined, 10),
+      vscode.workspace.findFiles(bestInclude, excludePattern, 10),
+      vscode.workspace.findFiles(worstInclude, excludePattern, 10),
     ]))
 
     // Show "closest" files first
