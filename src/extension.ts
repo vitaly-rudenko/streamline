@@ -36,7 +36,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 			if (isHighlighted || isParentOfScoped || isScoped) {
 				return new vscode.FileDecoration(
-					isScoped ? '|' : isParentOfScoped ? '¦' : undefined,
+					isScoped ? '•' : isParentOfScoped ? '›' : undefined,
 					undefined,
 					isHighlighted ? new vscode.ThemeColor('textLink.foreground') : undefined
 				)
