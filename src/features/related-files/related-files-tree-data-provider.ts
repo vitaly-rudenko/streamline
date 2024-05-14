@@ -9,6 +9,8 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
   private _useRelativePaths = false
+  private _useExcludes = false
+  private _excludePattern: string | undefined
   private _cache = new LRUCache<string, RelatedFileTreeItem[]>({
     max: 100,
     ttl: 15 * 60_000, // 15 minutes
@@ -18,7 +20,20 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     this._useRelativePaths = value
   }
 
+  setUseExcludes(value: boolean) {
+    this._useExcludes = value
+  }
+
   refresh(): void {
+    if (this._useExcludes) {
+      const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
+      this._excludePattern = searchExcludes
+        ? `{${Object.entries(searchExcludes).filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
+        : undefined
+    } else {
+      this._excludePattern = undefined
+    }
+
 		this._onDidChangeTreeData.fire()
 	}
 
@@ -48,11 +63,6 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     const worstPathQuery = getPathQuery(originalUri.path, { includeSingleFolder: false })
     const worstInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, `**/${worstPathQuery}*`) : `**/${worstPathQuery}*`
 
-    const searchExclude = vscode.workspace.getConfiguration('search').get<Record<string, boolean>>('exclude')
-    const excludePattern = searchExclude
-      ? `{${Object.entries(searchExclude).filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
-      : undefined
-
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
     // TODO: Exclude files from search.exclude and files.exclude configurations
@@ -60,8 +70,8 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       bestFilesWithoutExcludes,
       worstFilesWithoutExcludes,
     ] = (await Promise.all([
-      vscode.workspace.findFiles(bestInclude, excludePattern, 10),
-      vscode.workspace.findFiles(worstInclude, excludePattern, 10),
+      vscode.workspace.findFiles(bestInclude, this._excludePattern, 10),
+      vscode.workspace.findFiles(worstInclude, this._excludePattern, 10),
     ]))
 
     // Show "closest" files first
