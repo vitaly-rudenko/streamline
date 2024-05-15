@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -17,6 +17,12 @@
   "contributes": {
     "views": {
       "explorer": [
+        {
+          "id": "tabHistory",
+          "name": "Tab history",
+          "visibility": "collapsed",
+          "icon": "$(history)"
+        },
         {
           "id": "relatedFiles",
           "name": "Related files",
@@ -170,6 +176,11 @@
           "type": "boolean",
           "default": true,
           "description": "Use excludes in related files view"
+        },
+        "streamline.tabHistory": {
+          "type": "array",
+          "default": [],
+          "description": "Tab history backup"
         }
       }
     }
@@ -201,6 +212,7 @@
     "url": "https://github.com/vitaly-rudenko/streamline"
   },
   "dependencies": {
+    "date-fns": "^3.6.0",
     "lru-cache": "^10.2.2"
   }
 }

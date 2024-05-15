@@ -3,6 +3,7 @@ import { createHighlightedPathsFeature } from './features/highlighted-paths/high
 import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-feature'
 import { createRelatedFilesFeature } from './features/related-files/related-files-feature'
 import { uriToPath } from './utils/uri'
+import { createTabHistoryFeature } from './features/tab-history/tab-history-feature'
 
 export async function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
@@ -22,6 +23,10 @@ export async function activate(context: vscode.ExtensionContext) {
 			onDidChangeFileDecorationsEmitter.fire(payload)
 			await relatedFilesFeature.refresh()
 		},
+	})
+
+	const tabHistoryFeature = await createTabHistoryFeature({
+		context,
 	})
 
 	const fileDecorationProvider: vscode.FileDecorationProvider = {
