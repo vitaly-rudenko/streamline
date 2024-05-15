@@ -11,10 +11,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   private _useRelativePaths = false
   private _useExcludes = false
   private _excludePattern: string | undefined
-  private _cache = new LRUCache<string, RelatedFileTreeItem[]>({
-    max: 100,
-    ttl: 15 * 60_000, // 15 minutes
-  })
+  private _cache = new LRUCache<string, RelatedFileTreeItem[]>({ max: 100 })
 
   setUseRelativePaths(value: boolean) {
     this._useRelativePaths = value
@@ -46,21 +43,21 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     return element
   }
 
-  async getChildren(element?: unknown): Promise<(RelatedFileTreeItem)[] | undefined> {
+  async getChildren(element?: unknown): Promise<RelatedFileTreeItem[] | undefined> {
     if (element) return
 
-    const originalUri = vscode.window.activeTextEditor?.document.uri
-    if (!originalUri) return
+    const currentUri = vscode.window.activeTextEditor?.document.uri
+    if (!currentUri) return
 
-    const cache = this._cache.get(originalUri.path)
+    const cache = this._cache.get(currentUri.path)
     if (cache) return cache
 
-    const workspaceFolder = isMultiRootWorkspace() ? vscode.workspace.getWorkspaceFolder(originalUri) : undefined
+    const workspaceFolder = isMultiRootWorkspace() ? vscode.workspace.getWorkspaceFolder(currentUri) : undefined
 
-    const bestPathQuery = getPathQuery(originalUri.path, { includeSingleFolder: true })
+    const bestPathQuery = getPathQuery(currentUri.path, { includeSingleFolder: true })
     const bestInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, `**/${bestPathQuery}*`) : `**/${bestPathQuery}*`
 
-    const worstPathQuery = getPathQuery(originalUri.path, { includeSingleFolder: false })
+    const worstPathQuery = getPathQuery(currentUri.path, { includeSingleFolder: false })
     const worstInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, `**/${worstPathQuery}*`) : `**/${worstPathQuery}*`
 
     // TODO: Use findFiles2() when API is stable
@@ -83,23 +80,23 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     }
 
     const ignoredPaths = new Set()
-    ignoredPaths.add(originalUri.path) // Ignore current file
+    ignoredPaths.add(currentUri.path) // Ignore current file
 
     const children: RelatedFileTreeItem[] = []
 
     for (const relatedUri of bestFilesWithoutExcludes) {
       if (ignoredPaths.has(relatedUri.path)) continue
       ignoredPaths.add(relatedUri.path)
-      children.push(this.createRelatedFileTreeItem(originalUri, relatedUri, true))
+      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri, true))
     }
 
     for (const relatedUri of worstFilesWithoutExcludes) {
       if (ignoredPaths.has(relatedUri.path)) continue
       ignoredPaths.add(relatedUri.path)
-      children.push(this.createRelatedFileTreeItem(originalUri, relatedUri))
+      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri))
     }
 
-    this._cache.set(originalUri.path, children)
+    this._cache.set(currentUri.path, children)
     return children
   }
 

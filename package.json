@@ -20,8 +20,8 @@
         {
           "id": "relatedFiles",
           "name": "Related files",
-          "visibility": "visible",
-          "when": "editorIsOpen"
+          "visibility": "collapsed",
+          "icon": "$(sparkle)"
         }
       ]
     },

@@ -9,7 +9,9 @@ export async function createRelatedFilesFeature(input: {
   const { context } = input
 
   const relatedFilesTreeDataProvider = new RelatedFilesTreeDataProvider()
-	vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider)
+	context.subscriptions.push(
+    vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider)
+  )
 
   async function refresh() {
     const config = vscode.workspace.getConfiguration('streamline')
