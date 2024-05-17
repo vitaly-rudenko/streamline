@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -177,10 +177,20 @@
           "default": true,
           "description": "Use excludes in related files view"
         },
-        "streamline.tabHistory": {
-          "type": "array",
-          "default": [],
-          "description": "Tab history backup"
+        "streamline.tabHistory.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable tab history backup"
+        },
+        "streamline.tabHistory.records": {
+          "type": "object",
+          "default": {},
+          "description": "Tab history backup records"
+        },
+        "streamline.tabHistory.size": {
+          "type": "number",
+          "default": 100,
+          "description": "Tab history backup size"
         }
       }
     }
