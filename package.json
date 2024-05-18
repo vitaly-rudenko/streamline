@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -196,6 +196,11 @@
           "type": "boolean",
           "default": true,
           "description": "Use excludes in related files view"
+        },
+        "streamline.relatedFiles.exclude": {
+          "type": "object",
+          "default": {},
+          "description": "Custom exclude patterns for related files view"
         },
         "streamline.tabHistory.enabled": {
           "type": "boolean",

@@ -24,8 +24,11 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   refresh(): void {
     if (this._useExcludes) {
       const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
-      this._excludePattern = searchExcludes
-        ? `{${Object.entries(searchExcludes).filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
+      const customExcludes = vscode.workspace.getConfiguration('streamline').get<Record<string, unknown>>('relatedFiles.exclude')
+
+      const excludeEntries = Object.entries({ ...searchExcludes, ...customExcludes })
+      this._excludePattern = excludeEntries.length > 0
+        ? `{${excludeEntries.filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
         : undefined
     } else {
       this._excludePattern = undefined

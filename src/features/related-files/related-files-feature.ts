@@ -73,7 +73,8 @@ export async function createRelatedFilesFeature(input: {
     vscode.workspace.onDidChangeConfiguration(async (event) => {
       if (
         event.affectsConfiguration('streamline.useRelativePathsInRelatedFiles') ||
-        event.affectsConfiguration('streamline.useExcludesInRelatedFiles')
+        event.affectsConfiguration('streamline.useExcludesInRelatedFiles') ||
+        event.affectsConfiguration('streamline.relatedFiles')
       ) {
         await refresh()
       }
