@@ -29,12 +29,12 @@ export class TabHistoryStorage {
       }, {})
   }
 
-  put(tab: Tab) {
+  put(tab: Tab): boolean {
     const index = this.tabs.findIndex(t => t.path === tab.path)
 
     if (index !== -1) {
       this.tabs[index] = tab
-      return
+      return false
     }
 
     this.tabs.unshift(tab)
@@ -42,6 +42,8 @@ export class TabHistoryStorage {
       const oldestTabIndex = this.tabs.reduce((oldestIndex, tab, tabIndex) => tab.openedAt < this.tabs[oldestIndex].openedAt ? tabIndex : oldestIndex, 0)
       this.tabs.splice(oldestTabIndex, 1)
     }
+
+    return true
   }
 
   sort() {

@@ -73,8 +73,8 @@ export async function createTabHistoryFeature(input: {
       const uri = event?.document.uri
       if (!uri) return
 
-      tabHistoryStorage.put({ path: uri.path, openedAt: Date.now() })
-      tabHistoryTreeDataProvider.refresh()
+      const isNew = tabHistoryStorage.put({ path: uri.path, openedAt: Date.now() })
+      if (isNew) tabHistoryTreeDataProvider.refresh()
 
       scheduleBackup()
     }),

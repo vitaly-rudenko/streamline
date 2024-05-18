@@ -162,4 +162,17 @@ suite('TabHistoryStorage', () => {
     assert.deepEqual(tabHistoryStorage.list(), [])
     assert.deepEqual(tabHistoryStorage.export(100), {})
   })
+
+  test('returns true/false depending on whether the tab is new or updated', () => {
+    const tabHistoryStorage = new TabHistoryStorage(3)
+
+    assert.equal(tabHistoryStorage.put({ path: '1', openedAt: 10 }), true)
+    assert.equal(tabHistoryStorage.put({ path: '2', openedAt: 20 }), true)
+    assert.equal(tabHistoryStorage.put({ path: '3', openedAt: 30 }), true)
+    assert.equal(tabHistoryStorage.put({ path: '4', openedAt: 40 }), true)
+
+    assert.equal(tabHistoryStorage.put({ path: '1', openedAt: 50 }), true) // new, because old one was removed due to limit
+    assert.equal(tabHistoryStorage.put({ path: '3', openedAt: 60 }), false)
+    assert.equal(tabHistoryStorage.put({ path: '4', openedAt: 70 }), false)
+  })
 })
