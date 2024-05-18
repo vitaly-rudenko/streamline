@@ -49,8 +49,6 @@ export async function createTabHistoryFeature(input: {
     const records = config.get<Record<string, number>>('tabHistory.records', {})
 
     tabHistoryStorage.import(records)
-    tabHistoryStorage.sort()
-
     tabHistoryTreeDataProvider.refresh()
   }
 
