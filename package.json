@@ -39,12 +39,12 @@
       },
       {
         "command": "streamline.scope",
-        "title": "Streamline: Scope",
+        "title": "Scope",
         "icon": "$(circle-large-outline)"
       },
       {
         "command": "streamline.unscope",
-        "title": "Streamline: Unscope",
+        "title": "Unscope",
         "icon": "$(pass-filled)"
       },
       {
@@ -59,27 +59,27 @@
       },
       {
         "command": "streamline.refresh-related-files",
-        "title": "Streamline: Refresh Related Files",
+        "title": "Refresh Related Files",
         "icon": "$(refresh)"
       },
       {
         "command": "streamline.toggle-use-relative-paths-in-related-files",
-        "title": "Streamline: Toggle Use Relative Paths Related Files",
+        "title": "Toggle Use Relative Paths Related Files",
         "icon": "$(selection)"
       },
       {
         "command": "streamline.toggle-use-excludes-in-related-files",
-        "title": "Streamline: Toggle Excludes in Related Files",
+        "title": "Toggle Excludes in Related Files",
         "icon": "$(exclude)"
       },
       {
         "command": "streamline.copy-related-file-path",
-        "title": "Streamline: Copy Path of Related File",
+        "title": "Copy Path of Related File",
         "icon": "$(files)"
       },
       {
         "command": "streamline.toggle-scope-for-file",
-        "title": "Streamline: Toggle Scope for File"
+        "title": "Toggle Scope for File"
       },
       {
         "command": "streamline.suggest-scopes-for-file",
@@ -88,6 +88,16 @@
       {
         "command": "streamline.quick-open-related-files",
         "title": "Streamline: Quick Open Related Files"
+      },
+      {
+        "command": "streamline.refresh-tab-history",
+        "title": "Refresh Tab History",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "streamline.clear-tab-history",
+        "title": "Clear Tab History",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
@@ -116,6 +126,16 @@
           "command": "streamline.refresh-related-files",
           "group": "navigation@3",
           "when": "view == relatedFiles"
+        },
+        {
+          "command": "streamline.clear-tab-history",
+          "group": "navigation@1",
+          "when": "view == tabHistory"
+        },
+        {
+          "command": "streamline.refresh-tab-history",
+          "group": "navigation@2",
+          "when": "view == tabHistory"
         }
       ],
       "view/item/context": [

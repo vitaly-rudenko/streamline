@@ -53,6 +53,22 @@ export async function createTabHistoryFeature(input: {
   }
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.refresh-tab-history', () => {
+      tabHistoryStorage.sort()
+      tabHistoryTreeDataProvider.refresh()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.clear-tab-history', () => {
+      tabHistoryStorage.clear()
+      tabHistoryTreeDataProvider.refresh()
+
+      scheduleBackup()
+    })
+  )
+
+  context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(async (event) => {
       const uri = event?.document.uri
       if (!uri) return
