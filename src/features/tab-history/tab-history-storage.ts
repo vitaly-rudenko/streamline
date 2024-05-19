@@ -20,7 +20,7 @@ export class TabHistoryStorage {
   }
 
   export(backupSize: number): Record<string, number> {
-    return this.tabs
+    return [...this.tabs]
       .sort((a, b) => b.openedAt - a.openedAt)
       .slice(0, backupSize)
       .reduce<Record<string, number>>((acc, tab) => {

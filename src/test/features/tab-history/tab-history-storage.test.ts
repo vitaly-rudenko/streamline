@@ -149,6 +149,30 @@ suite('TabHistoryStorage', () => {
     )
   })
 
+  test('exports without modifying the original list', () => {
+    const tabHistoryStorage = new TabHistoryStorage(3)
+
+    tabHistoryStorage.put({ path: '1', openedAt: 10 })
+    tabHistoryStorage.put({ path: '2', openedAt: 20 })
+    tabHistoryStorage.put({ path: '3', openedAt: 30 })
+    tabHistoryStorage.put({ path: '2', openedAt: 40 })
+    tabHistoryStorage.put({ path: '1', openedAt: 50 })
+
+    assert.deepEqual(
+      tabHistoryStorage.export(3),
+      {
+        '1': 50,
+        '2': 40,
+        '3': 30,
+      }
+    )
+
+    assert.deepEqual(
+      tabHistoryStorage.list().map(tab => tab.path),
+      ['3', '2', '1']
+    )
+  })
+
   test('clears tabs', () => {
     const tabHistoryStorage = new TabHistoryStorage(3)
 
