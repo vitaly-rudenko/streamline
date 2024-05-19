@@ -6,17 +6,17 @@ export async function createHighlightedPathsFeature(input: {
 }) {
   const { context, onHighlightChanged } = input
 
-  let cachedHighlightedPathsRegExps: RegExp[] = []
+  let cachedPatternRegExps: RegExp[] = []
 
   function isHighlighted(path: string): boolean {
-    return cachedHighlightedPathsRegExps.some(regExp => regExp.test(path))
+    return cachedPatternRegExps.some(regExp => regExp.test(path))
   }
 
   async function refresh() {
     const config = vscode.workspace.getConfiguration('streamline')
-    const highlightedPaths = config.get<string[]>('highlightedPaths', [])
+    const patterns = config.get<string[]>('highlightedPaths.patterns', [])
 
-    cachedHighlightedPathsRegExps = highlightedPaths.map(highlightedPath => new RegExp(highlightedPath))
+    cachedPatternRegExps = patterns.map(pattern => new RegExp(pattern))
 
     onHighlightChanged(undefined)
   }

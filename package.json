@@ -179,7 +179,7 @@
           },
           "description": "Scopes"
         },
-        "streamline.highlightedPaths": {
+        "streamline.highlightedPaths.patterns": {
           "type": "array",
           "items": {
             "type": "string"
