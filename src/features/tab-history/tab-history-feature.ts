@@ -53,14 +53,13 @@ export async function createTabHistoryFeature(input: {
   }
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.refresh-tab-history', () => {
-      tabHistoryStorage.sort()
-      tabHistoryTreeDataProvider.refresh()
+    vscode.commands.registerCommand('streamline.tabHistory.refresh', async () => {
+      await refresh()
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.clear-tab-history', () => {
+    vscode.commands.registerCommand('streamline.tabHistory.clear', () => {
       tabHistoryStorage.clear()
       tabHistoryTreeDataProvider.refresh()
 
@@ -77,14 +76,6 @@ export async function createTabHistoryFeature(input: {
       if (isNew) tabHistoryTreeDataProvider.refresh()
 
       scheduleBackup()
-    }),
-    vscode.workspace.onDidChangeConfiguration(async (event) => {
-      if (
-        event.affectsConfiguration('streamline.tabHistory.enabled') ||
-        event.affectsConfiguration('streamline.tabHistory.size')
-      ) {
-        await refresh()
-      }
     }),
   )
 

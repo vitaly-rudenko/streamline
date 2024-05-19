@@ -33,121 +33,130 @@
     },
     "commands": [
       {
-        "command": "streamline.select-scope",
+        "command": "streamline.scopedPaths.changeCurrentScope",
         "title": "Streamline: Select Scope",
         "icon": "$(chevron-down)"
       },
       {
-        "command": "streamline.scope",
+        "command": "streamline.scopedPaths.scope",
         "title": "Scope",
         "icon": "$(circle-large-outline)"
       },
       {
-        "command": "streamline.unscope",
+        "command": "streamline.scopedPaths.unscope",
         "title": "Unscope",
         "icon": "$(pass-filled)"
       },
       {
-        "command": "streamline.clear-scope",
+        "command": "streamline.scopedPaths.clearCurrentScope",
         "title": "Streamline: Clear Current Scope",
         "icon": "$(circle-slash)"
       },
       {
-        "command": "streamline.toggle-scope",
+        "command": "streamline.scopedPaths.toggleScope",
         "title": "Streamline: Toggle Scope",
         "icon": "$(activate-breakpoints)"
       },
       {
-        "command": "streamline.refresh-related-files",
+        "command": "streamline.relatedFiles.refresh",
         "title": "Refresh Related Files",
         "icon": "$(refresh)"
       },
       {
-        "command": "streamline.toggle-use-relative-paths-in-related-files",
+        "command": "streamline.relatedFiles.toggleUseRelativePaths",
         "title": "Toggle Use Relative Paths Related Files",
         "icon": "$(selection)"
       },
       {
-        "command": "streamline.toggle-use-excludes-in-related-files",
+        "command": "streamline.relatedFiles.toggleUseExcludes",
         "title": "Toggle Excludes in Related Files",
         "icon": "$(exclude)"
       },
       {
-        "command": "streamline.copy-related-file-path",
+        "command": "streamline.relatedFiles.copyPath",
         "title": "Copy Path of Related File",
         "icon": "$(files)"
       },
       {
-        "command": "streamline.toggle-scope-for-file",
+        "command": "streamline.scopedPaths.refresh",
+        "title": "Streamline: Refresh Scoped Paths"
+      },
+      {
+        "command": "streamline.scopedPaths.toggleScopeForFile",
         "title": "Toggle Scope for File"
       },
       {
-        "command": "streamline.suggest-scopes-for-file",
+        "command": "streamline.scopedPaths.suggestScopes",
         "title": "Streamline: Suggest Scopes for File"
       },
       {
-        "command": "streamline.quick-open-related-files",
+        "command": "streamline.relatedFiles.quickOpen",
         "title": "Streamline: Quick Open Related Files"
       },
       {
-        "command": "streamline.refresh-tab-history",
+        "command": "streamline.tabHistory.refresh",
         "title": "Refresh Tab History",
         "icon": "$(refresh)"
       },
       {
-        "command": "streamline.clear-tab-history",
+        "command": "streamline.tabHistory.clear",
         "title": "Clear Tab History",
         "icon": "$(trash)"
+      },
+      {
+        "command": "streamline.highlightedPaths.refresh",
+        "title": "Streamline: Refresh Highlighted Paths",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "streamline.unscope",
+          "command": "streamline.scopedPaths.unscope",
           "group": "navigation@1",
-          "when": "view == 'workbench.explorer.fileView' && streamline.scopeEnabled"
+          "when": "view == 'workbench.explorer.fileView' && streamline.scopedPaths.enabled"
         },
         {
-          "command": "streamline.scope",
+          "command": "streamline.scopedPaths.scope",
           "group": "navigation@1",
-          "when": "view == 'workbench.explorer.fileView' && !streamline.scopeEnabled"
+          "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled"
         },
         {
-          "command": "streamline.toggle-use-excludes-in-related-files",
+          "command": "streamline.relatedFiles.toggleUseExcludes",
           "group": "navigation@1",
           "when": "view == relatedFiles"
         },
         {
-          "command": "streamline.toggle-use-relative-paths-in-related-files",
+          "command": "streamline.relatedFiles.toggleUseRelativePaths",
           "group": "navigation@2",
           "when": "view == relatedFiles"
         },
         {
-          "command": "streamline.refresh-related-files",
+          "command": "streamline.relatedFiles.refresh",
           "group": "navigation@3",
           "when": "view == relatedFiles"
         },
         {
-          "command": "streamline.clear-tab-history",
+          "command": "streamline.tabHistory.clear",
           "group": "navigation@1",
           "when": "view == tabHistory"
         },
         {
-          "command": "streamline.refresh-tab-history",
+          "command": "streamline.tabHistory.refresh",
           "group": "navigation@2",
           "when": "view == tabHistory"
         }
       ],
       "view/item/context": [
         {
-          "command": "streamline.copy-related-file-path",
+          "command": "streamline.relatedFiles.copyPath",
           "when": "view == relatedFiles && viewItem == relatedFile",
           "group": "inline"
         }
       ],
       "explorer/context": [
         {
-          "command": "streamline.toggle-scope-for-file",
+          "command": "streamline.scopedPaths.toggleScopeForFile",
           "group": "2_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
         }
@@ -156,17 +165,17 @@
     "configuration": {
       "title": "Streamline",
       "properties": {
-        "streamline.scopeEnabled": {
+        "streamline.scopedPaths.enabled": {
           "type": "boolean",
           "default": false,
           "description": "Scope enabled"
         },
-        "streamline.currentScope": {
+        "streamline.scopedPaths.currentScope": {
           "type": "string",
           "default": "default",
           "description": "Current scope"
         },
-        "streamline.scopes": {
+        "streamline.scopedPaths.scopes": {
           "type": "object",
           "additionalProperties": {
             "type": "array",

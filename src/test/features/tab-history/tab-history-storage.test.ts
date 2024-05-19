@@ -84,7 +84,7 @@ suite('TabHistoryStorage', () => {
     )
   })
 
-  test('imports tabs into non-empty storage without changing existing tabs or sorting them', () => {
+  test('imports tabs and sorts them', () => {
     const tabHistoryStorage = new TabHistoryStorage(5)
 
     tabHistoryStorage.put({ path: '1', openedAt: 50 })
@@ -104,11 +104,11 @@ suite('TabHistoryStorage', () => {
     assert.deepEqual(
       tabHistoryStorage.list(),
       [
-        { path: '3', openedAt: 40 },
-        { path: '2', openedAt: 30 },
-        { path: '1', openedAt: 50 },
         { path: '7', openedAt: 70 },
         { path: '5', openedAt: 60 },
+        { path: '1', openedAt: 50 },
+        { path: '3', openedAt: 40 },
+        { path: '2', openedAt: 30 },
       ]
     )
   })

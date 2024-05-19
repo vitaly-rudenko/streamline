@@ -16,6 +16,7 @@ export class TabHistoryStorage {
       this.tabs.push(tab)
     }
 
+    this.sort()
     this.tabs = this.tabs.slice(0, this.memorySize)
   }
 

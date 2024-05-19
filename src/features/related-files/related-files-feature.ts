@@ -24,7 +24,7 @@ export async function createRelatedFilesFeature(input: {
   }
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.quick-open-related-files', async (uri: vscode.Uri | undefined) => {
+    vscode.commands.registerCommand('streamline.relatedFiles.quickOpen', async (uri: vscode.Uri | undefined) => {
       uri ||= vscode.window.activeTextEditor?.document.uri
       if (!uri) return
 
@@ -38,41 +38,42 @@ export async function createRelatedFilesFeature(input: {
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.refresh-related-files', async () => {
+    vscode.commands.registerCommand('streamline.relatedFiles.refresh', async () => {
       await refresh()
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.toggle-use-relative-paths-in-related-files', async () => {
+    vscode.commands.registerCommand('streamline.relatedFiles.toggleUseRelativePaths', async () => {
       const config = vscode.workspace.getConfiguration('streamline')
       const useRelativePaths = config.get<boolean>('relatedFiles.useRelativePaths', true)
+
+      relatedFilesTreeDataProvider.setUseRelativePaths(!useRelativePaths)
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       await config.update('relatedFiles.useRelativePaths', !useRelativePaths)
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.toggle-use-excludes-in-related-files', async () => {
+    vscode.commands.registerCommand('streamline.relatedFiles.toggleUseExcludes', async () => {
       const config = vscode.workspace.getConfiguration('streamline')
-      const useExcludes = config.get<boolean>('useExcludes', true)
+      const useExcludes = config.get<boolean>('relatedFiles.useExcludes', true)
+
+      relatedFilesTreeDataProvider.setUseExcludes(!useExcludes)
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       await config.update('relatedFiles.useExcludes', !useExcludes)
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.copy-related-file-path', async (relatedFileTreeItem: RelatedFileTreeItem) => {
+    vscode.commands.registerCommand('streamline.relatedFiles.copyPath', async (relatedFileTreeItem: RelatedFileTreeItem) => {
       await vscode.env.clipboard.writeText(relatedFileTreeItem.label)
     })
   )
 
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration(async (event) => {
-      if (event.affectsConfiguration('streamline.relatedFiles')) {
-        await refresh()
-      }
-    }),
     vscode.window.onDidChangeActiveTextEditor(() => relatedFilesTreeDataProvider.refresh()),
     vscode.workspace.onDidCreateFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
     vscode.workspace.onDidDeleteFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
