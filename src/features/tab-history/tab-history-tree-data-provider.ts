@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { formatDistance } from 'date-fns'
-import type { Tab } from './types'
 import type { TabHistoryStorage } from './tab-history-storage'
+import { formatTabPaths } from './format-tab-paths'
 
 export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -23,12 +23,12 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     const now = new Date()
     const children: TabTreeItem[] = []
 
-    for (const tab of this.tabHistoryStorage.list()) {
-      const uri = vscode.Uri.file(tab.path)
+    const tabsWithFormattedPaths = formatTabPaths(this.tabHistoryStorage.list())
+    for (const [tab, formattedPath] of tabsWithFormattedPaths) {
       children.push(
         new TabTreeItem(
-          `${vscode.workspace.asRelativePath(uri)} – ${formatDistance(tab.openedAt, now, { addSuffix: true })}`,
-          uri
+          `${formattedPath} – ${formatDistance(tab.openedAt, now, { addSuffix: true })}`,
+          vscode.Uri.file(tab.path)
         )
       )
     }
