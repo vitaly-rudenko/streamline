@@ -79,7 +79,10 @@ export async function createTabHistoryFeature(input: {
       scheduleBackup()
     }),
     vscode.workspace.onDidChangeConfiguration(async (event) => {
-      if (event.affectsConfiguration('streamline.tabHistory')) {
+      if (
+        event.affectsConfiguration('streamline.tabHistory.enabled') ||
+        event.affectsConfiguration('streamline.tabHistory.size')
+      ) {
         await refresh()
       }
     }),
