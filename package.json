@@ -187,12 +187,12 @@
           "default": [],
           "description": "Highlighted paths"
         },
-        "streamline.useRelativePathsInRelatedFiles": {
+        "streamline.relatedFiles.useRelativePaths": {
           "type": "boolean",
           "default": true,
           "description": "Use relative paths in related files view"
         },
-        "streamline.useExcludesInRelatedFiles": {
+        "streamline.relatedFiles.useExcludes": {
           "type": "boolean",
           "default": true,
           "description": "Use excludes in related files view"

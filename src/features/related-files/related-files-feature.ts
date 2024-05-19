@@ -15,11 +15,11 @@ export async function createRelatedFilesFeature(input: {
 
   async function refresh() {
     const config = vscode.workspace.getConfiguration('streamline')
-    const useRelativePathsInRelatedFiles = config.get<boolean>('useRelativePathsInRelatedFiles', true)
-    const useExcludesInRelatedFiles = config.get<boolean>('useExcludesInRelatedFiles', true)
+    const useRelativePaths = config.get<boolean>('relatedFiles.useRelativePaths', true)
+    const useExcludes = config.get<boolean>('relatedFiles.useExcludes', true)
 
-    relatedFilesTreeDataProvider.setUseRelativePaths(useRelativePathsInRelatedFiles)
-    relatedFilesTreeDataProvider.setUseExcludes(useExcludesInRelatedFiles)
+    relatedFilesTreeDataProvider.setUseRelativePaths(useRelativePaths)
+    relatedFilesTreeDataProvider.setUseExcludes(useExcludes)
     relatedFilesTreeDataProvider.clearCacheAndRefresh()
   }
 
@@ -46,20 +46,18 @@ export async function createRelatedFilesFeature(input: {
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.toggle-use-relative-paths-in-related-files', async () => {
       const config = vscode.workspace.getConfiguration('streamline')
-      const useRelativePathsInRelatedFiles = config.get<boolean>('useRelativePathsInRelatedFiles', true)
+      const useRelativePaths = config.get<boolean>('relatedFiles.useRelativePaths', true)
 
-      await config.update('useRelativePathsInRelatedFiles', !useRelativePathsInRelatedFiles)
-      await refresh()
+      await config.update('relatedFiles.useRelativePaths', !useRelativePaths)
     })
   )
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.toggle-use-excludes-in-related-files', async () => {
       const config = vscode.workspace.getConfiguration('streamline')
-      const useExcludesInRelatedFiles = config.get<boolean>('useExcludesInRelatedFiles', true)
+      const useExcludes = config.get<boolean>('useExcludes', true)
 
-      await config.update('useExcludesInRelatedFiles', !useExcludesInRelatedFiles)
-      await refresh()
+      await config.update('relatedFiles.useExcludes', !useExcludes)
     })
   )
 
@@ -71,11 +69,7 @@ export async function createRelatedFilesFeature(input: {
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async (event) => {
-      if (
-        event.affectsConfiguration('streamline.useRelativePathsInRelatedFiles') ||
-        event.affectsConfiguration('streamline.useExcludesInRelatedFiles') ||
-        event.affectsConfiguration('streamline.relatedFiles')
-      ) {
+      if (event.affectsConfiguration('streamline.relatedFiles')) {
         await refresh()
       }
     }),
