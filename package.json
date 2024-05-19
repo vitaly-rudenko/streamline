@@ -214,7 +214,7 @@
         },
         "streamline.tabHistory.size": {
           "type": "number",
-          "default": 100,
+          "default": 25,
           "description": "Tab history backup size"
         }
       }

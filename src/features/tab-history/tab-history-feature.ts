@@ -7,7 +7,7 @@ export async function createTabHistoryFeature(input: {
 }) {
   const { context } = input
 
-  const tabHistoryStorage = new TabHistoryStorage(1_000)
+  const tabHistoryStorage = new TabHistoryStorage(100)
   const tabHistoryTreeDataProvider = new TabHistoryTreeDataProvider(tabHistoryStorage)
   const tabHistoryTreeView = vscode.window.createTreeView('tabHistory', { treeDataProvider: tabHistoryTreeDataProvider })
 
