@@ -4,6 +4,7 @@ import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-f
 import { createRelatedFilesFeature } from './features/related-files/related-files-feature'
 import { uriToPath } from './utils/uri'
 import { createTabHistoryFeature } from './features/tab-history/tab-history-feature'
+import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 
 export async function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
@@ -25,7 +26,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	})
 
-	const tabHistoryFeature = await createTabHistoryFeature({
+	await createTabHistoryFeature({
+		context,
+	})
+
+	await createBookmarksFeature({
 		context,
 	})
 

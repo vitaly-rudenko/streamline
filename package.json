@@ -107,6 +107,16 @@
         "command": "streamline.highlightedPaths.refresh",
         "title": "Streamline: Refresh Highlighted Paths",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "streamline.bookmarks.add",
+        "title": "Bookmark this",
+        "icon": "$(bookmark)"
+      },
+      {
+        "command": "streamline.bookmarks.add-to-list",
+        "title": "Bookmark this to list...",
+        "icon": "$(bookmark)"
       }
     ],
     "menus": {
@@ -159,6 +169,24 @@
           "command": "streamline.scopedPaths.toggleScopeForFile",
           "group": "2_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
+        },
+        {
+          "command": "streamline.bookmarks.add",
+          "group": "2_workspace@2"
+        },
+        {
+          "command": "streamline.bookmarks.add-to-list",
+          "group": "2_workspace@3"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "streamline.bookmarks.add",
+          "group": "1_context@1"
+        },
+        {
+          "command": "streamline.bookmarks.add-to-list",
+          "group": "1_context@2"
         }
       ]
     },
