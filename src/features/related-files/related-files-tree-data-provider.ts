@@ -56,6 +56,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     const cache = this._cache.get(currentUri.path)
     if (cache) return cache
 
+    const currentBasename = getBasename(currentUri.path)
     const workspaceFolder = isMultiRootWorkspace() ? vscode.workspace.getWorkspaceFolder(currentUri) : undefined
 
     const bestPathQuery = getPathQuery(currentUri.path, { includeSingleFolder: true })
@@ -91,13 +92,13 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     for (const relatedUri of bestFilesWithoutExcludes) {
       if (ignoredPaths.has(relatedUri.path)) continue
       ignoredPaths.add(relatedUri.path)
-      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri, true))
+      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri, getBasename(relatedUri.path) === currentBasename))
     }
 
     for (const relatedUri of worstFilesWithoutExcludes) {
       if (ignoredPaths.has(relatedUri.path)) continue
       ignoredPaths.add(relatedUri.path)
-      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri))
+      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri, getBasename(relatedUri.path) === currentBasename))
     }
 
     this._cache.set(currentUri.path, children)
