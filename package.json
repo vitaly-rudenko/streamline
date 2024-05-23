@@ -264,6 +264,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test",
+    "dev": "rimraf ./out && nodemon -x 'npm run compile'",
     "deploy": "rimraf ./out && npm run test && vsce package && vsce publish"
   },
   "devDependencies": {
@@ -275,6 +276,7 @@
     "@vscode/test-cli": "^0.0.8",
     "@vscode/test-electron": "^2.3.9",
     "eslint": "^8.57.0",
+    "nodemon": "^3.1.0",
     "rimraf": "^5.0.5",
     "typescript": "^5.4.5"
   },
