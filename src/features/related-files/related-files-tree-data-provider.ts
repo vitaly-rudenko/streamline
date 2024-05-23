@@ -2,7 +2,8 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { LRUCache } from 'lru-cache'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
-import { getPathQuery } from './get-path-query'
+import { getBasename } from './get-basename'
+import { getRelatedFilesQueries } from './get-related-files-queries'
 
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem> {
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -59,46 +60,51 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     const currentBasename = getBasename(currentUri.path)
     const workspaceFolder = isMultiRootWorkspace() ? vscode.workspace.getWorkspaceFolder(currentUri) : undefined
 
-    const bestPathQuery = getPathQuery(currentUri.path, { includeSingleFolder: true })
-    const bestInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, `**/${bestPathQuery}*`) : `**/${bestPathQuery}*`
-
-    const worstPathQuery = getPathQuery(currentUri.path, { includeSingleFolder: false })
-    const worstInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, `**/${worstPathQuery}*`) : `**/${worstPathQuery}*`
+    const relatedFilesQueries = getRelatedFilesQueries(currentUri.path)
+    const bestInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, relatedFilesQueries.best) : relatedFilesQueries.best
+    const worstInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, relatedFilesQueries.worst) : relatedFilesQueries.worst
 
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
     // TODO: Exclude files from search.exclude and files.exclude configurations
-    const [
-      bestFilesWithoutExcludes,
-      worstFilesWithoutExcludes,
-    ] = (await Promise.all([
-      vscode.workspace.findFiles(bestInclude, this._excludePattern, 10),
-      vscode.workspace.findFiles(worstInclude, this._excludePattern, 10),
-    ]))
+    const [bestMatchedUris, worstMatchedUris] = (
+      await Promise.all([
+        vscode.workspace.findFiles(bestInclude, this._excludePattern, 10),
+        vscode.workspace.findFiles(worstInclude, this._excludePattern, 10),
+      ])
+    ).map(uris => {
+      // Sort files by name to stabilize list order
+      uris.sort((a, b) => a.path.localeCompare(b.path))
 
-    // Show "closest" files first
-    if (this._useRelativePaths) {
-      [
-        bestFilesWithoutExcludes,
-        worstFilesWithoutExcludes,
-      ].map(uris => uris.sort((a, b) => a.path.split('/').length - b.path.split('/').length))
-    }
+      // Sort files by distances
+      if (this._useRelativePaths) uris.sort((a, b) => a.path.split('/').length - b.path.split('/').length)
 
-    const ignoredPaths = new Set()
-    ignoredPaths.add(currentUri.path) // Ignore current file
+      // Sort files by basename equality
+      uris.sort((a, b) => {
+        const basenameA = getBasename(a.path)
+        const basenameB = getBasename(b.path)
+
+        if (basenameA === currentBasename && basenameB === currentBasename) return 0
+        if (basenameA !== currentBasename && basenameB !== currentBasename) return 0
+        return basenameA === currentBasename ? -1 : 1
+      })
+
+      return uris
+    })
 
     const children: RelatedFileTreeItem[] = []
+    const ignoredPaths = new Set([currentUri.path])
 
-    for (const relatedUri of bestFilesWithoutExcludes) {
+    for (const relatedUri of bestMatchedUris) {
       if (ignoredPaths.has(relatedUri.path)) continue
       ignoredPaths.add(relatedUri.path)
       children.push(this.createRelatedFileTreeItem(currentUri, relatedUri, getBasename(relatedUri.path) === currentBasename))
     }
 
-    for (const relatedUri of worstFilesWithoutExcludes) {
+    for (const relatedUri of worstMatchedUris) {
       if (ignoredPaths.has(relatedUri.path)) continue
       ignoredPaths.add(relatedUri.path)
-      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri, getBasename(relatedUri.path) === currentBasename))
+      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri))
     }
 
     this._cache.set(currentUri.path, children)
