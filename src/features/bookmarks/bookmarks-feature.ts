@@ -35,10 +35,12 @@ export async function createBookmarksFeature(input: {
     vscode.commands.registerCommand('streamline.bookmarks.add', async (_: never, selectedUris: vscode.Uri[] | undefined) => {
       if (selectedUris && selectedUris.length > 0) {
         for (const uri of selectedUris) {
+          if ((await vscode.workspace.fs.stat(uri)).type !== vscode.FileType.File) continue
+
           bookmarks.push({
             type: 'File',
             path: uri.path,
-            preview: uri.path.split('/').at(-1)!,
+            preview: uri.path.split('/').slice(-2).join('/'),
           })
         }
 
