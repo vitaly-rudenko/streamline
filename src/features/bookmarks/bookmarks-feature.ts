@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { BookmarksTreeDataProvider } from './bookmarks-tree-data-provider'
 
 type Position = {
   line: number
@@ -10,25 +11,11 @@ type Range = {
   end: Position
 }
 
-type Bookmark = {
-  type: 'Path'
+export type Bookmark = {
+  type: 'File'
+  preview: string
   path: string
-  preview: string
-} | {
-  type: 'Line'
-  path: string
-  line: number
-  preview: string
-} | {
-  type: 'Selection'
-  path: string
-  range: Range
-  preview: string
-} | {
-  type: 'Symbol'
-  kind: vscode.SymbolKind
-  range: Range
-  preview: string
+  range?: Range
 }
 
 export async function createBookmarksFeature(input: {
@@ -37,6 +24,10 @@ export async function createBookmarksFeature(input: {
   const { context } = input
 
   const bookmarks: Bookmark[] = []
+  const bookmarksTreeDataProvider = new BookmarksTreeDataProvider()
+	context.subscriptions.push(
+    vscode.window.registerTreeDataProvider('bookmarks', bookmarksTreeDataProvider)
+  )
 
   async function refresh() {}
 
@@ -45,12 +36,14 @@ export async function createBookmarksFeature(input: {
       if (selectedUris && selectedUris.length > 0) {
         for (const uri of selectedUris) {
           bookmarks.push({
-            type: 'Path',
+            type: 'File',
             path: uri.path,
             preview: uri.path.split('/').at(-1)!,
           })
         }
 
+        bookmarksTreeDataProvider.setBookmarks(bookmarks)
+        bookmarksTreeDataProvider.refresh()
         return
       }
 
@@ -58,28 +51,24 @@ export async function createBookmarksFeature(input: {
       if (!activeTextEditor) return
 
       for (const selection of activeTextEditor.selections) {
-        bookmarks.push(
-          selection.isEmpty ? {
-            type: 'Line',
-            path: activeTextEditor.document.uri.path,
-            line: activeTextEditor.selection.start.line,
-            preview: activeTextEditor.document.getText(activeTextEditor.document.lineAt(selection.start.line).range),
-          } : {
-            type: 'Selection',
-            path: activeTextEditor.document.uri.path,
-            range: selection,
-            preview: activeTextEditor.document.getText(selection),
-          }
-        )
+        bookmarks.push({
+          type: 'File',
+          path: activeTextEditor.document.uri.path,
+          range: selection,
+          preview: selection.isEmpty
+            ? activeTextEditor.document.getText(activeTextEditor.document.lineAt(selection.start.line).range).trim()
+            : activeTextEditor.document.getText(selection).trim(),
+        })
       }
+
+      bookmarksTreeDataProvider.setBookmarks(bookmarks)
+      bookmarksTreeDataProvider.refresh()
     })
   )
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.add-to-list', async (_: never, selectedUris: vscode.Uri[] | undefined) => {
-      const list = await vscode.window.showQuickPick(['default', 'list 1', 'list 2'], { canPickMany: true, title: 'Select list to add bookmark to' })
-
-      await vscode.commands.executeCommand('streamline.bookmarks.add', _, selectedUris)
+      const list = await vscode.window.showQuickPick(['default', 'list 1', 'list 2'], { title: 'Select list to add bookmark to' })
     })
   )
 
