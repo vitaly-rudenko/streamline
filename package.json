@@ -28,6 +28,12 @@
           "name": "Related files",
           "visibility": "collapsed",
           "icon": "$(sparkle)"
+        },
+        {
+          "id": "bookmarks",
+          "name": "Bookmarks",
+          "visibility": "collapsed",
+          "icon": "$(bookmark)"
         }
       ]
     },
@@ -259,13 +265,13 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "rimraf ./out && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test",
-    "dev": "rimraf ./out && nodemon -x 'npm run compile'",
-    "deploy": "rimraf ./out && npm run test && vsce package && vsce publish"
+    "dev": " nodemon -x 'npm run compile'",
+    "deploy": "npm run compile && npm run test && vsce package && vsce publish"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
