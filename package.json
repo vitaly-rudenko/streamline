@@ -116,13 +116,23 @@
       },
       {
         "command": "streamline.bookmarks.add",
-        "title": "Bookmark this",
+        "title": "Bookmark Selected",
         "icon": "$(bookmark)"
       },
       {
-        "command": "streamline.bookmarks.add-to-list",
-        "title": "Bookmark this to list...",
+        "command": "streamline.bookmarks.addToList",
+        "title": "Bookmark Selected to List...",
         "icon": "$(bookmark)"
+      },
+      {
+        "command": "streamline.bookmarks.revealInExplorer",
+        "title": "Reveal in Explorer",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.bookmarks.delete",
+        "title": "Delete bookmark",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
@@ -168,6 +178,16 @@
           "command": "streamline.relatedFiles.copyPath",
           "when": "view == relatedFiles && viewItem == relatedFile",
           "group": "inline"
+        },
+        {
+          "command": "streamline.bookmarks.revealInExplorer",
+          "when": "view == bookmarks && (viewItem == file || viewItem == folder)",
+          "group": "inline@1"
+        },
+        {
+          "command": "streamline.bookmarks.delete",
+          "when": "view == bookmarks",
+          "group": "inline@2"
         }
       ],
       "explorer/context": [
@@ -181,7 +201,7 @@
           "group": "2_workspace@2"
         },
         {
-          "command": "streamline.bookmarks.add-to-list",
+          "command": "streamline.bookmarks.addToList",
           "group": "2_workspace@3"
         }
       ],
@@ -191,7 +211,7 @@
           "group": "1_context@1"
         },
         {
-          "command": "streamline.bookmarks.add-to-list",
+          "command": "streamline.bookmarks.addToList",
           "group": "1_context@2"
         }
       ]

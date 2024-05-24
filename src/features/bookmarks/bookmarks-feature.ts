@@ -1,21 +1,17 @@
 import * as vscode from 'vscode'
-import { BookmarksTreeDataProvider } from './bookmarks-tree-data-provider'
-
-type Position = {
-  line: number
-  character: number
-}
-
-type Range = {
-  start: Position
-  end: Position
-}
+import { BookmarksTreeDataProvider, type FileTreeItem, type FolderTreeItem, type SelectionTreeItem } from './bookmarks-tree-data-provider'
 
 export type Bookmark = {
+  type: 'Folder'
+  uri: vscode.Uri
+} | {
   type: 'File'
+  uri: vscode.Uri
+} | {
+  type: 'Selection'
+  uri: vscode.Uri
+  selection: vscode.Selection
   preview: string
-  path: string
-  range?: Range
 }
 
 export async function createBookmarksFeature(input: {
@@ -23,7 +19,7 @@ export async function createBookmarksFeature(input: {
 }) {
   const { context } = input
 
-  const bookmarks: Bookmark[] = []
+  let bookmarks: Bookmark[] = []
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider()
 	context.subscriptions.push(
     vscode.window.registerTreeDataProvider('bookmarks', bookmarksTreeDataProvider)
@@ -35,13 +31,19 @@ export async function createBookmarksFeature(input: {
     vscode.commands.registerCommand('streamline.bookmarks.add', async (_: never, selectedUris: vscode.Uri[] | undefined) => {
       if (selectedUris && selectedUris.length > 0) {
         for (const uri of selectedUris) {
-          if ((await vscode.workspace.fs.stat(uri)).type !== vscode.FileType.File) continue
+          const fileType = (await vscode.workspace.fs.stat(uri)).type
 
-          bookmarks.push({
-            type: 'File',
-            path: uri.path,
-            preview: uri.path.split('/').slice(-2).join('/'),
-          })
+          if (fileType === vscode.FileType.File || fileType === vscode.FileType.SymbolicLink) {
+            bookmarks.push({
+              type: 'File',
+              uri,
+            })
+          } else if (fileType === vscode.FileType.Directory) {
+            bookmarks.push({
+              type: 'Folder',
+              uri,
+            })
+          }
         }
 
         bookmarksTreeDataProvider.setBookmarks(bookmarks)
@@ -54,12 +56,14 @@ export async function createBookmarksFeature(input: {
 
       for (const selection of activeTextEditor.selections) {
         bookmarks.push({
-          type: 'File',
-          path: activeTextEditor.document.uri.path,
-          range: selection,
-          preview: selection.isEmpty
-            ? activeTextEditor.document.getText(activeTextEditor.document.lineAt(selection.start.line).range).trim()
-            : activeTextEditor.document.getText(selection).trim(),
+          type: 'Selection',
+          uri: activeTextEditor.document.uri,
+          selection,
+          preview: (
+            selection.isEmpty
+              ? activeTextEditor.document.getText(activeTextEditor.document.lineAt(selection.start.line).range).trim()
+              : activeTextEditor.document.getText(selection).trim()
+          ).slice(0, 256),
         })
       }
 
@@ -69,8 +73,22 @@ export async function createBookmarksFeature(input: {
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.add-to-list', async (_: never, selectedUris: vscode.Uri[] | undefined) => {
+    vscode.commands.registerCommand('streamline.bookmarks.addToList', async (_: never, selectedUris: vscode.Uri[] | undefined) => {
       const list = await vscode.window.showQuickPick(['default', 'list 1', 'list 2'], { title: 'Select list to add bookmark to' })
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.revealInExplorer', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
+      await vscode.commands.executeCommand('revealInExplorer', item.uri)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.delete', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
+      bookmarks = bookmarks.filter(bookmark => bookmark.uri.path !== item.uri.path)
+      bookmarksTreeDataProvider.setBookmarks(bookmarks)
+      bookmarksTreeDataProvider.refresh()
     })
   )
 
