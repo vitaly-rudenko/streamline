@@ -32,7 +32,7 @@ export async function createScopedPathsFeature(input: {
     return cachedParentScopedPaths.has(path)
   }
 
-  async function toggleScopeForFile(path: string) {
+  async function toggleScopeForSelected(path: string) {
     const config = vscode.workspace.getConfiguration('streamline')
     const scopes = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
     const currentScope = config.get<string>('scopedPaths.currentScope', 'default')
@@ -124,19 +124,20 @@ export async function createScopedPathsFeature(input: {
       const suggestedPath = await vscode.window.showQuickPick(suggestedPaths, { title: 'Select path to include into the scope' })
       if (!suggestedPath) return
 
-      await toggleScopeForFile(suggestedPath)
+      await toggleScopeForSelected(suggestedPath)
     })
   )
 
+  // TODO: allow adding multiple selected files/folders to scope at once (in explorer)
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.toggleScopeForFile', async (file: vscode.Uri | undefined) => {
+		vscode.commands.registerCommand('streamline.scopedPaths.toggleScopeForSelected', async (file: vscode.Uri | undefined) => {
       file ||= vscode.window.activeTextEditor?.document.uri
       if (!file) return
 
 			const path = uriToPath(file)
       if (!path) return
 
-      await toggleScopeForFile(path)
+      await toggleScopeForSelected(path)
 		})
 	)
 

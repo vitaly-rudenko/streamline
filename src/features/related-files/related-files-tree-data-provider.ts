@@ -83,10 +83,9 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       uris.sort((a, b) => {
         const basenameA = getBasename(a.path)
         const basenameB = getBasename(b.path)
-
-        if (basenameA === currentBasename && basenameB === currentBasename) return 0
-        if (basenameA !== currentBasename && basenameB !== currentBasename) return 0
-        return basenameA === currentBasename ? -1 : 1
+        if (basenameA === currentBasename && basenameB !== currentBasename) return -1
+        if (basenameA !== currentBasename && basenameB === currentBasename) return 1
+        return 0
       })
 
       return uris
