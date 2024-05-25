@@ -3,9 +3,6 @@ import type { Bookmark } from './bookmarks-feature'
 import { formatPaths } from './format-paths'
 import { unique } from '../../utils/unique'
 
-// TODO: group by file, group by folder
-// TODO: what to do with outdated bookmarks?
-// TODO: bookmark labels
 export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem> {
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
@@ -13,6 +10,11 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTr
   private _bookmarks: Bookmark[] = []
   setBookmarks(bookmarks: Bookmark[]) {
     this._bookmarks = bookmarks
+  }
+
+  private _currentList: string = 'default'
+  setCurrentList(currentList: string) {
+    this._currentList = currentList
   }
 
   refresh(): void {
@@ -27,12 +29,14 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTr
     if (element === undefined) {
       return unique(this._bookmarks.map(bookmark => bookmark.list))
         .sort()
-        .map(list => new ListTreeItem(list))
+        .map(list => new ListTreeItem(list, this._currentList === list))
     }
 
+    const listBookmarks = this._bookmarks.filter(bookmark => bookmark.list === element.list)
+
     if (element instanceof FileTreeItem) {
-      const bookmarks = this._bookmarks.filter(
-        (bookmark): bookmark is Extract<Bookmark, { type: 'Selection' }> => bookmark.type === 'Selection' && bookmark.uri.path === element.uri.path
+      const bookmarks = listBookmarks.filter(
+        (bookmark): bookmark is Extract<Bookmark, { type: 'selection' }> => bookmark.type === 'selection' && bookmark.uri.path === element.uri.path
       )
 
       return bookmarks
@@ -41,27 +45,26 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTr
           bookmark.selection.isSingleLine
             ? `${bookmark.selection.start.line + 1}: ${bookmark.preview}`
             : `${bookmark.selection.start.line + 1}-${bookmark.selection.end.line + 1}: ${bookmark.preview}`,
+          bookmark.list,
           bookmark.uri,
           bookmark.selection,
         ))
     }
 
-    const nestedBookmarks = element
-      ? element instanceof ListTreeItem
-        ? this._bookmarks.filter(bookmark => bookmark.list === element.list)
-        : this._bookmarks.filter(bookmark => bookmark.uri.path.startsWith(element.uri.path + '/'))
-      : [...this._bookmarks]
+    const nestedBookmarks = element instanceof FolderTreeItem || element instanceof FileTreeItem
+      ? listBookmarks.filter(bookmark => bookmark.uri.path.startsWith(element.uri.path + '/'))
+      : [...listBookmarks]
 
     const bookmarks = nestedBookmarks.filter(bookmark => nestedBookmarks.every(b => !bookmark.uri.path.startsWith(b.uri.path + '/')))
 
     const folderUris = bookmarks
-      .filter(bookmark => bookmark.type === 'Folder')
+      .filter(bookmark => bookmark.type === 'folder')
       .map(bookmark => bookmark.uri)
       // Sort by filename
       .sort((a, b) => a.path.split('/').at(-1)!.localeCompare(b.path.split('/').at(-1)!))
 
     const fileUris = bookmarks
-      .filter(bookmark => bookmark.type === 'File' || bookmark.type === 'Selection')
+      .filter(bookmark => bookmark.type === 'file' || bookmark.type === 'selection')
       .map(bookmark => bookmark.uri)
       // Sort by filename
       .sort((a, b) => a.path.split('/').at(-1)!.localeCompare(b.path.split('/').at(-1)!))
@@ -78,14 +81,16 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTr
       ignoredPaths.add(uri.path)
 
       const isFolder = folderUris.includes(uri)
+      const isRealFile = listBookmarks.some(bookmark => bookmark.type === 'file' && bookmark.uri.path === uri.path)
       const hasChildren = isFolder
-        ? this._bookmarks.some(bookmark => bookmark.uri.path.startsWith(uri.path + '/'))
-        : this._bookmarks.some(bookmark => bookmark.type === 'Selection' && bookmark.uri.path === uri.path)
+        ? listBookmarks.some(bookmark => bookmark.uri.path.startsWith(uri.path + '/'))
+        : listBookmarks.some(bookmark => bookmark.type === 'selection' && bookmark.uri.path === uri.path)
 
+      const label = formattedPaths.get(uri.path)!
       children.push(
         isFolder
-          ? new FolderTreeItem(formattedPaths.get(uri.path)!, uri, hasChildren)
-          : new FileTreeItem(formattedPaths.get(uri.path)!, uri, hasChildren)
+          ? new FolderTreeItem(label, element.list, uri, hasChildren)
+          : new FileTreeItem(isRealFile ? label : `[${label}]`, element.list, uri, hasChildren)
       )
     }
 
@@ -94,16 +99,16 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTr
 }
 
 export class ListTreeItem extends vscode.TreeItem {
-  constructor(public readonly list: string) {
+  constructor(public readonly list: string, isCurrentList: boolean) {
     super(list, vscode.TreeItemCollapsibleState.Expanded)
 
-    this.iconPath = vscode.ThemeIcon.Folder
+    this.iconPath = isCurrentList ? new vscode.ThemeIcon('folder-active') : new vscode.ThemeIcon('folder')
     this.contextValue = 'list'
   }
 }
 
 export class FolderTreeItem extends vscode.TreeItem {
-  constructor(public readonly label: string, public readonly uri: vscode.Uri, hasChildren: boolean) {
+  constructor(public readonly label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean) {
     super(label, hasChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)
 
     this.iconPath = vscode.ThemeIcon.Folder
@@ -113,7 +118,7 @@ export class FolderTreeItem extends vscode.TreeItem {
 }
 
 export class FileTreeItem extends vscode.TreeItem {
-  constructor(public readonly label: string, public readonly uri: vscode.Uri, hasChildren: boolean) {
+  constructor(public readonly label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean) {
     super(label, hasChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)
 
     this.iconPath = vscode.ThemeIcon.File
@@ -128,7 +133,7 @@ export class FileTreeItem extends vscode.TreeItem {
 }
 
 export class SelectionTreeItem extends vscode.TreeItem {
-  constructor(public readonly label: string, public readonly uri: vscode.Uri, selection: vscode.Selection) {
+  constructor(public readonly label: string, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection) {
     super(label, vscode.TreeItemCollapsibleState.None)
 
     this.contextValue = 'selection'

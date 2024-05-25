@@ -120,6 +120,11 @@
         "command": "streamline.bookmarks.delete",
         "title": "Delete bookmark",
         "icon": "$(trash)"
+      },
+      {
+        "command": "streamline.bookmarks.changeCurrentList",
+        "title": "Change Current List",
+        "icon": "$(issue-closed)"
       }
     ],
     "menus": {
@@ -169,6 +174,11 @@
         {
           "command": "streamline.bookmarks.revealInExplorer",
           "when": "view == bookmarks && (viewItem == file || viewItem == folder)",
+          "group": "inline@1"
+        },
+        {
+          "command": "streamline.bookmarks.changeCurrentList",
+          "when": "view == bookmarks && viewItem == list",
           "group": "inline@1"
         },
         {

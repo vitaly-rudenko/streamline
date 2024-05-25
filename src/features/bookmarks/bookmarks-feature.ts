@@ -1,14 +1,15 @@
 import * as vscode from 'vscode'
-import { BookmarksTreeDataProvider, ListTreeItem, type FileTreeItem, type FolderTreeItem, type SelectionTreeItem } from './bookmarks-tree-data-provider'
+import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, type SelectionTreeItem } from './bookmarks-tree-data-provider'
+import { unique } from '../../utils/unique'
 
 export type Bookmark = {
   uri: vscode.Uri
   list: string
 } & (
-  { type: 'Folder' } |
-  { type: 'File' } |
+  { type: 'folder' } |
+  { type: 'file' } |
   {
-    type: 'Selection'
+    type: 'selection'
     selection: vscode.Selection
     preview: string
   }
@@ -20,6 +21,8 @@ export async function createBookmarksFeature(input: {
   const { context } = input
 
   let bookmarks: Bookmark[] = []
+  let currentList = 'default'
+
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider()
 	context.subscriptions.push(
     vscode.window.registerTreeDataProvider('bookmarks', bookmarksTreeDataProvider)
@@ -29,7 +32,7 @@ export async function createBookmarksFeature(input: {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.add', async (_: never, selectedUris: vscode.Uri[] | undefined, list?: string | undefined) => {
-      list ||= 'default'
+      list ||= currentList
 
       if (selectedUris && selectedUris.length > 0) {
         for (const uri of selectedUris) {
@@ -37,13 +40,13 @@ export async function createBookmarksFeature(input: {
 
           if (fileType === vscode.FileType.File || fileType === vscode.FileType.SymbolicLink) {
             bookmarks.push({
-              type: 'File',
+              type: 'file',
               uri,
               list,
             })
           } else if (fileType === vscode.FileType.Directory) {
             bookmarks.push({
-              type: 'Folder',
+              type: 'folder',
               uri,
               list,
             })
@@ -60,7 +63,7 @@ export async function createBookmarksFeature(input: {
 
       for (const selection of activeTextEditor.selections) {
         bookmarks.push({
-          type: 'Selection',
+          type: 'selection',
           uri: activeTextEditor.document.uri,
           list,
           selection,
@@ -79,9 +82,52 @@ export async function createBookmarksFeature(input: {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.addToList', async (_: never, selectedUris: vscode.Uri[] | undefined) => {
-      const list = await vscode.window.showQuickPick(['default', 'list 1', 'list 2'], { title: 'Select list to add bookmark to' })
+      const lists = unique([
+        ...bookmarks.map(bookmark => bookmark.list).sort(),
+        'default'
+      ])
+
+      let list = await vscode.window.showQuickPick(
+        [...lists, '+ Add new list'],
+        { title: 'Select a scope' }
+      )
+      if (!list) return
+
+      if (list === '+ Add new list') {
+        list = await vscode.window.showInputBox({ prompt: 'Enter the name of new list' })
+        if (!list) return
+      }
 
       await vscode.commands.executeCommand('streamline.bookmarks.add', _, selectedUris, list)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.changeCurrentList', async (item?: ListTreeItem) => {
+      if (item) {
+        currentList = item.list
+      } else {
+        const lists = unique([
+          ...bookmarks.map(bookmark => bookmark.list).sort(),
+          'default'
+        ])
+
+        let list = await vscode.window.showQuickPick(
+          [...lists, '+ Add new list'],
+          { title: 'Select a scope' }
+        )
+        if (!list) return
+
+        if (list === '+ Add new list') {
+          list = await vscode.window.showInputBox({ prompt: 'Enter the name of new list' })
+          if (!list) return
+        }
+
+        currentList = list
+      }
+
+      bookmarksTreeDataProvider.setCurrentList(currentList)
+      bookmarksTreeDataProvider.refresh()
     })
   )
 
@@ -94,9 +140,14 @@ export async function createBookmarksFeature(input: {
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.delete', async (item: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
       if (item instanceof ListTreeItem) {
-        bookmarks = bookmarks.filter(bookmark => bookmark.list !== item.list)
+        // TODO: confirm deleting
+        bookmarks = bookmarks.filter(bookmark => !(bookmark.list === item.list))
+      } else if (item instanceof FolderTreeItem) {
+        bookmarks = bookmarks.filter(bookmark => !(bookmark.type === 'folder' && bookmark.uri.path === item.uri.path))
+      } else if (item instanceof FileTreeItem) {
+        bookmarks = bookmarks.filter(bookmark => !(bookmark.type === 'file' && bookmark.uri.path === item.uri.path))
       } else {
-        bookmarks = bookmarks.filter(bookmark => bookmark.uri.path !== item.uri.path)
+        bookmarks = bookmarks.filter(bookmark => !(bookmark.type === 'selection' && bookmark.uri.path === item.uri.path && bookmark.selection.isEqual(item.selection)))
       }
 
       bookmarksTreeDataProvider.setBookmarks(bookmarks)
