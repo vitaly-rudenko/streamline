@@ -6,7 +6,7 @@ import { unique } from '../../utils/unique'
 // TODO: group by file, group by folder
 // TODO: what to do with outdated bookmarks?
 // TODO: bookmark labels
-export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<FolderTreeItem | FileTreeItem | SelectionTreeItem> {
+export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem> {
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
@@ -23,7 +23,13 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<Folder
     return element
   }
 
-  async getChildren(element?: FolderTreeItem | FileTreeItem | SelectionTreeItem): Promise<(FolderTreeItem | FileTreeItem | SelectionTreeItem)[] | undefined> {
+  async getChildren(element?: ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem): Promise<(ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem)[] | undefined> {
+    if (element === undefined) {
+      return unique(this._bookmarks.map(bookmark => bookmark.list))
+        .sort()
+        .map(list => new ListTreeItem(list))
+    }
+
     if (element instanceof FileTreeItem) {
       const bookmarks = this._bookmarks.filter(
         (bookmark): bookmark is Extract<Bookmark, { type: 'Selection' }> => bookmark.type === 'Selection' && bookmark.uri.path === element.uri.path
@@ -41,7 +47,9 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<Folder
     }
 
     const nestedBookmarks = element
-      ? this._bookmarks.filter(bookmark => bookmark.uri.path.startsWith(element.uri.path + '/'))
+      ? element instanceof ListTreeItem
+        ? this._bookmarks.filter(bookmark => bookmark.list === element.list)
+        : this._bookmarks.filter(bookmark => bookmark.uri.path.startsWith(element.uri.path + '/'))
       : [...this._bookmarks]
 
     const bookmarks = nestedBookmarks.filter(bookmark => nestedBookmarks.every(b => !bookmark.uri.path.startsWith(b.uri.path + '/')))
@@ -82,6 +90,15 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<Folder
     }
 
     return children
+  }
+}
+
+export class ListTreeItem extends vscode.TreeItem {
+  constructor(public readonly list: string) {
+    super(list, vscode.TreeItemCollapsibleState.Expanded)
+
+    this.iconPath = vscode.ThemeIcon.Folder
+    this.contextValue = 'list'
   }
 }
 
