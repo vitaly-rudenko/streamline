@@ -32,7 +32,7 @@ export async function createScopedPathsFeature(input: {
     return cachedParentScopedPaths.has(path)
   }
 
-  async function toggleScopeForSelected(path: string) {
+  async function addToCurrentScope(path: string) {
     const config = vscode.workspace.getConfiguration('streamline')
     const scopes = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
     const currentScope = config.get<string>('scopedPaths.currentScope', 'default')
@@ -108,36 +108,16 @@ export async function createScopedPathsFeature(input: {
 		})
 	)
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.scopedPaths.suggestScopes', async (file: vscode.Uri | undefined) => {
-      file ||= vscode.window.activeTextEditor?.document.uri
-      if (!file) return
-
-      const path = uriToPath(file)
-      if (!path) return
-
-      const parents = getParents(path)
-
-      const suggestedPaths = [...parents, path].filter(Boolean).sort((a, b) => b.length - a.length)
-      if (suggestedPaths.length === 0) return
-
-      const suggestedPath = await vscode.window.showQuickPick(suggestedPaths, { title: 'Select path to include into the scope' })
-      if (!suggestedPath) return
-
-      await toggleScopeForSelected(suggestedPath)
-    })
-  )
-
   // TODO: allow adding multiple selected files/folders to scope at once (in explorer)
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.toggleScopeForSelected', async (file: vscode.Uri | undefined) => {
+		vscode.commands.registerCommand('streamline.scopedPaths.addToCurrentScope', async (file: vscode.Uri | undefined) => {
       file ||= vscode.window.activeTextEditor?.document.uri
       if (!file) return
 
 			const path = uriToPath(file)
       if (!path) return
 
-      await toggleScopeForSelected(path)
+      await addToCurrentScope(path)
 		})
 	)
 
@@ -171,12 +151,6 @@ export async function createScopedPathsFeature(input: {
       const currentScope = config.get<string>('scopedPaths.currentScope', 'default')
 
       await config.update('scopedPaths.scopes', { ...scopes, [currentScope]: [] })
-      await refresh()
-    })
-  )
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.scopedPaths.refresh', async () => {
       await refresh()
     })
   )

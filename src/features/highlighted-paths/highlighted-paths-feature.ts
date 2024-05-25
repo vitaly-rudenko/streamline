@@ -22,12 +22,6 @@ export async function createHighlightedPathsFeature(input: {
   }
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.highlightedPaths.refresh', async () => {
-      await refresh()
-    })
-  )
-
-  context.subscriptions.push(
     vscode.workspace.onDidCreateFiles((event) => onHighlightChanged(event.files.map(uri => uri))),
     vscode.workspace.onDidRenameFiles((event) => onHighlightChanged(event.files.map(file => file.newUri))),
   )

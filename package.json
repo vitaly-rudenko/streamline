@@ -70,7 +70,7 @@
       },
       {
         "command": "streamline.relatedFiles.toggleUseRelativePaths",
-        "title": "Toggle Use Relative Paths Related Files",
+        "title": "Toggle Relative Paths in Related Files",
         "icon": "$(selection)"
       },
       {
@@ -84,16 +84,8 @@
         "icon": "$(files)"
       },
       {
-        "command": "streamline.scopedPaths.refresh",
-        "title": "Streamline: Refresh Scoped Paths"
-      },
-      {
-        "command": "streamline.scopedPaths.toggleScopeForSelected",
-        "title": "Toggle Scope for Selected File(s)"
-      },
-      {
-        "command": "streamline.scopedPaths.suggestScopes",
-        "title": "Streamline: Suggest Scopes for File"
+        "command": "streamline.scopedPaths.addToCurrentScope",
+        "title": "Add Selected to Current Scope"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
@@ -108,11 +100,6 @@
         "command": "streamline.tabHistory.clear",
         "title": "Clear Tab History",
         "icon": "$(trash)"
-      },
-      {
-        "command": "streamline.highlightedPaths.refresh",
-        "title": "Streamline: Refresh Highlighted Paths",
-        "icon": "$(refresh)"
       },
       {
         "command": "streamline.bookmarks.add",
@@ -192,7 +179,7 @@
       ],
       "explorer/context": [
         {
-          "command": "streamline.scopedPaths.toggleScopeForSelected",
+          "command": "streamline.scopedPaths.addToCurrentScope",
           "group": "2_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
         },
