@@ -1,4 +1,4 @@
-import { getBasename } from './get-basename'
+import { getBasename } from '../../utils/get-basename'
 
 export function getRelatedFilesQueries(path: string) {
   const basename = getBasename(path)

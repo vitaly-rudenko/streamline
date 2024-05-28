@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { getSharedPath } from '../../../features/tab-history/get-shared-path'
+import { getSharedPath } from '../../utils/get-shared-path'
 
 suite('getSharedPaths()', () => {
   test('returns the shared path for given paths', () => {

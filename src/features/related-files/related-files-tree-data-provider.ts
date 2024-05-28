@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { LRUCache } from 'lru-cache'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
-import { getBasename } from './get-basename'
+import { getBasename } from '../../utils/get-basename'
 import { getRelatedFilesQueries } from './get-related-files-queries'
 
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem> {
@@ -76,7 +76,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       // Sort files by name to stabilize list order
       uris.sort((a, b) => a.path.localeCompare(b.path))
 
-      // Sort files by distances
+      // Sort files by distance
       if (this._useRelativePaths) uris.sort((a, b) => a.path.split('/').length - b.path.split('/').length)
 
       // Sort files by basename equality

@@ -1,9 +1,12 @@
 import * as vscode from 'vscode'
 import type { Bookmark } from './bookmarks-feature'
-import { formatPaths } from './format-paths'
+import { formatPaths } from '../../utils/format-paths'
 import { unique } from '../../utils/unique'
+import { getFilename } from '../../utils/get-filename'
 
-export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem> {
+type TreeItem = ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
+
+export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
@@ -25,7 +28,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTr
     return element
   }
 
-  async getChildren(element?: ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem): Promise<(ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem)[] | undefined> {
+  async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (element === undefined) {
       return unique(this._bookmarks.map(bookmark => bookmark.list))
         .sort()
@@ -61,13 +64,13 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<ListTr
       .filter(bookmark => bookmark.type === 'folder')
       .map(bookmark => bookmark.uri)
       // Sort by filename
-      .sort((a, b) => a.path.split('/').at(-1)!.localeCompare(b.path.split('/').at(-1)!))
+      .sort((a, b) => getFilename(a.path).localeCompare(getFilename(b.path)))
 
     const fileUris = bookmarks
       .filter(bookmark => bookmark.type === 'file' || bookmark.type === 'selection')
       .map(bookmark => bookmark.uri)
       // Sort by filename
-      .sort((a, b) => a.path.split('/').at(-1)!.localeCompare(b.path.split('/').at(-1)!))
+      .sort((a, b) => getFilename(a.path).localeCompare(getFilename(b.path)))
 
     // Show folders at the top
     const uris = [...folderUris, ...fileUris]

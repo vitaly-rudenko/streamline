@@ -1,9 +1,10 @@
-import { getSharedPath } from '../tab-history/get-shared-path'
+import { getFilename } from './get-filename'
+import { getSharedPath } from './get-shared-path'
 
 export function formatPaths(paths: string[]): Map<string, string> {
   const filenamePaths = new Map<string, string[]>()
   for (const path of paths) {
-    const filename = path.split('/').at(-1)!
+    const filename = getFilename(path)
     filenamePaths.set(filename, filenamePaths.has(filename) ? filenamePaths.get(filename)!.concat(path) : [path])
   }
 
@@ -16,7 +17,7 @@ export function formatPaths(paths: string[]): Map<string, string> {
   for (const path of paths) {
     if (results.has(path)) continue
 
-    const filename = path.split('/').at(-1)!
+    const filename = getFilename(path)
     const sharedPath = filenameSharedPaths.get(filename)!
     results.set(path, path.replace(sharedPath + '/', ''))
   }
