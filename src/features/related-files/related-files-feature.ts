@@ -2,26 +2,19 @@ import * as vscode from 'vscode'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
 import { RelatedFilesTreeDataProvider, type RelatedFileTreeItem } from './related-files-tree-data-provider'
 import { getRelatedFilesQueries } from './get-related-files-queries'
+import { config } from '../../config'
 
-export async function createRelatedFilesFeature(input: {
-  context: vscode.ExtensionContext
-}) {
+export function createRelatedFilesFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
+  const useRelativePaths = config.get<boolean>('relatedFiles.useRelativePaths', true)
+  const useExcludes = config.get<boolean>('relatedFiles.useExcludes', true)
+
   const relatedFilesTreeDataProvider = new RelatedFilesTreeDataProvider()
-	context.subscriptions.push(
-    vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider)
-  )
+  relatedFilesTreeDataProvider.useRelativePaths = useRelativePaths
+  relatedFilesTreeDataProvider.useExcludes = useExcludes
 
-  async function refresh() {
-    const config = vscode.workspace.getConfiguration('streamline')
-    const useRelativePaths = config.get<boolean>('relatedFiles.useRelativePaths', true)
-    const useExcludes = config.get<boolean>('relatedFiles.useExcludes', true)
-
-    relatedFilesTreeDataProvider.setUseRelativePaths(useRelativePaths)
-    relatedFilesTreeDataProvider.setUseExcludes(useExcludes)
-    relatedFilesTreeDataProvider.clearCacheAndRefresh()
-  }
+	context.subscriptions.push(vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider))
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.quickOpen', async (uri: vscode.Uri | undefined) => {
@@ -38,7 +31,7 @@ export async function createRelatedFilesFeature(input: {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.refresh', async () => {
-      await refresh()
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
     })
   )
 
@@ -47,7 +40,7 @@ export async function createRelatedFilesFeature(input: {
       const config = vscode.workspace.getConfiguration('streamline')
       const useRelativePaths = config.get<boolean>('relatedFiles.useRelativePaths', true)
 
-      relatedFilesTreeDataProvider.setUseRelativePaths(!useRelativePaths)
+      relatedFilesTreeDataProvider.useRelativePaths = !useRelativePaths
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       await config.update('relatedFiles.useRelativePaths', !useRelativePaths)
@@ -59,7 +52,7 @@ export async function createRelatedFilesFeature(input: {
       const config = vscode.workspace.getConfiguration('streamline')
       const useExcludes = config.get<boolean>('relatedFiles.useExcludes', true)
 
-      relatedFilesTreeDataProvider.setUseExcludes(!useExcludes)
+      relatedFilesTreeDataProvider.useExcludes = !useExcludes
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       await config.update('relatedFiles.useExcludes', !useExcludes)
@@ -73,11 +66,14 @@ export async function createRelatedFilesFeature(input: {
   )
 
   context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('search.exclude') || event.affectsConfiguration('files.exclude')) {
+        relatedFilesTreeDataProvider.clearCacheAndRefresh()
+      }
+    }),
     vscode.window.onDidChangeActiveTextEditor(() => relatedFilesTreeDataProvider.refresh()),
     vscode.workspace.onDidCreateFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
     vscode.workspace.onDidDeleteFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
     vscode.workspace.onDidRenameFiles(() => relatedFilesTreeDataProvider.clearCacheAndRefresh()),
   )
-
-  return { refresh }
 }

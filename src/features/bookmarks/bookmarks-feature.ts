@@ -15,9 +15,7 @@ export type Bookmark = {
   }
 )
 
-export async function createBookmarksFeature(input: {
-  context: vscode.ExtensionContext
-}) {
+export function createBookmarksFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
   let bookmarks: Bookmark[] = []
@@ -27,8 +25,6 @@ export async function createBookmarksFeature(input: {
 	context.subscriptions.push(
     vscode.window.registerTreeDataProvider('bookmarks', bookmarksTreeDataProvider)
   )
-
-  async function refresh() {}
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.add', async (_: never, selectedUris: vscode.Uri[] | undefined, list?: string | undefined) => {
@@ -154,8 +150,4 @@ export async function createBookmarksFeature(input: {
       bookmarksTreeDataProvider.refresh()
     })
   )
-
-  await refresh()
-
-  return { refresh }
 }

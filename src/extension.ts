@@ -14,25 +14,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		onHighlightChanged: (payload) => onDidChangeFileDecorationsEmitter.fire(payload),
 	})
 
-	const relatedFilesFeature = await createRelatedFilesFeature({
-		context,
-	})
-
 	const scopedPathsFeature = await createScopedPathsFeature({
 		context,
-		onScopeChanged: async (payload) => {
-			onDidChangeFileDecorationsEmitter.fire(payload)
-			await relatedFilesFeature.refresh()
-		},
+		onScopeChanged: async (payload) => onDidChangeFileDecorationsEmitter.fire(payload),
 	})
 
-	await createTabHistoryFeature({
-		context,
-	})
-
-	await createBookmarksFeature({
-		context,
-	})
+	createRelatedFilesFeature({ context })
+	createTabHistoryFeature({ context })
+	createBookmarksFeature({ context })
 
 	const fileDecorationProvider: vscode.FileDecorationProvider = {
 		onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,

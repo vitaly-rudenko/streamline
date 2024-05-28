@@ -1,10 +1,10 @@
 import * as vscode from 'vscode'
 import { generateExcludedPaths } from './generate-excluded-paths'
-import { readDirectory } from '../../utils/read-directory'
 import { serializeExcludes } from './serialize-excludes'
 import { getParents } from '../../utils/get-parents'
 import { uriToPath } from '../../utils/uri'
 import { unique } from '../../utils/unique'
+import { createDirectoryReader } from '../../utils/read-directory'
 
 export async function createScopedPathsFeature(input: {
   context: vscode.ExtensionContext
@@ -61,7 +61,7 @@ export async function createScopedPathsFeature(input: {
     try {
       const workspaceFilesConfig = vscode.workspace.getConfiguration('files', null)
       if (enabled) {
-        const excludedPaths = await generateExcludedPaths(scopedPaths, readDirectory)
+        const excludedPaths = await generateExcludedPaths(scopedPaths, createDirectoryReader())
         const excludes = serializeExcludes({ excludedPaths })
         await workspaceFilesConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
       } else {
