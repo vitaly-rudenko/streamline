@@ -9,7 +9,7 @@ import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 export async function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
 
-	const highlightedPathsFeature = await createHighlightedPathsFeature({
+	const highlightedPathsFeature = createHighlightedPathsFeature({
 		context,
 		onHighlightChanged: (payload) => onDidChangeFileDecorationsEmitter.fire(payload),
 	})

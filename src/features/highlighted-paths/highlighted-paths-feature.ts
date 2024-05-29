@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { config } from '../../config'
 
-export async function createHighlightedPathsFeature(input: {
+export function createHighlightedPathsFeature(input: {
   context: vscode.ExtensionContext
   onHighlightChanged: (payload: vscode.Uri | vscode.Uri[] | undefined) => unknown
 }) {

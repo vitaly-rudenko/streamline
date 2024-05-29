@@ -79,8 +79,8 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.addToList', async (_: never, selectedUris: vscode.Uri[] | undefined) => {
       const lists = unique([
+        'default',
         ...bookmarks.map(bookmark => bookmark.list).sort(),
-        'default'
       ])
 
       let list = await vscode.window.showQuickPick(
@@ -104,8 +104,8 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
         currentList = item.list
       } else {
         const lists = unique([
+          'default',
           ...bookmarks.map(bookmark => bookmark.list).sort(),
-          'default'
         ])
 
         let list = await vscode.window.showQuickPick(

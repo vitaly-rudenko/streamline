@@ -85,7 +85,7 @@
       },
       {
         "command": "streamline.scopedPaths.addToCurrentScope",
-        "title": "Add Selected to Current Scope"
+        "title": "Add/Remove Selected from Current Scope"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
