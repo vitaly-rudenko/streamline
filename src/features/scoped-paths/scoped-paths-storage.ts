@@ -36,8 +36,4 @@ export class ScopedPathsStorage {
   export() {
     return [...this._scopedPaths]
   }
-
-  exportWithParents() {
-    return [...this._scopedPaths, ...this._parentsOfScopedPaths]
-  }
 }

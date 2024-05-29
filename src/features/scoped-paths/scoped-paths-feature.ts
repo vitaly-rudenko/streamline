@@ -42,8 +42,9 @@ export async function createScopedPathsFeature(input: {
   async function updateExcludes() {
     try {
       const workspaceFilesConfig = vscode.workspace.getConfiguration('files', null)
+
       if (enabled) {
-        const excludedPaths = await generateExcludedPaths(scopedPathsStorage.exportWithParents(), directoryReader)
+        const excludedPaths = await generateExcludedPaths(scopedPathsStorage.export(), directoryReader)
         const excludes = serializeExcludes({ excludedPaths })
         await workspaceFilesConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
       } else {
@@ -71,6 +72,7 @@ export async function createScopedPathsFeature(input: {
 
     updateStatusBarItems()
 
+    await updateContext()
     await updateExcludes()
     await config.update('scopedPaths.enabled', enabled)
   }
