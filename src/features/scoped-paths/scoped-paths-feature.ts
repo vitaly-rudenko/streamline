@@ -19,10 +19,12 @@ export async function createScopedPathsFeature(input: {
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 2)
   textStatusBarItem.command = 'streamline.scopedPaths.changeCurrentScope'
   context.subscriptions.push(textStatusBarItem)
+  textStatusBarItem.show()
 
   const buttonStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1)
   buttonStatusBarItem.command = 'streamline.scopedPaths.toggleScope'
   context.subscriptions.push(buttonStatusBarItem)
+  buttonStatusBarItem.show()
 
   let enabled = config.get<boolean>('scopedPaths.enabled', false)
   let currentScope = config.get<string>('scopedPaths.currentScope', 'default')
@@ -55,11 +57,9 @@ export async function createScopedPathsFeature(input: {
   function updateStatusBarItems() {
     textStatusBarItem.text = `Scope: ${currentScope}`
     textStatusBarItem.backgroundColor = enabled ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
-    textStatusBarItem.show()
 
     buttonStatusBarItem.text = enabled ? '$(pass-filled)' : '$(circle-large-outline)'
     buttonStatusBarItem.backgroundColor = enabled ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
-    buttonStatusBarItem.show()
   }
 
   async function updateContext() {
