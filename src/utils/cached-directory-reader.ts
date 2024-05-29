@@ -1,11 +1,11 @@
 import * as vscode from 'vscode'
 import { pathToUri } from './uri'
 
-export function createDirectoryReader() {
-	const cache = new Map<string, string[]>()
+export class CachedDirectoryReader {
+	private _cache = new Map<string, string[]>()
 
-	return async function readDirectory(path: string): Promise<string[]> {
-		const cached = cache.get(path)
+	async read(path: string): Promise<string[]> {
+		const cached = this._cache.get(path)
 		if (cached) return cached
 
 		let results: string[]
@@ -21,7 +21,11 @@ export function createDirectoryReader() {
 			results = vscode.workspace.workspaceFolders?.map(workspaceFolder => workspaceFolder.name) ?? []
 		}
 
-		cache.set(path, results)
+		this._cache.set(path, results)
 		return results
+	}
+
+	clearCache() {
+		this._cache.clear()
 	}
 }

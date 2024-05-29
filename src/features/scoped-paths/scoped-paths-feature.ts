@@ -4,7 +4,11 @@ import { serializeExcludes } from './serialize-excludes'
 import { getParents } from '../../utils/get-parents'
 import { uriToPath } from '../../utils/uri'
 import { unique } from '../../utils/unique'
-import { createDirectoryReader } from '../../utils/read-directory'
+import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
+import { ScopedPathsStorage } from './scoped-paths-storage'
+import { config } from '../../config'
+
+
 
 export async function createScopedPathsFeature(input: {
   context: vscode.ExtensionContext
@@ -20,48 +24,24 @@ export async function createScopedPathsFeature(input: {
   buttonStatusBarItem.command = 'streamline.scopedPaths.toggleScope'
   context.subscriptions.push(buttonStatusBarItem)
 
-  let cachedEnabled = false
-  let cachedScopedPaths: Set<string> = new Set()
-  let cachedParentScopedPaths: Set<string> = new Set()
+  let enabled = config.get<boolean>('scopedPaths.enabled', false)
+  let currentScope = config.get<string>('scopedPaths.currentScope', 'default')
+  let scopedPathsStorage = new ScopedPathsStorage(config.get<string[]>(`scopedPaths.scopes.${currentScope}`, []))
+  const directoryReader = new CachedDirectoryReader()
 
   function isScoped(path: string) {
-    return cachedScopedPaths.has(path)
+    return scopedPathsStorage.isScoped(path)
   }
 
   function isParentOfScoped(path: string) {
-    return cachedParentScopedPaths.has(path)
+    return scopedPathsStorage.isParentOfScoped(path)
   }
 
-  async function addToCurrentScope(path: string) {
-    const config = vscode.workspace.getConfiguration('streamline')
-    const scopes = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
-    const currentScope = config.get<string>('scopedPaths.currentScope', 'default')
-
-    const scopedPaths = scopes[currentScope] ?? []
-    scopes[currentScope] = scopedPaths.includes(path)
-      ? scopedPaths.filter(scopedPaths => scopedPaths !== path)
-      : [...scopedPaths, path]
-
-    await config.update('scopedPaths.scopes', scopes)
-    await refresh()
-  }
-
-  async function refresh() {
-    const config = vscode.workspace.getConfiguration('streamline')
-
-    const scopes = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
-    const currentScope = config.get<string>('scopedPaths.currentScope', 'default')
-    const enabled = config.get<boolean>('scopedPaths.enabled', false)
-
-    const scopedPaths = scopes[currentScope] ?? []
-    cachedEnabled = enabled
-    cachedScopedPaths = new Set(scopedPaths)
-    cachedParentScopedPaths = new Set(scopedPaths.flatMap(scopedPath => getParents(scopedPath)))
-
+  async function updateExcludes() {
     try {
       const workspaceFilesConfig = vscode.workspace.getConfiguration('files', null)
       if (enabled) {
-        const excludedPaths = await generateExcludedPaths(scopedPaths, createDirectoryReader())
+        const excludedPaths = await generateExcludedPaths(scopedPathsStorage.exportWithParents(), directoryReader)
         const excludes = serializeExcludes({ excludedPaths })
         await workspaceFilesConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
       } else {
@@ -70,9 +50,9 @@ export async function createScopedPathsFeature(input: {
     } catch (err) {
       console.warn('Could not update workspace configuration', err)
     }
+  }
 
-    await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', enabled)
-
+  function updateStatusBarItems() {
     textStatusBarItem.text = `Scope: ${currentScope}`
     textStatusBarItem.backgroundColor = enabled ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
     textStatusBarItem.show()
@@ -80,50 +60,62 @@ export async function createScopedPathsFeature(input: {
     buttonStatusBarItem.text = enabled ? '$(pass-filled)' : '$(circle-large-outline)'
     buttonStatusBarItem.backgroundColor = enabled ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
     buttonStatusBarItem.show()
+  }
 
-    onScopeChanged(undefined)
+  async function updateContext() {
+    await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', enabled)
+  }
+
+  async function setEnabled(value: boolean) {
+    enabled = value
+
+    updateStatusBarItems()
+
+    await updateExcludes()
+    await config.update('scopedPaths.enabled', enabled)
   }
 
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.scope', async () => {
-      await vscode.workspace.getConfiguration('streamline').update('scopedPaths.enabled', true)
-      await refresh()
+      await setEnabled(true)
 		})
 	)
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.unscope', async () => {
-      await vscode.workspace.getConfiguration('streamline').update('scopedPaths.enabled', false)
-      await refresh()
+      await setEnabled(false)
 		})
 	)
 
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.toggleScope', async () => {
-      const config = vscode.workspace.getConfiguration('streamline')
-      const enabled = config.get('scopedPaths.enabled', false)
-
-      await config.update('scopedPaths.enabled', !enabled)
-      await refresh()
+      await setEnabled(!enabled)
 		})
 	)
 
   // TODO: allow adding multiple selected files/folders to scope at once (in explorer)
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.addToCurrentScope', async (file: vscode.Uri | undefined) => {
-      file ||= vscode.window.activeTextEditor?.document.uri
-      if (!file) return
+		vscode.commands.registerCommand('streamline.scopedPaths.toggleScopeForPath', async (uri: vscode.Uri | undefined) => {
+      uri ||= vscode.window.activeTextEditor?.document.uri
+      if (!uri) return
 
-			const path = uriToPath(file)
+			const path = uriToPath(uri)
       if (!path) return
 
-      await addToCurrentScope(path)
+      if (scopedPathsStorage.has(path)) {
+        scopedPathsStorage.remove(path)
+      } else {
+        scopedPathsStorage.add(path)
+      }
+
+      onScopeChanged(uri)
+      await updateExcludes()
+      await config.update(`scopedPaths.scopes.${currentScope}`, scopedPathsStorage.export())
 		})
 	)
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.changeCurrentScope', async () => {
-      const config = vscode.workspace.getConfiguration('streamline')
       const scopes = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
 
       let scope = await vscode.window.showQuickPick(
@@ -136,26 +128,34 @@ export async function createScopedPathsFeature(input: {
       if (scope === '+ Add new scope') {
         scope = await vscode.window.showInputBox({ prompt: 'Enter the name of new scope' })
         if (!scope) return
-        await config.update('scopedPaths.scopes', { ...scopes, [scope]: [] })
       }
 
+      currentScope = scope
+      scopedPathsStorage = new ScopedPathsStorage(config.get<string[]>(`scopedPaths.scopes.${currentScope}`, []))
+
+      onScopeChanged(undefined)
+      await updateExcludes()
       await config.update('scopedPaths.currentScope', scope)
-      await refresh()
     })
   )
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', async () => {
-      const config = vscode.workspace.getConfiguration('streamline')
-      const scopes = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
-      const currentScope = config.get<string>('scopedPaths.currentScope', 'default')
+      scopedPathsStorage = new ScopedPathsStorage([])
 
-      await config.update('scopedPaths.scopes', { ...scopes, [currentScope]: [] })
-      await refresh()
+      onScopeChanged(undefined)
+      await updateExcludes()
+      await config.update(`scopedPaths.scopes.${currentScope}`, [])
     })
   )
 
-  await refresh()
+  context.subscriptions.push(
+    vscode.workspace.onDidCreateFiles(() => directoryReader.clearCache()),
+    vscode.workspace.onDidRenameFiles(() => directoryReader.clearCache()),
+  )
+
+  updateStatusBarItems()
+  await updateContext()
 
   return { isScoped, isParentOfScoped }
 }

@@ -84,7 +84,7 @@
         "icon": "$(files)"
       },
       {
-        "command": "streamline.scopedPaths.addToCurrentScope",
+        "command": "streamline.scopedPaths.toggleScopeForPath",
         "title": "Add/Remove Selected from Current Scope"
       },
       {
@@ -189,7 +189,7 @@
       ],
       "explorer/context": [
         {
-          "command": "streamline.scopedPaths.addToCurrentScope",
+          "command": "streamline.scopedPaths.toggleScopeForPath",
           "group": "2_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
         },
