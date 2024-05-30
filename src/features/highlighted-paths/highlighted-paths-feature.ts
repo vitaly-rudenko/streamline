@@ -1,23 +1,31 @@
 import * as vscode from 'vscode'
 import { config } from '../../config'
 
-export function createHighlightedPathsFeature(input: {
-  context: vscode.ExtensionContext
-  onHighlightChanged: (payload: vscode.Uri | vscode.Uri[] | undefined) => unknown
-}) {
-  const { context, onHighlightChanged } = input
+export function createHighlightedPathsFeature(input: { context: vscode.ExtensionContext, onChange: () => unknown }) {
+  const { context, onChange } = input
 
-  const patterns = config.get<string[]>('highlightedPaths.patterns', [])
-  const cachedPatternRegExps = patterns.map(pattern => new RegExp(pattern))
+  let patterns: string[] = []
+  let cachedPatternRegExps: RegExp[] = []
+
+  function loadPatterns() {
+    patterns = config.get<string[]>('highlightedPaths.patterns', [])
+    cachedPatternRegExps = patterns.map(pattern => new RegExp(pattern))
+  }
 
   function isHighlighted(path: string): boolean {
     return cachedPatternRegExps.some(regExp => regExp.test(path))
   }
 
   context.subscriptions.push(
-    vscode.workspace.onDidCreateFiles((event) => onHighlightChanged(event.files.map(uri => uri))),
-    vscode.workspace.onDidRenameFiles((event) => onHighlightChanged(event.files.map(file => file.newUri))),
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('highlightedPaths.patterns')) {
+        loadPatterns()
+        onChange()
+      }
+    }),
   )
+
+  loadPatterns()
 
   return { isHighlighted }
 }

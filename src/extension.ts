@@ -11,7 +11,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const highlightedPathsFeature = createHighlightedPathsFeature({
 		context,
-		onHighlightChanged: (payload) => onDidChangeFileDecorationsEmitter.fire(payload),
+		onChange: () => onDidChangeFileDecorationsEmitter.fire(undefined),
 	})
 
 	const scopedPathsFeature = await createScopedPathsFeature({
