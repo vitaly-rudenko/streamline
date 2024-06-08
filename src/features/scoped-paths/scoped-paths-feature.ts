@@ -26,18 +26,18 @@ export async function createScopedPathsFeature(input: {
   const directoryReader = new CachedDirectoryReader()
 
   function isPathCurrentlyScoped(path: string) {
-    return config.cachedCurrentlyScopedPathsSet?.has(path) === true
+    return config.getCachedCurrentlyScopedPathsSet().has(path)
   }
 
   function isParentOfCurrentlyScopedPaths(path: string) {
-    return config.cachedParentsOfCurrentlyScopedPathsSet?.has(path) === true
+    return config.getCachedParentsOfCurrentlyScopedPathsSet().has(path)
   }
 
   async function updateExcludes() {
     try {
       let excludes: Record<string, unknown> | undefined = undefined
-      if (config.enabled) {
-        const excludedPaths = await generateExcludedPaths(config.cachedCurrentlyScopedPaths ?? [], directoryReader)
+      if (config.getEnabled()) {
+        const excludedPaths = await generateExcludedPaths(config.getCachedCurrentlyScopedPaths() ?? [], directoryReader)
         excludes = serializeExcludes({ excludedPaths })
       }
 
@@ -50,23 +50,23 @@ export async function createScopedPathsFeature(input: {
   }
 
   function updateStatusBarItems() {
-    textStatusBarItem.text = `Scope: ${config.currentScope}`
-    textStatusBarItem.backgroundColor = config.enabled ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
+    textStatusBarItem.text = `Scope: ${config.getCurrentScope()}`
+    textStatusBarItem.backgroundColor = config.getEnabled() ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
 
-    buttonStatusBarItem.text = config.enabled ? '$(pass-filled)' : '$(circle-large-outline)'
-    buttonStatusBarItem.backgroundColor = config.enabled ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
+    buttonStatusBarItem.text = config.getEnabled() ? '$(pass-filled)' : '$(circle-large-outline)'
+    buttonStatusBarItem.backgroundColor = config.getEnabled() ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
   }
 
   async function updateContext() {
     try {
-      await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', config.enabled)
+      await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', config.getEnabled())
     } catch (error) {
       console.warn('Could not update context', error)
     }
   }
 
   async function setEnabled(value: boolean) {
-    config.enabled = value
+    config.setEnabled(value)
     onChange()
 
     updateStatusBarItems()
@@ -89,7 +89,7 @@ export async function createScopedPathsFeature(input: {
 
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.toggleScope', async() => {
-      await setEnabled(!config.enabled)
+      await setEnabled(!config.getEnabled())
 		})
 	)
 
@@ -102,12 +102,12 @@ export async function createScopedPathsFeature(input: {
 			const path = uriToPath(uri)
       if (!path) return
 
-      config.scopesObject = {
-        ...config.scopesObject,
-        [config.currentScope]: config.cachedCurrentlyScopedPathsSet.has(path)
-          ? config.cachedCurrentlyScopedPaths.filter(p => p !== path)
-          : [...config.cachedCurrentlyScopedPaths, path]
-      }
+      config.setScopesObject({
+        ...config.getScopesObject(),
+        [config.getCurrentScope()]: config.getCachedCurrentlyScopedPathsSet().has(path)
+          ? config.getCachedCurrentlyScopedPaths().filter(p => p !== path)
+          : [...config.getCachedCurrentlyScopedPaths(), path]
+      })
 
       onChange()
 
@@ -118,10 +118,10 @@ export async function createScopedPathsFeature(input: {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.changeCurrentScope', async () => {
-      const scopes = Object.keys(config.scopesObject)
+      const scopes = Object.keys(config.getScopesObject())
 
       let selectedScope = await vscode.window.showQuickPick(
-        unique(['default', ...scopes, config.currentScope, '+ Add new scope']),
+        unique(['default', ...scopes, config.getCurrentScope(), '+ Add new scope']),
         { title: 'Select a scope' }
       )
 
@@ -132,7 +132,7 @@ export async function createScopedPathsFeature(input: {
         if (!selectedScope) return
       }
 
-      config.currentScope = selectedScope
+      config.setCurrentScope(selectedScope)
       onChange()
 
       updateStatusBarItems()
@@ -143,10 +143,10 @@ export async function createScopedPathsFeature(input: {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', async () => {
-      config.scopesObject = {
-        ...config.scopesObject,
-        [config.currentScope]: []
-      }
+      config.setScopesObject({
+        ...config.getScopesObject(),
+        [config.getCurrentScope()]: []
+      })
 
       onChange()
 

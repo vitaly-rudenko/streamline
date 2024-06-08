@@ -33,7 +33,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.toggleUseRelativePaths', async () => {
-      config.useRelativePaths = !config.useRelativePaths
+      config.setUseRelativePaths(!config.getUseRelativePaths())
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       await config.save()
@@ -42,7 +42,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.toggleUseExcludes', async () => {
-      config.useExcludes = !config.useExcludes
+      config.setUseExcludes(!config.getUseExcludes())
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       await config.save()

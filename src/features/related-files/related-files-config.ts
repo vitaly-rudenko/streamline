@@ -1,18 +1,17 @@
 import { getConfig } from '../../config'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 
-const defaultCustomExcludes = {}
 const defaultUseRelativePaths = true
 const defaultUseExcludes = true
 
 export class RelatedFilesConfig {
-  private _customExcludes: Record<string, unknown> = defaultCustomExcludes
+  private _customExcludes: Record<string, unknown> = {}
   private _useRelativePaths: boolean = defaultUseRelativePaths
   private _useExcludes: boolean = defaultUseExcludes
 
   load(): boolean {
     const config = getConfig()
-    const customExcludes = config.get<Record<string, unknown>>('relatedFiles.exclude', defaultCustomExcludes)
+    const customExcludes = config.get<Record<string, unknown>>('relatedFiles.exclude', {})
     const useRelativePaths = config.get<boolean>('relatedFiles.useRelativePaths', defaultUseRelativePaths)
     const useExcludes = config.get<boolean>('relatedFiles.useExcludes', defaultUseExcludes)
 
@@ -51,23 +50,23 @@ export class RelatedFilesConfig {
     console.debug('[RelatedFiles] Config has been saved')
   }
 
-  get customExcludes() {
+  getCustomExcludes() {
     return this._customExcludes
   }
 
-  set useRelativePaths(value: boolean) {
+  setUseRelativePaths(value: boolean) {
     this._useRelativePaths = value
   }
 
-  get useRelativePaths() {
+  getUseRelativePaths() {
     return this._useRelativePaths
   }
 
-  set useExcludes(value: boolean) {
+  setUseExcludes(value: boolean) {
     this._useExcludes = value
   }
 
-  get useExcludes() {
+  getUseExcludes() {
     return this._useExcludes
   }
 }

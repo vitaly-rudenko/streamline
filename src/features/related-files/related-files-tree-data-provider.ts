@@ -17,10 +17,10 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
 
   refresh(): void {
     // TODO: generate this outside of the data provider and pass it here instead
-    if (this.config.useExcludes) {
+    if (this.config.getUseExcludes()) {
       const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
 
-      const excludeEntries = Object.entries({ ...searchExcludes, ...this.config.customExcludes })
+      const excludeEntries = Object.entries({ ...searchExcludes, ...this.config.getCustomExcludes() })
       this._excludePattern = excludeEntries.length > 0
         ? `{${excludeEntries.filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
         : undefined
@@ -69,7 +69,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       uris.sort((a, b) => a.path.localeCompare(b.path))
 
       // Sort files by distance
-      if (this.config.useRelativePaths) {
+      if (this.config.getUseRelativePaths()) {
         uris.sort((a, b) => a.path.split('/').length - b.path.split('/').length)
       }
 
@@ -106,7 +106,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
 
   createRelatedFileTreeItem(originalUri: vscode.Uri, relatedUri: vscode.Uri, isBestMatch?: boolean) {
     let label: string
-    if (this.config.useRelativePaths) {
+    if (this.config.getUseRelativePaths()) {
       label = path.relative(originalUri.path, relatedUri.path).replace('../', '')
       if (!label.startsWith('../')) label = './' + label
     } else {

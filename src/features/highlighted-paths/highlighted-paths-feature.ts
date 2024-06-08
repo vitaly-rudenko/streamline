@@ -7,7 +7,7 @@ export function createHighlightedPathsFeature(input: { context: vscode.Extension
   const config = new HighlightedPathsConfig()
 
   function isPathHighlighted(path: string): boolean {
-    return config.cachedCombinedPatternRegExp?.test(path) === true
+    return config.getCachedCombinedPatternRegExp()?.test(path) === true
   }
 
   context.subscriptions.push(

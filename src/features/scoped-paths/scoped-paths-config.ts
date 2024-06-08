@@ -3,12 +3,11 @@ import { getParents } from '../../utils/get-parents'
 
 const defaultEnabled = false
 const defaultCurrentScope = 'default'
-const defaultScopesObject = {}
 
 export class ScopedPathsConfig {
   private _enabled: boolean = defaultEnabled
   private _currentScope: string = defaultCurrentScope
-  private _scopesObject: Record<string, string[]> = defaultScopesObject
+  private _scopesObject: Record<string, string[]> = {}
   private _cachedCurrentlyScopedPaths: string[] = []
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
   private _cachedParentsOfCurrentlyScopedPathsSet: Set<string> = new Set()
@@ -17,7 +16,7 @@ export class ScopedPathsConfig {
     const config = getConfig()
     const enabled = config.get<boolean>('scopedPaths.enabled', defaultEnabled)
     const currentScope = config.get<string>('scopedPaths.currentScope', defaultCurrentScope)
-    const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', defaultScopesObject)
+    const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
 
     let hasChanged = false
 
@@ -72,41 +71,41 @@ export class ScopedPathsConfig {
     this._cachedParentsOfCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths.flatMap(path => getParents(path)))
   }
 
-  get cachedCurrentlyScopedPaths() {
+  getCachedCurrentlyScopedPaths() {
     return this._cachedCurrentlyScopedPaths
   }
 
-  get cachedCurrentlyScopedPathsSet() {
+  getCachedCurrentlyScopedPathsSet() {
     return this._cachedCurrentlyScopedPathsSet
   }
 
-  get cachedParentsOfCurrentlyScopedPathsSet() {
+  getCachedParentsOfCurrentlyScopedPathsSet() {
     return this._cachedParentsOfCurrentlyScopedPathsSet
   }
 
-  set enabled(value: boolean) {
+  setEnabled(value: boolean) {
     this._enabled = value
   }
 
-  get enabled() {
+  getEnabled() {
     return this._enabled
   }
 
-  set currentScope(value: string) {
+  setCurrentScope(value: string) {
     this._currentScope = value
     this._updateScopedPathsCache()
   }
 
-  get currentScope() {
+  getCurrentScope() {
     return this._currentScope
   }
 
-  set scopesObject(value: Record<string, string[]>) {
+  setScopesObject(value: Record<string, string[]>) {
     this._scopesObject = value
     this._updateScopedPathsCache()
   }
 
-  get scopesObject() {
+  getScopesObject() {
     return this._scopesObject
   }
 }

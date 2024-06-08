@@ -20,8 +20,8 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
     }
 
     backupTimeoutId = setTimeout(async () => {
-      if (config.backupEnabled) {
-        config.backupRecords = tabHistoryStorage.export(config.backupSize)
+      if (config.getBackupEnabled()) {
+        config.setBackupRecords(tabHistoryStorage.export(config.getBackupSize()))
         await config.save()
       }
     }, BACKUP_DEBOUNCE_MS)
@@ -29,7 +29,7 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
 
   async function updateContext() {
     try {
-      await vscode.commands.executeCommand('setContext', 'streamline.tabHistory.backup.enabled', config.backupEnabled)
+      await vscode.commands.executeCommand('setContext', 'streamline.tabHistory.backup.enabled', config.getBackupEnabled())
     } catch (error) {
       console.warn('Could not update context', error)
     }
@@ -61,7 +61,7 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
   )
 
   async function setBackupEnabled(value: boolean) {
-    config.backupEnabled = value
+    config.setBackupEnabled(value)
 
     scheduleBackup()
     await updateContext()
@@ -84,7 +84,7 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
     vscode.workspace.onDidChangeConfiguration(async (event) => {
       if (event.affectsConfiguration('streamline.tabHistory')) {
         if (config.load()) {
-          tabHistoryStorage.import(config.backupRecords)
+          tabHistoryStorage.import(config.getBackupRecords())
           tabHistoryTreeDataProvider.refresh()
           await updateContext()
         }
@@ -102,7 +102,7 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
   )
 
   config.load()
-  tabHistoryStorage.import(config.backupRecords)
+  tabHistoryStorage.import(config.getBackupRecords())
   await updateContext()
 
   // Update timestamps once a minute

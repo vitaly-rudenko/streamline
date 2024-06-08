@@ -1,15 +1,13 @@
 import { getConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 
-const defaultPatterns: string[] = []
-
 export class HighlightedPathsConfig {
-  private _patterns: string[] = defaultPatterns
+  private _patterns: string[] = []
   private _cachedCombinedPatternRegExp: RegExp | undefined
 
   load(): boolean {
     const config = getConfig()
-    const patterns = config.get<string[]>('highlightedPaths.patterns', defaultPatterns)
+    const patterns = config.get<string[]>('highlightedPaths.patterns', [])
 
     let hasChanged = false
 
@@ -29,7 +27,7 @@ export class HighlightedPathsConfig {
     this._cachedCombinedPatternRegExp = new RegExp(this._patterns.join('|'))
   }
 
-  get cachedCombinedPatternRegExp() {
+  getCachedCombinedPatternRegExp() {
     return this._cachedCombinedPatternRegExp
   }
 }
