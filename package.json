@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -82,17 +82,17 @@
       },
       {
         "command": "streamline.scopedPaths.enableScope",
-        "title": "Scope",
+        "title": "Enable Scope",
         "icon": "$(circle-large-outline)"
       },
       {
         "command": "streamline.scopedPaths.disableScope",
-        "title": "Unscope",
+        "title": "Disable Scope",
         "icon": "$(pass-filled)"
       },
       {
         "command": "streamline.scopedPaths.clearCurrentScope",
-        "title": "lear Current Scope",
+        "title": "Clear Current Scope",
         "icon": "$(circle-slash)"
       },
       {
@@ -117,11 +117,11 @@
       },
       {
         "command": "streamline.scopedPaths.addPathToCurrentScope",
-        "title": "Scope Selected"
+        "title": "Add to Scope"
       },
       {
         "command": "streamline.scopedPaths.deletePathFromCurrentScope",
-        "title": "Unscope Selected"
+        "title": "Delete from Scope"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
@@ -149,12 +149,12 @@
       },
       {
         "command": "streamline.bookmarks.add",
-        "title": "Bookmark Selected",
+        "title": "Bookmark",
         "icon": "$(bookmark)"
       },
       {
         "command": "streamline.bookmarks.addToList",
-        "title": "Bookmark Selected to List...",
+        "title": "Bookmark to List...",
         "icon": "$(bookmark)"
       },
       {
@@ -256,11 +256,11 @@
         },
         {
           "command": "streamline.bookmarks.add",
-          "group": "2_workspace@1"
+          "group": "1_workspace@3"
         },
         {
           "command": "streamline.bookmarks.addToList",
-          "group": "2_workspace@2"
+          "group": "1_workspace@4"
         }
       ],
       "editor/context": [
