@@ -1,19 +1,23 @@
 import { getConfig } from '../../config'
 import { getParents } from '../../utils/get-parents'
 
+const defaultEnabled = false
+const defaultCurrentScope = 'default'
+const defaultScopesObject = {}
+
 export class ScopedPathsConfig {
-  private _enabled: boolean = false
-  private _currentScope: string = 'default'
-  private _scopesObject: Record<string, string[]> = {}
+  private _enabled: boolean = defaultEnabled
+  private _currentScope: string = defaultCurrentScope
+  private _scopesObject: Record<string, string[]> = defaultScopesObject
   private _cachedCurrentlyScopedPaths: string[] = []
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
   private _cachedParentsOfCurrentlyScopedPathsSet: Set<string> = new Set()
 
   load(): boolean {
     const config = getConfig()
-    const enabled = config.get<boolean>('scopedPaths.enabled', false)
-    const currentScope = config.get<string>('scopedPaths.currentScope', 'default')
-    const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
+    const enabled = config.get<boolean>('scopedPaths.enabled', defaultEnabled)
+    const currentScope = config.get<string>('scopedPaths.currentScope', defaultCurrentScope)
+    const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', defaultScopesObject)
 
     let hasChanged = false
 
@@ -34,16 +38,30 @@ export class ScopedPathsConfig {
       hasChanged = true
     }
 
-    console.debug('[ScopedPaths] Config has been loaded', { hasChanged })
+    console.debug('[ScopedPaths] Config has been loaded', { hasChanged, enabled, currentScope, scopesObject })
 
     return hasChanged
   }
 
   async save() {
     const config = getConfig()
-    await config.update('scopedPaths.enabled', this._enabled)
-    await config.update('scopedPaths.currentScope', this._currentScope)
-    await config.update('scopedPaths.scopes', this._scopesObject)
+
+    await config.update(
+      'scopedPaths.enabled',
+      this._enabled !== defaultEnabled ? this._enabled : undefined
+    )
+
+    await config.update(
+      'scopedPaths.currentScope',
+      this._currentScope !== defaultCurrentScope ? this._currentScope : undefined
+    )
+
+    const scopesObjectEntries = Object.entries(this._scopesObject)
+    await config.update(
+      'scopedPaths.scopes',
+      scopesObjectEntries.some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0)
+        ? this._scopesObject : undefined
+    )
 
     console.debug('[ScopedPaths] Config has been saved')
   }

@@ -14,6 +14,38 @@
     "onView:fileExplorer"
   ],
   "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "rimraf ./out && tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "dev": " nodemon -x 'npm run compile'",
+    "deploy": "npm run compile && npm run test && vsce package && vsce publish"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.88.0",
+    "@typescript-eslint/eslint-plugin": "^7.7.1",
+    "@typescript-eslint/parser": "^7.7.1",
+    "@vscode/test-cli": "^0.0.8",
+    "@vscode/test-electron": "^2.3.9",
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.4.5"
+  },
+  "publisher": "vitaly-rudenko",
+  "icon": "./icon.png",
+  "repository": {
+    "url": "https://github.com/vitaly-rudenko/streamline"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0",
+    "lru-cache": "^10.2.2"
+  },
   "contributes": {
     "views": {
       "explorer": [
@@ -228,23 +260,21 @@
         },
         "streamline.scopedPaths.scopes": {
           "type": "object",
+          "default": {},
           "additionalProperties": {
             "type": "array",
             "items": {
               "type": "string"
             }
           },
-          "default": {
-            "default": []
-          },
           "description": "Scopes"
         },
         "streamline.highlightedPaths.patterns": {
           "type": "array",
+          "default": [],
           "items": {
             "type": "string"
           },
-          "default": [],
           "description": "Highlighted paths"
         },
         "streamline.relatedFiles.useRelativePaths": {
@@ -260,56 +290,30 @@
         "streamline.relatedFiles.exclude": {
           "type": "object",
           "default": {},
+          "additionalProperties": {
+            "type": "boolean"
+          },
           "description": "Custom exclude patterns for related files view"
         },
-        "streamline.tabHistory.enabled": {
+        "streamline.tabHistory.backup.enabled": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Enable tab history backup"
         },
-        "streamline.tabHistory.records": {
+        "streamline.tabHistory.backup.size": {
+          "type": "number",
+          "default": 100,
+          "description": "Tab history backup size"
+        },
+        "streamline.tabHistory.backup.records": {
           "type": "object",
           "default": {},
+          "additionalProperties": {
+            "type": "number"
+          },
           "description": "Tab history backup records"
-        },
-        "streamline.tabHistory.size": {
-          "type": "number",
-          "default": 25,
-          "description": "Tab history backup size"
         }
       }
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "rimraf ./out && tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test",
-    "dev": " nodemon -x 'npm run compile'",
-    "deploy": "npm run compile && npm run test && vsce package && vsce publish"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@types/vscode": "^1.88.0",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
-    "@typescript-eslint/parser": "^7.7.1",
-    "@vscode/test-cli": "^0.0.8",
-    "@vscode/test-electron": "^2.3.9",
-    "eslint": "^8.57.0",
-    "nodemon": "^3.1.0",
-    "rimraf": "^5.0.5",
-    "typescript": "^5.4.5"
-  },
-  "publisher": "vitaly-rudenko",
-  "icon": "./icon.png",
-  "repository": {
-    "url": "https://github.com/vitaly-rudenko/streamline"
-  },
-  "dependencies": {
-    "date-fns": "^3.6.0",
-    "lru-cache": "^10.2.2"
   }
 }

@@ -26,18 +26,18 @@ export async function createScopedPathsFeature(input: {
   const directoryReader = new CachedDirectoryReader()
 
   function isPathCurrentlyScoped(path: string) {
-    return config.cachedCurrentlyScopedPathsSet.has(path)
+    return config.cachedCurrentlyScopedPathsSet?.has(path) === true
   }
 
   function isParentOfCurrentlyScopedPaths(path: string) {
-    return config.cachedParentsOfCurrentlyScopedPathsSet.has(path)
+    return config.cachedParentsOfCurrentlyScopedPathsSet?.has(path) === true
   }
 
   async function updateExcludes() {
     try {
-      let excludes: Record<string, boolean> | undefined = undefined
+      let excludes: Record<string, unknown> | undefined = undefined
       if (config.enabled) {
-        const excludedPaths = await generateExcludedPaths(config.cachedCurrentlyScopedPaths, directoryReader)
+        const excludedPaths = await generateExcludedPaths(config.cachedCurrentlyScopedPaths ?? [], directoryReader)
         excludes = serializeExcludes({ excludedPaths })
       }
 
@@ -121,7 +121,7 @@ export async function createScopedPathsFeature(input: {
       const scopes = Object.keys(config.scopesObject)
 
       let selectedScope = await vscode.window.showQuickPick(
-        unique(['default', ...scopes, '+ Add new scope']),
+        unique(['default', ...scopes, config.currentScope, '+ Add new scope']),
         { title: 'Select a scope' }
       )
 

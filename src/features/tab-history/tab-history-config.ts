@@ -1,56 +1,79 @@
 import { getConfig } from '../../config'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 
+const defaultBackupEnabled = false
+const defaultBackupSize = 100
+const defaultBackupRecords = {}
+
 export class TabHistoryConfig {
-  private _enabled: boolean = false
-  private _size: number = 100
-  private _records: Record<string, number> = {}
+  private _backupEnabled: boolean = defaultBackupEnabled
+  private _backupSize: number = defaultBackupSize
+  private _backupRecords: Record<string, number> = defaultBackupRecords
 
   load() {
     const config = getConfig()
-    const enabled = config.get<boolean>('tabHistory.enabled', true)
-    const size = config.get<number>('tabHistory.size', 100)
-    const records = config.get<Record<string, number>>('tabHistory.records', {})
+    const backupEnabled = config.get<boolean>('tabHistory.backup.enabled', defaultBackupEnabled)
+    const backupSize = config.get<number>('tabHistory.backup.size', defaultBackupSize)
+    const backupRecords = config.get<Record<string, number>>('tabHistory.backup.records', defaultBackupRecords)
 
     let hasChanged = false
 
     if (
-      this._enabled !== enabled ||
-      this._size !== size
+      this._backupEnabled !== backupEnabled ||
+      this._backupSize !== backupSize
     ) {
-      this._enabled = enabled
-      this._size = size
+      this._backupEnabled = backupEnabled
+      this._backupSize = backupSize
 
       hasChanged = true
     }
 
-    if (!areObjectsShallowEqual(this._records, records)) {
-      this._records = records
+    if (!areObjectsShallowEqual(this._backupRecords, backupRecords)) {
+      this._backupRecords = backupRecords
 
       hasChanged = true
     }
+
+    console.debug('[TabHistory] Config has been loaded', { hasChanged, enabled: backupEnabled, size: backupSize, records: backupRecords })
 
     return hasChanged
   }
 
   async save() {
     const config = getConfig()
-    await config.update('tabHistory.records', this._records)
+
+    await config.update(
+      'tabHistory.backup.enabled',
+      this._backupEnabled !== defaultBackupEnabled ? this._backupEnabled : undefined
+    )
+
+    await config.update(
+      'tabHistory.backup.size',
+      this._backupSize !== defaultBackupSize ? this._backupSize : undefined
+    )
+
+    await config.update(
+      'tabHistory.backup.records',
+      Object.keys(this._backupRecords).length > 0
+        ? this._backupRecords : undefined
+    )
+
+    console.debug('[TabHistory] Config has been saved')
   }
 
-  get enabled() {
-    return this._enabled
+  get backupEnabled() {
+    return this._backupEnabled
   }
 
-  get size() {
-    return this._size
+  get backupSize() {
+    return this._backupSize
   }
 
-  set records(value: Record<string, number>) {
-    this._records = value
+  set backupRecords(value: Record<string, number>) {
+    this._backupRecords = value
   }
 
-  get records() {
-    return this._records
+  get backupRecords() {
+    return this._backupRecords
   }
 }

@@ -1,7 +1,7 @@
 import { unique } from '../../utils/unique'
 
-export function serializeExcludes(input: { excludedPaths: string[] }): Record<string, boolean> {
-  const excludes: Record<string, boolean> = {
+export function serializeExcludes(input: { excludedPaths: string[] }): Record<string, unknown> {
+  const excludes: Record<string, unknown> = {
     '**/.git': true,
     '**/.svn': true,
     '**/.hg': true,

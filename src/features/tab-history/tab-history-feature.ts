@@ -24,14 +24,14 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
 
   let backupTimeoutId: NodeJS.Timeout | undefined
   function scheduleBackup() {
-    if (!config.enabled) return
+    if (!config.backupEnabled) return
     if (backupTimeoutId !== undefined) {
       clearTimeout(backupTimeoutId)
     }
 
     backupTimeoutId = setTimeout(async () => {
-      if (config.enabled) {
-        config.records = tabHistoryStorage.export(config.size)
+      if (config.backupEnabled) {
+        config.backupRecords = tabHistoryStorage.export(config.backupSize)
         await config.save()
       }
     }, 5_000)
@@ -57,7 +57,7 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.tabHistory')) {
         if (config.load()) {
-          tabHistoryStorage.import(config.records)
+          tabHistoryStorage.import(config.backupRecords)
           tabHistoryTreeDataProvider.refresh()
         }
       }
@@ -74,7 +74,7 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
   )
 
   config.load()
-  tabHistoryStorage.import(config.records)
+  tabHistoryStorage.import(config.backupRecords)
 
   // Update timestamps once a minute
   setInterval(() => tabHistoryTreeDataProvider.refresh(), 60_000)
