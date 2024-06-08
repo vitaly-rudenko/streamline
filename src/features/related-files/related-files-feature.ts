@@ -3,6 +3,7 @@ import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
 import { RelatedFilesTreeDataProvider, type RelatedFileTreeItem } from './related-files-tree-data-provider'
 import { getRelatedFilesQueries } from './get-related-files-queries'
 import { RelatedFilesConfig } from './related-files-config'
+import { getBasename } from '../../utils/get-basename'
 
 export function createRelatedFilesFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
@@ -17,9 +18,9 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
       uri ||= vscode.window.activeTextEditor?.document.uri
       if (!uri) return
 
-      const relatedFilesQueries = getRelatedFilesQueries(uri.path)
+      const basename = getBasename(uri.path)
       const workspaceFolder = isMultiRootWorkspace() ? vscode.workspace.getWorkspaceFolder(uri) : undefined
-      const query = workspaceFolder ? `${workspaceFolder.name}/${relatedFilesQueries.worst}` : relatedFilesQueries.worst
+      const query = workspaceFolder ? `${workspaceFolder.name}/${basename}` : basename
 
       await vscode.commands.executeCommand('workbench.action.quickOpen', query)
     })
