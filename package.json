@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -14,6 +14,38 @@
     "onView:fileExplorer"
   ],
   "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "rimraf ./out && tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "dev": " nodemon -x 'npm run compile'",
+    "deploy": "npm run compile && npm run test && vsce package && vsce publish"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.88.0",
+    "@typescript-eslint/eslint-plugin": "^7.7.1",
+    "@typescript-eslint/parser": "^7.7.1",
+    "@vscode/test-cli": "^0.0.8",
+    "@vscode/test-electron": "^2.3.9",
+    "eslint": "^8.57.0",
+    "nodemon": "^3.1.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.4.5"
+  },
+  "publisher": "vitaly-rudenko",
+  "icon": "./icon.png",
+  "repository": {
+    "url": "https://github.com/vitaly-rudenko/streamline"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0",
+    "lru-cache": "^10.2.2"
+  },
   "contributes": {
     "views": {
       "explorer": [
@@ -28,34 +60,40 @@
           "name": "Related files",
           "visibility": "collapsed",
           "icon": "$(sparkle)"
+        },
+        {
+          "id": "bookmarks",
+          "name": "Bookmarks",
+          "visibility": "collapsed",
+          "icon": "$(bookmark)"
         }
       ]
     },
     "commands": [
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
-        "title": "Streamline: Select Scope",
+        "title": "Select Current Scope",
         "icon": "$(chevron-down)"
       },
       {
-        "command": "streamline.scopedPaths.scope",
+        "command": "streamline.scopedPaths.toggleScope",
+        "title": "Toggle Scope",
+        "icon": "$(activate-breakpoints)"
+      },
+      {
+        "command": "streamline.scopedPaths.enableScope",
         "title": "Scope",
         "icon": "$(circle-large-outline)"
       },
       {
-        "command": "streamline.scopedPaths.unscope",
+        "command": "streamline.scopedPaths.disableScope",
         "title": "Unscope",
         "icon": "$(pass-filled)"
       },
       {
         "command": "streamline.scopedPaths.clearCurrentScope",
-        "title": "Streamline: Clear Current Scope",
+        "title": "lear Current Scope",
         "icon": "$(circle-slash)"
-      },
-      {
-        "command": "streamline.scopedPaths.toggleScope",
-        "title": "Streamline: Toggle Scope",
-        "icon": "$(activate-breakpoints)"
       },
       {
         "command": "streamline.relatedFiles.refresh",
@@ -64,7 +102,7 @@
       },
       {
         "command": "streamline.relatedFiles.toggleUseRelativePaths",
-        "title": "Toggle Use Relative Paths Related Files",
+        "title": "Toggle Relative Paths in Related Files",
         "icon": "$(selection)"
       },
       {
@@ -78,20 +116,16 @@
         "icon": "$(files)"
       },
       {
-        "command": "streamline.scopedPaths.refresh",
-        "title": "Streamline: Refresh Scoped Paths"
+        "command": "streamline.scopedPaths.addPathToCurrentScope",
+        "title": "Scope Selected"
       },
       {
-        "command": "streamline.scopedPaths.toggleScopeForFile",
-        "title": "Toggle Scope for File"
-      },
-      {
-        "command": "streamline.scopedPaths.suggestScopes",
-        "title": "Streamline: Suggest Scopes for File"
+        "command": "streamline.scopedPaths.deletePathFromCurrentScope",
+        "title": "Unscope Selected"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
-        "title": "Streamline: Quick Open Related Files"
+        "title": "Quick Open Related Files"
       },
       {
         "command": "streamline.tabHistory.refresh",
@@ -104,20 +138,50 @@
         "icon": "$(trash)"
       },
       {
-        "command": "streamline.highlightedPaths.refresh",
-        "title": "Streamline: Refresh Highlighted Paths",
-        "icon": "$(refresh)"
+        "command": "streamline.tabHistory.enableBackup",
+        "title": "Enable Backup",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "streamline.tabHistory.disableBackup",
+        "title": "Disable Backup",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.bookmarks.add",
+        "title": "Bookmark Selected",
+        "icon": "$(bookmark)"
+      },
+      {
+        "command": "streamline.bookmarks.addToList",
+        "title": "Bookmark Selected to List...",
+        "icon": "$(bookmark)"
+      },
+      {
+        "command": "streamline.bookmarks.revealInExplorer",
+        "title": "Reveal Bookmark in Explorer",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.bookmarks.delete",
+        "title": "Delete Bookmark",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "streamline.bookmarks.changeCurrentList",
+        "title": "Change Current List",
+        "icon": "$(issue-closed)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "streamline.scopedPaths.unscope",
+          "command": "streamline.scopedPaths.disableScope",
           "group": "navigation@1",
           "when": "view == 'workbench.explorer.fileView' && streamline.scopedPaths.enabled"
         },
         {
-          "command": "streamline.scopedPaths.scope",
+          "command": "streamline.scopedPaths.enableScope",
           "group": "navigation@1",
           "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled"
         },
@@ -137,13 +201,23 @@
           "when": "view == relatedFiles"
         },
         {
-          "command": "streamline.tabHistory.clear",
+          "command": "streamline.tabHistory.enableBackup",
           "group": "navigation@1",
+          "when": "view == tabHistory && !streamline.tabHistory.backup.enabled"
+        },
+        {
+          "command": "streamline.tabHistory.disableBackup",
+          "group": "navigation@1",
+          "when": "view == tabHistory && streamline.tabHistory.backup.enabled"
+        },
+        {
+          "command": "streamline.tabHistory.clear",
+          "group": "navigation@2",
           "when": "view == tabHistory"
         },
         {
           "command": "streamline.tabHistory.refresh",
-          "group": "navigation@2",
+          "group": "navigation@3",
           "when": "view == tabHistory"
         }
       ],
@@ -152,13 +226,51 @@
           "command": "streamline.relatedFiles.copyPath",
           "when": "view == relatedFiles && viewItem == relatedFile",
           "group": "inline"
+        },
+        {
+          "command": "streamline.bookmarks.revealInExplorer",
+          "when": "view == bookmarks && (viewItem == file || viewItem == folder)",
+          "group": "inline@1"
+        },
+        {
+          "command": "streamline.bookmarks.changeCurrentList",
+          "when": "view == bookmarks && viewItem == list",
+          "group": "inline@1"
+        },
+        {
+          "command": "streamline.bookmarks.delete",
+          "when": "view == bookmarks",
+          "group": "inline@2"
         }
       ],
       "explorer/context": [
         {
-          "command": "streamline.scopedPaths.toggleScopeForFile",
-          "group": "2_workspace@1",
+          "command": "streamline.scopedPaths.addPathToCurrentScope",
+          "group": "1_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
+        },
+        {
+          "command": "streamline.scopedPaths.deletePathFromCurrentScope",
+          "group": "1_workspace@2",
+          "when": "activeViewlet == 'workbench.view.explorer'"
+        },
+        {
+          "command": "streamline.bookmarks.add",
+          "group": "2_workspace@1"
+        },
+        {
+          "command": "streamline.bookmarks.addToList",
+          "group": "2_workspace@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "streamline.bookmarks.add",
+          "group": "1_context@1"
+        },
+        {
+          "command": "streamline.bookmarks.addToList",
+          "group": "1_context@2"
         }
       ]
     },
@@ -177,23 +289,21 @@
         },
         "streamline.scopedPaths.scopes": {
           "type": "object",
+          "default": {},
           "additionalProperties": {
             "type": "array",
             "items": {
               "type": "string"
             }
           },
-          "default": {
-            "default": []
-          },
           "description": "Scopes"
         },
         "streamline.highlightedPaths.patterns": {
           "type": "array",
+          "default": [],
           "items": {
             "type": "string"
           },
-          "default": [],
           "description": "Highlighted paths"
         },
         "streamline.relatedFiles.useRelativePaths": {
@@ -209,54 +319,40 @@
         "streamline.relatedFiles.exclude": {
           "type": "object",
           "default": {},
+          "additionalProperties": {
+            "type": "boolean"
+          },
           "description": "Custom exclude patterns for related files view"
         },
-        "streamline.tabHistory.enabled": {
+        "streamline.tabHistory.backup.enabled": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Enable tab history backup"
         },
-        "streamline.tabHistory.records": {
+        "streamline.tabHistory.backup.size": {
+          "type": "number",
+          "default": 100,
+          "description": "Tab history backup size"
+        },
+        "streamline.tabHistory.backup.records": {
           "type": "object",
           "default": {},
+          "additionalProperties": {
+            "type": "number"
+          },
           "description": "Tab history backup records"
         },
-        "streamline.tabHistory.size": {
-          "type": "number",
-          "default": 25,
-          "description": "Tab history backup size"
+        "streamline.bookmarks.currentList": {
+          "type": "string",
+          "default": "default",
+          "description": "Current bookmarks list"
+        },
+        "streamline.bookmarks.serializedBookmarks": {
+          "type": "array",
+          "default": [],
+          "description": "Serialized bookmarks"
         }
       }
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test",
-    "deploy": "rimraf ./out && npm run test && vsce package && vsce publish"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@types/vscode": "^1.88.0",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
-    "@typescript-eslint/parser": "^7.7.1",
-    "@vscode/test-cli": "^0.0.8",
-    "@vscode/test-electron": "^2.3.9",
-    "eslint": "^8.57.0",
-    "rimraf": "^5.0.5",
-    "typescript": "^5.4.5"
-  },
-  "publisher": "vitaly-rudenko",
-  "icon": "./icon.png",
-  "repository": {
-    "url": "https://github.com/vitaly-rudenko/streamline"
-  },
-  "dependencies": {
-    "date-fns": "^3.6.0",
-    "lru-cache": "^10.2.2"
   }
 }

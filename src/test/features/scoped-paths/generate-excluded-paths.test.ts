@@ -22,16 +22,18 @@ const defaultPaths = [
 ]
 
 function createDirectoryReader(paths = defaultPaths) {
-  return async (path: string): Promise<string[]> => {
-    if (path === '') {
-      return paths.filter((p) => !p.includes('/'))
-    }
+  return {
+    read: async (path: string): Promise<string[]> => {
+      if (path === '') {
+        return paths.filter((p) => !p.includes('/'))
+      }
 
-    return paths.filter((p) =>
-      p.startsWith(path)
-        ? p.split('/').length === path.split('/').length + 1
-        : false,
-    )
+      return paths.filter((p) =>
+        p.startsWith(path)
+          ? p.split('/').length === path.split('/').length + 1
+          : false,
+      )
+    }
   }
 }
 

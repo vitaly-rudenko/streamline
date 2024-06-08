@@ -1,6 +1,6 @@
 import { getParents } from '../../utils/get-parents'
 
-export async function generateExcludedPaths(includedPaths: string[], readDirectory: (path: string) => Promise<string[]>): Promise<string[]> {
+export async function generateExcludedPaths(includedPaths: string[], directoryReader: { read: (path: string) => Promise<string[]> }): Promise<string[]> {
   const includedPathsWithParents = new Set(
     includedPaths.flatMap((includedPath) => [includedPath, ...getParents(includedPath)])
   )
@@ -10,7 +10,7 @@ export async function generateExcludedPaths(includedPaths: string[], readDirecto
   for (const includedPath of includedPaths) {
     const parents = getParents(includedPath)
 
-    const children = (await Promise.all(parents.map(parent => readDirectory(parent))))
+    const children = (await Promise.all(parents.map(parent => directoryReader.read(parent))))
       .flat()
       .filter((child) =>
         !includedPathsWithParents.has(child) &&

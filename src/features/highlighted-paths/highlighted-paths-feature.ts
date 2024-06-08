@@ -1,38 +1,26 @@
 import * as vscode from 'vscode'
+import { HighlightedPathsConfig } from './highlighted-paths-config'
 
-export async function createHighlightedPathsFeature(input: {
-  context: vscode.ExtensionContext
-  onHighlightChanged: (payload: vscode.Uri | vscode.Uri[] | undefined) => unknown
-}) {
-  const { context, onHighlightChanged } = input
+export function createHighlightedPathsFeature(input: { context: vscode.ExtensionContext, onChange: () => unknown }) {
+  const { context, onChange } = input
 
-  let cachedPatternRegExps: RegExp[] = []
+  const config = new HighlightedPathsConfig()
 
-  function isHighlighted(path: string): boolean {
-    return cachedPatternRegExps.some(regExp => regExp.test(path))
-  }
-
-  async function refresh() {
-    const config = vscode.workspace.getConfiguration('streamline')
-    const patterns = config.get<string[]>('highlightedPaths.patterns', [])
-
-    cachedPatternRegExps = patterns.map(pattern => new RegExp(pattern))
-
-    onHighlightChanged(undefined)
+  function isPathHighlighted(path: string): boolean {
+    return config.getCachedCombinedPatternRegExp()?.test(path) === true
   }
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.highlightedPaths.refresh', async () => {
-      await refresh()
-    })
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('streamline.highlightedPaths')) {
+        if (config.load()) {
+          onChange()
+        }
+      }
+    }),
   )
 
-  context.subscriptions.push(
-    vscode.workspace.onDidCreateFiles((event) => onHighlightChanged(event.files.map(uri => uri))),
-    vscode.workspace.onDidRenameFiles((event) => onHighlightChanged(event.files.map(file => file.newUri))),
-  )
+  config.load()
 
-  await refresh()
-
-  return { isHighlighted }
+  return { isPathHighlighted }
 }

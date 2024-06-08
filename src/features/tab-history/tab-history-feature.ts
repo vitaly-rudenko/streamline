@@ -1,26 +1,17 @@
 import * as vscode from 'vscode'
 import { TabHistoryTreeDataProvider } from './tab-history-tree-data-provider'
 import { TabHistoryStorage } from './tab-history-storage'
+import { TabHistoryConfig } from './tab-history-config'
 
-export async function createTabHistoryFeature(input: {
-  context: vscode.ExtensionContext
-}) {
+const BACKUP_DEBOUNCE_MS = 1000
+
+export async function createTabHistoryFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
+  const config = new TabHistoryConfig()
   const tabHistoryStorage = new TabHistoryStorage(100)
   const tabHistoryTreeDataProvider = new TabHistoryTreeDataProvider(tabHistoryStorage)
   const tabHistoryTreeView = vscode.window.createTreeView('tabHistory', { treeDataProvider: tabHistoryTreeDataProvider })
-
-  context.subscriptions.push(
-    tabHistoryTreeView,
-    // re-sort tabs in background when panel is not visible
-    tabHistoryTreeView.onDidChangeVisibility((event) => {
-      if (!event.visible) {
-        tabHistoryStorage.sort()
-        tabHistoryTreeDataProvider.refresh()
-      }
-    })
-  )
 
   let backupTimeoutId: NodeJS.Timeout | undefined
   function scheduleBackup() {
@@ -29,32 +20,34 @@ export async function createTabHistoryFeature(input: {
     }
 
     backupTimeoutId = setTimeout(async () => {
-      backupTimeoutId = undefined
-
-      const config = vscode.workspace.getConfiguration('streamline')
-      const size = config.get<number>('tabHistory.size', 100)
-      const enabled = config.get<boolean>('tabHistory.enabled', true)
-
-      if (enabled) {
-        await config.update('tabHistory.records', tabHistoryStorage.export(size))
+      if (config.getBackupEnabled()) {
+        config.setBackupRecords(tabHistoryStorage.export(config.getBackupSize()))
+        await config.save()
       }
-    }, 5_000)
+    }, BACKUP_DEBOUNCE_MS)
   }
 
-  // Update timestamps once a minute
-  setInterval(() => tabHistoryTreeDataProvider.refresh(), 60_000)
-
-  async function refresh() {
-    const config = vscode.workspace.getConfiguration('streamline')
-    const records = config.get<Record<string, number>>('tabHistory.records', {})
-
-    tabHistoryStorage.import(records)
-    tabHistoryTreeDataProvider.refresh()
+  async function updateContext() {
+    try {
+      await vscode.commands.executeCommand('setContext', 'streamline.tabHistory.backup.enabled', config.getBackupEnabled())
+    } catch (error) {
+      console.warn('Could not update context', error)
+    }
   }
 
   context.subscriptions.push(
+    tabHistoryTreeView,
+    // re-sort tabs in background
+    tabHistoryTreeView.onDidChangeVisibility(() => {
+      tabHistoryStorage.sort()
+      tabHistoryTreeDataProvider.refresh()
+    })
+  )
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('streamline.tabHistory.refresh', async () => {
-      await refresh()
+      tabHistoryStorage.sort()
+      tabHistoryTreeDataProvider.refresh()
     })
   )
 
@@ -67,7 +60,36 @@ export async function createTabHistoryFeature(input: {
     })
   )
 
+  async function setBackupEnabled(value: boolean) {
+    config.setBackupEnabled(value)
+
+    scheduleBackup()
+    await updateContext()
+    await config.save()
+  }
+
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.tabHistory.enableBackup', async () => {
+      await setBackupEnabled(true)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.tabHistory.disableBackup', async () => {
+      await setBackupEnabled(false)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(async (event) => {
+      if (event.affectsConfiguration('streamline.tabHistory')) {
+        if (config.load()) {
+          tabHistoryStorage.import(config.getBackupRecords())
+          tabHistoryTreeDataProvider.refresh()
+          await updateContext()
+        }
+      }
+    }),
     vscode.window.onDidChangeActiveTextEditor(async (event) => {
       const uri = event?.document.uri
       if (!uri) return
@@ -79,7 +101,10 @@ export async function createTabHistoryFeature(input: {
     }),
   )
 
-  await refresh()
+  config.load()
+  tabHistoryStorage.import(config.getBackupRecords())
+  await updateContext()
 
-  return { refresh }
+  // Update timestamps once a minute
+  setInterval(() => tabHistoryTreeDataProvider.refresh(), 60_000)
 }

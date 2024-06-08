@@ -4,30 +4,24 @@ import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-f
 import { createRelatedFilesFeature } from './features/related-files/related-files-feature'
 import { uriToPath } from './utils/uri'
 import { createTabHistoryFeature } from './features/tab-history/tab-history-feature'
+import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 
 export async function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
 
-	const highlightedPathsFeature = await createHighlightedPathsFeature({
+	const highlightedPathsFeature = createHighlightedPathsFeature({
 		context,
-		onHighlightChanged: (payload) => onDidChangeFileDecorationsEmitter.fire(payload),
-	})
-
-	const relatedFilesFeature = await createRelatedFilesFeature({
-		context,
+		onChange: () => onDidChangeFileDecorationsEmitter.fire(undefined),
 	})
 
 	const scopedPathsFeature = await createScopedPathsFeature({
 		context,
-		onScopeChanged: async (payload) => {
-			onDidChangeFileDecorationsEmitter.fire(payload)
-			await relatedFilesFeature.refresh()
-		},
+		onChange: async () => onDidChangeFileDecorationsEmitter.fire(undefined),
 	})
 
-	const tabHistoryFeature = await createTabHistoryFeature({
-		context,
-	})
+	createRelatedFilesFeature({ context })
+	await createTabHistoryFeature({ context })
+	createBookmarksFeature({ context })
 
 	const fileDecorationProvider: vscode.FileDecorationProvider = {
 		onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,
@@ -35,9 +29,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			const path = uriToPath(uri)
 			if (!path) return undefined
 
-			const isScoped = scopedPathsFeature.isScoped(path)
-			const isParentOfScoped = scopedPathsFeature.isParentOfScoped(path)
-			const isHighlighted = highlightedPathsFeature.isHighlighted(path)
+			const isScoped = scopedPathsFeature.isPathCurrentlyScoped(path)
+			const isParentOfScoped = scopedPathsFeature.isParentOfCurrentlyScopedPaths(path)
+			const isHighlighted = highlightedPathsFeature.isPathHighlighted(path)
 
 			if (isHighlighted || isParentOfScoped || isScoped) {
 				return new vscode.FileDecoration(
