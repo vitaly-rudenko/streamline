@@ -1,4 +1,5 @@
 import { getConfig } from '../../config'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 
 export class HighlightedPathsConfig {
   private _patterns: string[] = []
@@ -25,8 +26,4 @@ export class HighlightedPathsConfig {
   get cachedCombinedPatternRegExp() {
     return this._cachedCombinedPatternRegExp
   }
-}
-
-function areArraysShallowEqual<T>(a: readonly T[], b: readonly T[]): boolean {
-  return a.length === b.length && a.every((_, i) => a[i] === b[i])
 }
