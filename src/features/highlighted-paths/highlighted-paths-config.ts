@@ -24,7 +24,9 @@ export class HighlightedPathsConfig {
   }
 
   _updatePatternsCache() {
-    this._cachedCombinedPatternRegExp = new RegExp(this._patterns.join('|'))
+    this._cachedCombinedPatternRegExp = this._patterns.length > 0
+      ? new RegExp(this._patterns.join('|'))
+      : undefined
   }
 
   getCachedCombinedPatternRegExp() {

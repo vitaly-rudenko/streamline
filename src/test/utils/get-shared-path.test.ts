@@ -1,7 +1,7 @@
 import assert from 'assert'
 import { getSharedPath } from '../../utils/get-shared-path'
 
-suite('getSharedPaths()', () => {
+suite('getSharedPath()', () => {
   test('returns the shared path for given paths', () => {
     assert.deepEqual(
       getSharedPath([
