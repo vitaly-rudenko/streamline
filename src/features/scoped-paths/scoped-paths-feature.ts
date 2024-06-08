@@ -76,13 +76,13 @@ export async function createScopedPathsFeature(input: {
   }
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.scope', async () => {
+		vscode.commands.registerCommand('streamline.scopedPaths.enableScope', async () => {
       await setEnabled(true)
 		})
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.unscope', async () => {
+		vscode.commands.registerCommand('streamline.scopedPaths.disableScope', async () => {
       await setEnabled(false)
 		})
 	)
@@ -93,20 +93,47 @@ export async function createScopedPathsFeature(input: {
 		})
 	)
 
-  // TODO: allow adding multiple selected files/folders to scope at once (in explorer)
-  context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.toggleScopeForPath', async (uri: vscode.Uri | undefined) => {
-      uri ||= vscode.window.activeTextEditor?.document.uri
-      if (!uri) return
+  function getTargetPathsForCommand(uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) {
+    let uris: vscode.Uri[] = []
+    if (selectedUris && selectedUris.length > 0) {
+      uris = selectedUris
+    } else if (uri) {
+      uris = [uri]
+    } else if (vscode.window.activeTextEditor?.document.uri) {
+      uris = [vscode.window.activeTextEditor.document.uri]
+    }
 
-			const path = uriToPath(uri)
-      if (!path) return
+    return uris.map(uri => uriToPath(uri)).filter((path): path is string => path !== undefined)
+  }
+
+  context.subscriptions.push(
+		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+			const paths = getTargetPathsForCommand(uri, selectedUris)
+      if (paths.length === 0) return
 
       config.setScopesObject({
         ...config.getScopesObject(),
-        [config.getCurrentScope()]: config.getCachedCurrentlyScopedPathsSet().has(path)
-          ? config.getCachedCurrentlyScopedPaths().filter(p => p !== path)
-          : [...config.getCachedCurrentlyScopedPaths(), path]
+        [config.getCurrentScope()]: [
+          ...config.getCachedCurrentlyScopedPaths(),
+          ...paths.filter(path => !config.getCachedCurrentlyScopedPathsSet().has(path)),
+        ]
+      })
+
+      onChange()
+
+      await updateExcludes()
+      await config.save()
+		})
+	)
+
+  context.subscriptions.push(
+		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      const paths = new Set(getTargetPathsForCommand(uri, selectedUris))
+      if (paths.size === 0) return
+
+      config.setScopesObject({
+        ...config.getScopesObject(),
+        [config.getCurrentScope()]: config.getCachedCurrentlyScopedPaths().filter(path => !paths.has(path)),
       })
 
       onChange()

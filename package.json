@@ -72,28 +72,28 @@
     "commands": [
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
-        "title": "Streamline: Select Scope",
+        "title": "Select Current Scope",
         "icon": "$(chevron-down)"
       },
       {
-        "command": "streamline.scopedPaths.scope",
+        "command": "streamline.scopedPaths.toggleScope",
+        "title": "Toggle Scope",
+        "icon": "$(activate-breakpoints)"
+      },
+      {
+        "command": "streamline.scopedPaths.enableScope",
         "title": "Scope",
         "icon": "$(circle-large-outline)"
       },
       {
-        "command": "streamline.scopedPaths.unscope",
+        "command": "streamline.scopedPaths.disableScope",
         "title": "Unscope",
         "icon": "$(pass-filled)"
       },
       {
         "command": "streamline.scopedPaths.clearCurrentScope",
-        "title": "Streamline: Clear Current Scope",
+        "title": "lear Current Scope",
         "icon": "$(circle-slash)"
-      },
-      {
-        "command": "streamline.scopedPaths.toggleScope",
-        "title": "Streamline: Toggle Scope",
-        "icon": "$(activate-breakpoints)"
       },
       {
         "command": "streamline.relatedFiles.refresh",
@@ -116,12 +116,16 @@
         "icon": "$(files)"
       },
       {
-        "command": "streamline.scopedPaths.toggleScopeForPath",
-        "title": "Add/Remove Selected from Current Scope"
+        "command": "streamline.scopedPaths.addPathToCurrentScope",
+        "title": "Scope Selected"
+      },
+      {
+        "command": "streamline.scopedPaths.deletePathFromCurrentScope",
+        "title": "Unscope Selected"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
-        "title": "Streamline: Quick Open Related Files"
+        "title": "Quick Open Related Files"
       },
       {
         "command": "streamline.tabHistory.refresh",
@@ -135,12 +139,12 @@
       },
       {
         "command": "streamline.tabHistory.enableBackup",
-        "title": "Enable backup",
+        "title": "Enable Backup",
         "icon": "$(eye-closed)"
       },
       {
         "command": "streamline.tabHistory.disableBackup",
-        "title": "Disable backup",
+        "title": "Disable Backup",
         "icon": "$(eye)"
       },
       {
@@ -155,12 +159,12 @@
       },
       {
         "command": "streamline.bookmarks.revealInExplorer",
-        "title": "Reveal in Explorer",
+        "title": "Reveal Bookmark in Explorer",
         "icon": "$(eye)"
       },
       {
         "command": "streamline.bookmarks.delete",
-        "title": "Delete bookmark",
+        "title": "Delete Bookmark",
         "icon": "$(trash)"
       },
       {
@@ -172,12 +176,12 @@
     "menus": {
       "view/title": [
         {
-          "command": "streamline.scopedPaths.unscope",
+          "command": "streamline.scopedPaths.disableScope",
           "group": "navigation@1",
           "when": "view == 'workbench.explorer.fileView' && streamline.scopedPaths.enabled"
         },
         {
-          "command": "streamline.scopedPaths.scope",
+          "command": "streamline.scopedPaths.enableScope",
           "group": "navigation@1",
           "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled"
         },
@@ -241,17 +245,22 @@
       ],
       "explorer/context": [
         {
-          "command": "streamline.scopedPaths.toggleScopeForPath",
-          "group": "2_workspace@1",
+          "command": "streamline.scopedPaths.addPathToCurrentScope",
+          "group": "1_workspace@1",
+          "when": "activeViewlet == 'workbench.view.explorer'"
+        },
+        {
+          "command": "streamline.scopedPaths.deletePathFromCurrentScope",
+          "group": "1_workspace@2",
           "when": "activeViewlet == 'workbench.view.explorer'"
         },
         {
           "command": "streamline.bookmarks.add",
-          "group": "2_workspace@2"
+          "group": "2_workspace@1"
         },
         {
           "command": "streamline.bookmarks.addToList",
-          "group": "2_workspace@3"
+          "group": "2_workspace@2"
         }
       ],
       "editor/context": [
