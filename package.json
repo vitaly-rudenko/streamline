@@ -134,6 +134,16 @@
         "icon": "$(trash)"
       },
       {
+        "command": "streamline.tabHistory.enableBackup",
+        "title": "Enable backup",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "streamline.tabHistory.disableBackup",
+        "title": "Disable backup",
+        "icon": "$(eye)"
+      },
+      {
         "command": "streamline.bookmarks.add",
         "title": "Bookmark Selected",
         "icon": "$(bookmark)"
@@ -187,13 +197,23 @@
           "when": "view == relatedFiles"
         },
         {
-          "command": "streamline.tabHistory.clear",
+          "command": "streamline.tabHistory.enableBackup",
           "group": "navigation@1",
+          "when": "view == tabHistory && !streamline.tabHistory.backup.enabled"
+        },
+        {
+          "command": "streamline.tabHistory.disableBackup",
+          "group": "navigation@1",
+          "when": "view == tabHistory && streamline.tabHistory.backup.enabled"
+        },
+        {
+          "command": "streamline.tabHistory.clear",
+          "group": "navigation@2",
           "when": "view == tabHistory"
         },
         {
           "command": "streamline.tabHistory.refresh",
-          "group": "navigation@2",
+          "group": "navigation@3",
           "when": "view == tabHistory"
         }
       ],

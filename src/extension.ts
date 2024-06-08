@@ -20,7 +20,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	})
 
 	createRelatedFilesFeature({ context })
-	createTabHistoryFeature({ context })
+	await createTabHistoryFeature({ context })
 	createBookmarksFeature({ context })
 
 	const fileDecorationProvider: vscode.FileDecorationProvider = {

@@ -61,6 +61,10 @@ export class TabHistoryConfig {
     console.debug('[TabHistory] Config has been saved')
   }
 
+  set backupEnabled(value: boolean) {
+    this._backupEnabled = value
+  }
+
   get backupEnabled() {
     return this._backupEnabled
   }
