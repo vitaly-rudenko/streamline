@@ -4,7 +4,7 @@ import { LRUCache } from 'lru-cache'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
 import { getBasename } from '../../utils/get-basename'
 import { getRelatedFilesQueries } from './get-related-files-queries'
-import { config } from '../../config'
+import type { RelatedFilesConfig } from './related-files-config'
 
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -13,16 +13,14 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   private _excludePattern: string | undefined
   private readonly _cache = new LRUCache<string, RelatedFileTreeItem[]>({ max: 100 })
 
-  useRelativePaths = false
-  useExcludes = false
+  constructor(private readonly config: RelatedFilesConfig) {}
 
   refresh(): void {
     // TODO: generate this outside of the data provider and pass it here instead
-    if (this.useExcludes) {
+    if (this.config.useExcludes) {
       const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
-      const customExcludes = config.get<Record<string, unknown>>('relatedFiles.exclude')
 
-      const excludeEntries = Object.entries({ ...searchExcludes, ...customExcludes })
+      const excludeEntries = Object.entries({ ...searchExcludes, ...this.config.customExcludes })
       this._excludePattern = excludeEntries.length > 0
         ? `{${excludeEntries.filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
         : undefined
@@ -71,7 +69,9 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       uris.sort((a, b) => a.path.localeCompare(b.path))
 
       // Sort files by distance
-      if (this.useRelativePaths) uris.sort((a, b) => a.path.split('/').length - b.path.split('/').length)
+      if (this.config.useRelativePaths) {
+        uris.sort((a, b) => a.path.split('/').length - b.path.split('/').length)
+      }
 
       // Sort files by basename equality
       uris.sort((a, b) => {
@@ -106,7 +106,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
 
   createRelatedFileTreeItem(originalUri: vscode.Uri, relatedUri: vscode.Uri, isBestMatch?: boolean) {
     let label: string
-    if (this.useRelativePaths) {
+    if (this.config.useRelativePaths) {
       label = path.relative(originalUri.path, relatedUri.path).replace('../', '')
       if (!label.startsWith('../')) label = './' + label
     } else {

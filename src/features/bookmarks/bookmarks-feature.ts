@@ -58,16 +58,18 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       if (!activeTextEditor) return
 
       for (const selection of activeTextEditor.selections) {
+        const preview = (
+          selection.isEmpty
+            ? activeTextEditor.document.getText(activeTextEditor.document.lineAt(selection.start.line).range).trim()
+            : activeTextEditor.document.getText(selection).trim()
+        ).slice(0, 256)
+
         bookmarks.push({
           type: 'selection',
           uri: activeTextEditor.document.uri,
           list,
           selection,
-          preview: (
-            selection.isEmpty
-              ? activeTextEditor.document.getText(activeTextEditor.document.lineAt(selection.start.line).range).trim()
-              : activeTextEditor.document.getText(selection).trim()
-          ).slice(0, 256),
+          preview,
         })
       }
 

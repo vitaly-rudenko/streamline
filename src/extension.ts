@@ -16,7 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const scopedPathsFeature = await createScopedPathsFeature({
 		context,
-		onScopeChanged: async (payload) => onDidChangeFileDecorationsEmitter.fire(payload),
+		onChange: async () => onDidChangeFileDecorationsEmitter.fire(undefined),
 	})
 
 	createRelatedFilesFeature({ context })
@@ -29,9 +29,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			const path = uriToPath(uri)
 			if (!path) return undefined
 
-			const isScoped = scopedPathsFeature.isScoped(path)
-			const isParentOfScoped = scopedPathsFeature.isParentOfScoped(path)
-			const isHighlighted = highlightedPathsFeature.isHighlighted(path)
+			const isScoped = scopedPathsFeature.isPathCurrentlyScoped(path)
+			const isParentOfScoped = scopedPathsFeature.isParentOfCurrentlyScopedPaths(path)
+			const isHighlighted = highlightedPathsFeature.isPathHighlighted(path)
 
 			if (isHighlighted || isParentOfScoped || isScoped) {
 				return new vscode.FileDecoration(

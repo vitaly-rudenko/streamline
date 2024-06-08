@@ -1,31 +1,26 @@
 import * as vscode from 'vscode'
+import { HighlightedPathsConfig } from './highlighted-paths-config'
 
 export function createHighlightedPathsFeature(input: { context: vscode.ExtensionContext, onChange: () => unknown }) {
   const { context, onChange } = input
 
-  let pattern: RegExp
-
-  function loadConfig() {
-    const config = vscode.workspace.getConfiguration('streamline')
-    const patterns = config.get<string[]>('highlightedPaths.patterns', [])
-
-    pattern = new RegExp(patterns.join('|'))
-  }
+  const config = new HighlightedPathsConfig()
 
   function isPathHighlighted(path: string): boolean {
-    return pattern.test(path)
+    return config.cachedCombinedPatternRegExp?.test(path) === true
   }
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.highlightedPaths')) {
-        loadConfig()
-        onChange()
+        if (config.load()) {
+          onChange()
+        }
       }
     }),
   )
 
-  loadConfig()
+  config.load()
 
   return { isPathHighlighted }
 }
