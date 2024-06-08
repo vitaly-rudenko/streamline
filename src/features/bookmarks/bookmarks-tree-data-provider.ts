@@ -1,8 +1,9 @@
 import * as vscode from 'vscode'
-import type { Bookmark } from './bookmarks-feature'
 import { formatPaths } from '../../utils/format-paths'
 import { unique } from '../../utils/unique'
 import { getFilename } from '../../utils/get-filename'
+import type { BookmarksConfig } from './bookmarks-config'
+import type { Bookmark } from './types'
 
 type TreeItem = ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
@@ -10,15 +11,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
-  private _bookmarks: Bookmark[] = []
-  setBookmarks(bookmarks: Bookmark[]) {
-    this._bookmarks = bookmarks
-  }
-
-  private _currentList: string = 'default'
-  setCurrentList(currentList: string) {
-    this._currentList = currentList
-  }
+  constructor(private readonly config: BookmarksConfig) {}
 
   refresh(): void {
 		this._onDidChangeTreeData.fire()
@@ -30,12 +23,12 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (element === undefined) {
-      return unique(this._bookmarks.map(bookmark => bookmark.list))
+      return unique(this.config.getBookmarks().map(bookmark => bookmark.list))
         .sort()
-        .map(list => new ListTreeItem(list, this._currentList === list))
+        .map(list => new ListTreeItem(list, this.config.getCurrentList() === list))
     }
 
-    const listBookmarks = this._bookmarks.filter(bookmark => bookmark.list === element.list)
+    const listBookmarks = this.config.getBookmarks().filter(bookmark => bookmark.list === element.list)
 
     if (element instanceof FileTreeItem) {
       const bookmarks = listBookmarks.filter(

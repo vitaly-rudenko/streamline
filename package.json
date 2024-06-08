@@ -332,6 +332,16 @@
             "type": "number"
           },
           "description": "Tab history backup records"
+        },
+        "streamline.bookmarks.currentList": {
+          "type": "string",
+          "default": "default",
+          "description": "Current bookmarks list"
+        },
+        "streamline.bookmarks.serializedBookmarks": {
+          "type": "array",
+          "default": [],
+          "description": "Serialized bookmarks"
         }
       }
     }
