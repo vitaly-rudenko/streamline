@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.10.2",
+  "version": "0.11.0",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -148,6 +148,16 @@
         "icon": "$(eye)"
       },
       {
+        "command": "streamline.tabHistory.pinTab",
+        "title": "Pin Tab",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "streamline.tabHistory.unpinTab",
+        "title": "Unpin Tab",
+        "icon": "$(pinned)"
+      },
+      {
         "command": "streamline.bookmarks.add",
         "title": "Bookmark",
         "icon": "$(bookmark)"
@@ -241,6 +251,16 @@
           "command": "streamline.bookmarks.delete",
           "when": "view == bookmarks",
           "group": "inline@2"
+        },
+        {
+          "command": "streamline.tabHistory.pinTab",
+          "when": "view == tabHistory && viewItem == tab",
+          "group": "inline"
+        },
+        {
+          "command": "streamline.tabHistory.unpinTab",
+          "when": "view == tabHistory && viewItem == pinnedTab",
+          "group": "inline"
         }
       ],
       "explorer/context": [
@@ -341,6 +361,14 @@
             "type": "number"
           },
           "description": "Tab history backup records"
+        },
+        "streamline.tabHistory.pinnedPaths": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Pinned tabs in tab history"
         },
         "streamline.bookmarks.currentList": {
           "type": "string",

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { TabHistoryTreeDataProvider } from './tab-history-tree-data-provider'
+import { TabHistoryTreeDataProvider, type TabTreeItem } from './tab-history-tree-data-provider'
 import { TabHistoryStorage } from './tab-history-storage'
 import { TabHistoryConfig } from './tab-history-config'
 
@@ -10,7 +10,7 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
 
   const config = new TabHistoryConfig()
   const tabHistoryStorage = new TabHistoryStorage(100)
-  const tabHistoryTreeDataProvider = new TabHistoryTreeDataProvider(tabHistoryStorage)
+  const tabHistoryTreeDataProvider = new TabHistoryTreeDataProvider(tabHistoryStorage, config)
   const tabHistoryTreeView = vscode.window.createTreeView('tabHistory', { treeDataProvider: tabHistoryTreeDataProvider })
 
   let backupTimeoutId: NodeJS.Timeout | undefined
@@ -77,6 +77,24 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.tabHistory.disableBackup', async () => {
       await setBackupEnabled(false)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.tabHistory.pinTab', async (item: TabTreeItem) => {
+      config.setPinnedPaths([...config.getPinnedPaths(), item.uri.path])
+      tabHistoryTreeDataProvider.refresh()
+
+      await config.save()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.tabHistory.unpinTab', async (item: TabTreeItem) => {
+      config.setPinnedPaths(config.getPinnedPaths().filter(path => path !== item.uri.path))
+      tabHistoryTreeDataProvider.refresh()
+
+      await config.save()
     })
   )
 

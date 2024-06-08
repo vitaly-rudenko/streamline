@@ -1,4 +1,5 @@
 import { getConfig } from '../../config'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 
 const defaultBackupEnabled = false
@@ -9,12 +10,15 @@ export class TabHistoryConfig {
   private _backupEnabled: boolean = defaultBackupEnabled
   private _backupSize: number = defaultBackupSize
   private _backupRecords: Record<string, number> = defaultBackupRecords
+  private _pinnedPaths: string[] = []
+  private _cachedPinnedPathsSet: Set<string> = new Set()
 
   load() {
     const config = getConfig()
     const backupEnabled = config.get<boolean>('tabHistory.backup.enabled', defaultBackupEnabled)
     const backupSize = config.get<number>('tabHistory.backup.size', defaultBackupSize)
     const backupRecords = config.get<Record<string, number>>('tabHistory.backup.records', defaultBackupRecords)
+    const pinnedPaths = config.get<string[]>('tabHistory.pinnedPaths', [])
 
     let hasChanged = false
 
@@ -34,7 +38,14 @@ export class TabHistoryConfig {
       hasChanged = true
     }
 
-    console.debug('[TabHistory] Config has been loaded', { hasChanged, enabled: backupEnabled, size: backupSize, records: backupRecords })
+    if (!areArraysShallowEqual(this._pinnedPaths, pinnedPaths)) {
+      this._pinnedPaths = pinnedPaths
+      this._updatePinnedPathsCache()
+
+      hasChanged = true
+    }
+
+    console.debug('[TabHistory] Config has been loaded', { hasChanged, backupEnabled, backupSize, backupRecords, pinnedPaths })
 
     return hasChanged
   }
@@ -58,7 +69,24 @@ export class TabHistoryConfig {
         ? this._backupRecords : undefined
     )
 
+    await config.update(
+      'tabHistory.pinnedPaths',
+      this._pinnedPaths.length > 0 ? this._pinnedPaths : undefined
+    )
+
     console.debug('[TabHistory] Config has been saved')
+  }
+
+  private _updatePinnedPathsCache() {
+    this._cachedPinnedPathsSet = new Set(this._pinnedPaths)
+  }
+
+  getCachedPinnedPathsSet() {
+    return this._cachedPinnedPathsSet
+  }
+
+  getBackupSize() {
+    return this._backupSize
   }
 
   setBackupEnabled(value: boolean) {
@@ -69,15 +97,20 @@ export class TabHistoryConfig {
     return this._backupEnabled
   }
 
-  getBackupSize() {
-    return this._backupSize
-  }
-
   setBackupRecords(value: Record<string, number>) {
     this._backupRecords = value
   }
 
   getBackupRecords() {
     return this._backupRecords
+  }
+
+  setPinnedPaths(value: string[]) {
+    this._pinnedPaths = value
+    this._updatePinnedPathsCache()
+  }
+
+  getPinnedPaths() {
+    return this._pinnedPaths
   }
 }

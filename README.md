@@ -26,7 +26,8 @@ Available as an Explorer view and in the Command Palette – `Quick Open Related
 
 ## Tab history
 
-Go through your tab history to quickly find a recently opened file.
+Go through your tab history to quickly find a recently opened file.  
+Tabs can be pinned for easier access.
 
 ![Demo](docs/tab_history.gif)
 
