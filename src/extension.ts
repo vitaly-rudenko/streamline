@@ -6,7 +6,7 @@ import { uriToPath } from './utils/uri'
 import { createTabHistoryFeature } from './features/tab-history/tab-history-feature'
 import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 
-export async function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
 
 	const highlightedPathsFeature = createHighlightedPathsFeature({
