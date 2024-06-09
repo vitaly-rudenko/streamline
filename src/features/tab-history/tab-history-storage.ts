@@ -1,5 +1,6 @@
 import type { Tab } from './types'
 
+// TODO: refactor & simplify this class
 export class TabHistoryStorage {
   private tabs: Tab[] = []
 

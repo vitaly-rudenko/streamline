@@ -45,7 +45,7 @@ export async function createScopedPathsFeature(input: {
         .getConfiguration('files', null)
         .update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
     } catch (error) {
-      console.warn('Could not update workspace configuration', error)
+      console.warn('[ScopedPaths] Could not update workspace configuration', error)
     }
   }
 
@@ -61,7 +61,7 @@ export async function createScopedPathsFeature(input: {
     try {
       await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', config.getEnabled())
     } catch (error) {
-      console.warn('Could not update context', error)
+      console.warn('[ScopedPaths] Could not update context', error)
     }
   }
 
