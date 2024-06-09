@@ -28,25 +28,38 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     const children: TabTreeItem[] = []
 
     const tabs = this.tabHistoryStorage.list()
-      .sort((a, b) => {
-        const aPinned = this.config.getCachedPinnedPathsSet().has(a.path)
-        const bPinned = this.config.getCachedPinnedPathsSet().has(b.path)
+    const remainingTabsMap = new Map(tabs.map(tab => [tab.path, tab]))
 
-        if (aPinned && !bPinned) return -1
-        if (!aPinned && bPinned) return 1
+    const formattedPaths = formatPaths([...this.config.getPinnedPaths(), ...tabs.map(tab => tab.path)])
 
-        return 0
-      })
+    // Pinned tabs
+    for (const path of this.config.getPinnedPaths().sort()) {
+      const formattedPath = formattedPaths.get(path)!
+      const tab = remainingTabsMap.get(path)
 
-    const formattedPaths = formatPaths(tabs.map(tab => tab.path))
+      children.push(
+        new TabTreeItem(
+          formattedPath,
+          tab ? formatDistance(tab.openedAt, now, { addSuffix: true }) : undefined,
+          vscode.Uri.file(path),
+          true
+        )
+      )
+
+      remainingTabsMap.delete(path)
+    }
+
+    // Other tabs
     for (const tab of tabs) {
       const formattedPath = formattedPaths.get(tab.path)!
+      if (!remainingTabsMap.has(tab.path)) continue
+
       children.push(
         new TabTreeItem(
           formattedPath,
           formatDistance(tab.openedAt, now, { addSuffix: true }),
           vscode.Uri.file(tab.path),
-          this.config.getCachedPinnedPathsSet().has(tab.path),
+          false,
         )
       )
     }
@@ -58,14 +71,17 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
 export class TabTreeItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
-    public readonly date: string,
+    public readonly date: string | undefined,
     public readonly uri: vscode.Uri,
-    public readonly isPinned: boolean = false
+    public readonly isPinned: boolean
   ) {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.resourceUri = uri
     this.contextValue = isPinned ? 'pinnedTab' : 'tab'
-    this.description = isPinned ? `pinned – ${date}` : date
+    this.description = isPinned
+      ? (date ? `pinned – ${date}` : 'pinned')
+      : date
+
     this.command = {
       command: 'vscode.open',
       arguments: [uri],
