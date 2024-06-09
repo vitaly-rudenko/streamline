@@ -3,9 +3,9 @@ import { TabHistoryTreeDataProvider, type TabTreeItem } from './tab-history-tree
 import { TabHistoryStorage } from './tab-history-storage'
 import { TabHistoryConfig } from './tab-history-config'
 
-const BACKUP_DEBOUNCE_MS = 1000
+const BACKUP_DEBOUNCE_MS = 5_000
 
-export async function createTabHistoryFeature(input: { context: vscode.ExtensionContext }) {
+export function createTabHistoryFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
   const config = new TabHistoryConfig()
@@ -22,16 +22,16 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
     backupTimeoutId = setTimeout(async () => {
       if (config.getBackupEnabled()) {
         config.setBackupRecords(tabHistoryStorage.export(config.getBackupSize()))
-        await config.save()
+        config.saveInBackground()
       }
     }, BACKUP_DEBOUNCE_MS)
   }
 
-  async function updateContext() {
+  async function updateContextInBackground() {
     try {
       await vscode.commands.executeCommand('setContext', 'streamline.tabHistory.backup.enabled', config.getBackupEnabled())
     } catch (error) {
-      console.warn('Could not update context', error)
+      console.warn('[TabHistory] Could not update context', error)
     }
   }
 
@@ -45,70 +45,73 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.refresh', async () => {
+    vscode.commands.registerCommand('streamline.tabHistory.refresh', () => {
       tabHistoryStorage.sort()
       tabHistoryTreeDataProvider.refresh()
     })
   )
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.tabHistory.enableBackup', () => {
+      config.setBackupEnabled(true)
+      config.setBackupRecords(tabHistoryStorage.export(config.getBackupSize()))
+
+      scheduleBackup()
+      updateContextInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.tabHistory.disableBackup', () => {
+      config.setBackupEnabled(false)
+      config.setBackupRecords({})
+
+      updateContextInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('streamline.tabHistory.clear', () => {
+      config.setBackupRecords({})
+
       tabHistoryStorage.clear()
       tabHistoryTreeDataProvider.refresh()
 
-      scheduleBackup()
-    })
-  )
-
-  async function setBackupEnabled(value: boolean) {
-    config.setBackupEnabled(value)
-
-    scheduleBackup()
-    await updateContext()
-    await config.save()
-  }
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.enableBackup', async () => {
-      await setBackupEnabled(true)
+      config.saveInBackground()
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.disableBackup', async () => {
-      await setBackupEnabled(false)
-    })
-  )
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.pinTab', async (item: TabTreeItem) => {
+    vscode.commands.registerCommand('streamline.tabHistory.pinTab', (item: TabTreeItem) => {
       config.setPinnedPaths([...config.getPinnedPaths(), item.uri.path])
       tabHistoryTreeDataProvider.refresh()
 
-      await config.save()
+      config.saveInBackground()
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.unpinTab', async (item: TabTreeItem) => {
+    vscode.commands.registerCommand('streamline.tabHistory.unpinTab', (item: TabTreeItem) => {
       config.setPinnedPaths(config.getPinnedPaths().filter(path => path !== item.uri.path))
       tabHistoryTreeDataProvider.refresh()
 
-      await config.save()
+      config.saveInBackground()
     })
   )
 
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration(async (event) => {
+    vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.tabHistory')) {
-        if (config.load()) {
+        if (!config.isSavingInBackground && config.load()) {
           tabHistoryStorage.import(config.getBackupRecords())
           tabHistoryTreeDataProvider.refresh()
-          await updateContext()
+          updateContextInBackground()
         }
       }
     }),
-    vscode.window.onDidChangeActiveTextEditor(async (event) => {
+    vscode.window.onDidChangeActiveTextEditor((event) => {
       const uri = event?.document.uri
       if (!uri) return
 
@@ -121,7 +124,7 @@ export async function createTabHistoryFeature(input: { context: vscode.Extension
 
   config.load()
   tabHistoryStorage.import(config.getBackupRecords())
-  await updateContext()
+  updateContextInBackground()
 
   // Update timestamps once a minute
   setInterval(() => tabHistoryTreeDataProvider.refresh(), 60_000)

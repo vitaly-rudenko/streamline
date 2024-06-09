@@ -1,17 +1,20 @@
 import { getConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
+import { FeatureConfig } from '../feature-config'
 
 const defaultBackupEnabled = false
 const defaultBackupSize = 100
 const defaultBackupRecords = {}
 
-export class TabHistoryConfig {
+export class TabHistoryConfig extends FeatureConfig {
   private _backupEnabled: boolean = defaultBackupEnabled
   private _backupSize: number = defaultBackupSize
   private _backupRecords: Record<string, number> = defaultBackupRecords
   private _pinnedPaths: string[] = []
   private _cachedPinnedPathsSet: Set<string> = new Set()
+
+  constructor() { super('TabHistory') }
 
   load() {
     const config = getConfig()
@@ -65,8 +68,7 @@ export class TabHistoryConfig {
 
     await config.update(
       'tabHistory.backup.records',
-      Object.keys(this._backupRecords).length > 0
-        ? this._backupRecords : undefined
+      Object.keys(this._backupRecords).length > 0 ? this._backupRecords : undefined
     )
 
     await config.update(
