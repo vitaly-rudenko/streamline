@@ -265,7 +265,7 @@
         },
         {
           "command": "streamline.bookmarks.delete",
-          "when": "view == bookmarks && (viewItem == file || viewItem == selection || viewItem == folder)",
+          "when": "view == bookmarks && (viewItem == list || viewItem == file || viewItem == selection || viewItem == folder)",
           "group": "inline@2"
         },
         {

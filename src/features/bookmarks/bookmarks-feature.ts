@@ -104,7 +104,12 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.delete', (item: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
+    vscode.commands.registerCommand('streamline.bookmarks.delete', async (item: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
+      if (item instanceof ListTreeItem) {
+        const result = await vscode.window.showInformationMessage(`Delete list '${item.list}'?`, 'Delete', 'Cancel')
+        if (result !== 'Delete') return
+      }
+
       config.setBookmarks(
         config.getBookmarks().filter(bookmark => {
           if (item instanceof ListTreeItem) {
