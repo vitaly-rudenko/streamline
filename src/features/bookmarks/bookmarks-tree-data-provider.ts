@@ -86,7 +86,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
       children.push(
         isFolder
           ? new FolderTreeItem(label, element.list, uri, hasChildren)
-          : new FileTreeItem(isRealFile ? label : `[${label}]`, element.list, uri, hasChildren)
+          : new FileTreeItem(label, element.list, uri, hasChildren, isRealFile)
       )
     }
 
@@ -104,7 +104,7 @@ export class ListTreeItem extends vscode.TreeItem {
 }
 
 export class FolderTreeItem extends vscode.TreeItem {
-  constructor(public readonly label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean) {
+  constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean) {
     super(label, hasChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)
 
     this.iconPath = vscode.ThemeIcon.Folder
@@ -114,12 +114,12 @@ export class FolderTreeItem extends vscode.TreeItem {
 }
 
 export class FileTreeItem extends vscode.TreeItem {
-  constructor(public readonly label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean) {
-    super(label, hasChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)
+  constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean, isRealFile: boolean) {
+    super(isRealFile ? label : `[${label}]`, hasChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)
 
     this.iconPath = vscode.ThemeIcon.File
     this.resourceUri = uri
-    this.contextValue = 'file'
+    this.contextValue = isRealFile ? 'file' : 'virtualFile'
     this.command = {
       command: 'vscode.open',
       arguments: [uri],
@@ -129,7 +129,7 @@ export class FileTreeItem extends vscode.TreeItem {
 }
 
 export class SelectionTreeItem extends vscode.TreeItem {
-  constructor(public readonly label: string, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection) {
+  constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection) {
     super(label, vscode.TreeItemCollapsibleState.None)
 
     this.contextValue = 'selection'

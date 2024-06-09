@@ -70,10 +70,10 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
 
 export class TabTreeItem extends vscode.TreeItem {
   constructor(
-    public readonly label: string,
-    public readonly date: string | undefined,
+    label: string,
+    date: string | undefined,
     public readonly uri: vscode.Uri,
-    public readonly isPinned: boolean
+    isPinned: boolean
   ) {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.resourceUri = uri

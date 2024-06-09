@@ -90,8 +90,8 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.copyPath', async (relatedFileTreeItem: RelatedFileTreeItem) => {
-      await vscode.env.clipboard.writeText(relatedFileTreeItem.label)
+    vscode.commands.registerCommand('streamline.relatedFiles.copyPath', async (item: RelatedFileTreeItem) => {
+      await vscode.env.clipboard.writeText(item.textToCopy)
     })
   )
 

@@ -113,15 +113,16 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       label = vscode.workspace.asRelativePath(relatedUri)
     }
 
-    return new RelatedFileTreeItem(label, relatedUri, isBestMatch)
+    return new RelatedFileTreeItem(label, relatedUri, label, isBestMatch)
   }
 }
 
 export class RelatedFileTreeItem extends vscode.TreeItem {
   constructor(
-    public readonly label: string,
-    public readonly uri: vscode.Uri,
-    public readonly isBestMatch?: boolean,
+    label: string,
+    uri: vscode.Uri,
+    public readonly textToCopy: string,
+    isBestMatch?: boolean,
   ) {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.iconPath = isBestMatch ? new vscode.ThemeIcon('star-full') : undefined

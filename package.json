@@ -255,7 +255,7 @@
         },
         {
           "command": "streamline.bookmarks.revealInExplorer",
-          "when": "view == bookmarks && (viewItem == file || viewItem == folder)",
+          "when": "view == bookmarks && (viewItem == file || viewItem == virtualFile || viewItem == folder)",
           "group": "inline@1"
         },
         {
@@ -265,7 +265,7 @@
         },
         {
           "command": "streamline.bookmarks.delete",
-          "when": "view == bookmarks",
+          "when": "view == bookmarks && (viewItem == file || viewItem == selection || viewItem == folder)",
           "group": "inline@2"
         },
         {
