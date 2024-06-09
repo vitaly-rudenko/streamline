@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -76,11 +76,6 @@
         "icon": "$(chevron-down)"
       },
       {
-        "command": "streamline.scopedPaths.toggleScope",
-        "title": "Toggle Scope",
-        "icon": "$(activate-breakpoints)"
-      },
-      {
         "command": "streamline.scopedPaths.enableScope",
         "title": "Enable Scope",
         "icon": "$(circle-large-outline)"
@@ -109,13 +104,23 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "streamline.relatedFiles.toggleUseRelativePaths",
-        "title": "Toggle Relative Paths in Related Files",
+        "command": "streamline.relatedFiles.enableUseRelativePaths",
+        "title": "Enable Relative Paths in Related Files",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "streamline.relatedFiles.disableUseRelativePaths",
+        "title": "Disable Relative Paths in Related Files",
         "icon": "$(selection)"
       },
       {
-        "command": "streamline.relatedFiles.toggleUseExcludes",
-        "title": "Toggle Excludes in Related Files",
+        "command": "streamline.relatedFiles.enableUseExcludes",
+        "title": "Enable Excludes in Related Files",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "streamline.relatedFiles.disableUseExcludes",
+        "title": "Disable Excludes in Related Files",
         "icon": "$(exclude)"
       },
       {
@@ -187,24 +192,34 @@
     "menus": {
       "view/title": [
         {
-          "command": "streamline.scopedPaths.disableScope",
-          "group": "navigation@1",
-          "when": "view == 'workbench.explorer.fileView' && streamline.scopedPaths.enabled"
-        },
-        {
           "command": "streamline.scopedPaths.enableScope",
           "group": "navigation@1",
           "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled"
         },
         {
-          "command": "streamline.relatedFiles.toggleUseExcludes",
+          "command": "streamline.scopedPaths.disableScope",
           "group": "navigation@1",
-          "when": "view == relatedFiles"
+          "when": "view == 'workbench.explorer.fileView' && streamline.scopedPaths.enabled"
         },
         {
-          "command": "streamline.relatedFiles.toggleUseRelativePaths",
+          "command": "streamline.relatedFiles.enableUseExcludes",
+          "group": "navigation@1",
+          "when": "view == relatedFiles && !streamline.relatedFiles.useExcludes"
+        },
+        {
+          "command": "streamline.relatedFiles.disableUseExcludes",
+          "group": "navigation@1",
+          "when": "view == relatedFiles && streamline.relatedFiles.useExcludes"
+        },
+        {
+          "command": "streamline.relatedFiles.enableUseRelativePaths",
           "group": "navigation@2",
-          "when": "view == relatedFiles"
+          "when": "view == relatedFiles && !streamline.relatedFiles.useRelativePaths"
+        },
+        {
+          "command": "streamline.relatedFiles.disableUseRelativePaths",
+          "group": "navigation@2",
+          "when": "view == relatedFiles && streamline.relatedFiles.useRelativePaths"
         },
         {
           "command": "streamline.relatedFiles.refresh",

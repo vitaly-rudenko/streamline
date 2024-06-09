@@ -16,7 +16,6 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
   textStatusBarItem.show()
 
   const buttonStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1)
-  buttonStatusBarItem.command = 'streamline.scopedPaths.toggleScope'
   context.subscriptions.push(buttonStatusBarItem)
   buttonStatusBarItem.show()
 
@@ -51,6 +50,7 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
     textStatusBarItem.text = `Scope: ${config.getCurrentScope()}`
     textStatusBarItem.backgroundColor = config.getEnabled() ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
 
+    buttonStatusBarItem.command = config.getEnabled() ? 'streamline.scopedPaths.disableScope' : 'streamline.scopedPaths.enableScope'
     buttonStatusBarItem.text = config.getEnabled() ? '$(pass-filled)' : '$(circle-large-outline)'
     buttonStatusBarItem.backgroundColor = config.getEnabled() ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
   }
@@ -63,31 +63,27 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
     }
   }
 
-  function setEnabled(value: boolean) {
-    config.setEnabled(value)
-    onChange()
-
-    updateStatusBarItems()
-    updateContextInBackground()
-    updateExcludesInBackground()
-    config.saveInBackground()
-  }
-
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.enableScope', () => {
-      setEnabled(true)
+      config.setEnabled(true)
+      onChange()
+
+      updateStatusBarItems()
+      updateContextInBackground()
+      updateExcludesInBackground()
+      config.saveInBackground()
 		})
 	)
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.disableScope', () => {
-      setEnabled(false)
-		})
-	)
+      config.setEnabled(false)
+      onChange()
 
-  context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.toggleScope', () => {
-      setEnabled(!config.getEnabled())
+      updateStatusBarItems()
+      updateContextInBackground()
+      updateExcludesInBackground()
+      config.saveInBackground()
 		})
 	)
 

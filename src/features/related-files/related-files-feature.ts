@@ -19,6 +19,15 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     relatedFilesTreeDataProvider.clearCacheAndRefresh()
   }, 1_000)
 
+  async function updateContextInBackground() {
+    try {
+      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useExcludes', config.getUseExcludes())
+      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useRelativePaths', config.getUseRelativePaths())
+    } catch (error) {
+      console.warn('[ScopedPaths] Could not update context', error)
+    }
+  }
+
 	context.subscriptions.push(vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider))
 
   context.subscriptions.push(
@@ -41,19 +50,41 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.toggleUseRelativePaths', () => {
-      config.setUseRelativePaths(!config.getUseRelativePaths())
+    vscode.commands.registerCommand('streamline.relatedFiles.enableUseRelativePaths', () => {
+      config.setUseRelativePaths(true)
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
+      updateContextInBackground()
       config.saveInBackground()
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.toggleUseExcludes', () => {
-      config.setUseExcludes(!config.getUseExcludes())
+    vscode.commands.registerCommand('streamline.relatedFiles.disableUseRelativePaths', () => {
+      config.setUseRelativePaths(false)
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
+      updateContextInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.relatedFiles.enableUseExcludes', () => {
+      config.setUseExcludes(true)
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+
+      updateContextInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.relatedFiles.disableUseExcludes', () => {
+      config.setUseExcludes(false)
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+
+      updateContextInBackground()
       config.saveInBackground()
     })
   )
@@ -83,4 +114,5 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   )
 
   config.load()
+  updateContextInBackground()
 }
