@@ -23,7 +23,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (element === undefined) {
-      return unique(this.config.getBookmarks().map(bookmark => bookmark.list))
+      return unique([...this.config.getBookmarks().map(bookmark => bookmark.list), this.config.getCurrentList()])
         .sort()
         .map(list => new ListTreeItem(list, this.config.getCurrentList() === list))
     }
