@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -52,18 +52,21 @@
         {
           "id": "tabHistory",
           "name": "Tab history",
+          "contextualTitle": "Tab history",
           "visibility": "collapsed",
           "icon": "$(history)"
         },
         {
           "id": "relatedFiles",
           "name": "Related files",
+          "contextualTitle": "Related files",
           "visibility": "collapsed",
           "icon": "$(sparkle)"
         },
         {
           "id": "bookmarks",
           "name": "Bookmarks",
+          "contextualTitle": "Bookmarks",
           "visibility": "collapsed",
           "icon": "$(bookmark)"
         }
