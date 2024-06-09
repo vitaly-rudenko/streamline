@@ -4,7 +4,7 @@ export abstract class FeatureConfig {
 
   constructor(private readonly featureName: string) {}
 
-  abstract load(): void
+  abstract load(): boolean
   abstract save(): Promise<void>
 
   async saveInBackground() {

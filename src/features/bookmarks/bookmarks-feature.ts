@@ -2,12 +2,18 @@ import * as vscode from 'vscode'
 import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, type SelectionTreeItem } from './bookmarks-tree-data-provider'
 import { unique } from '../../utils/unique'
 import { BookmarksConfig } from './bookmarks-config'
+import { createDebouncedFunction } from '../../utils/create-debounced-function'
 
 export function createBookmarksFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
   const config = new BookmarksConfig()
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(config)
+
+  const scheduleConfigLoad = createDebouncedFunction(() => {
+    if (!config.load()) return
+    bookmarksTreeDataProvider.refresh()
+  }, 1_000)
 
   async function promptListSelection() {
     let selectedList = await vscode.window.showQuickPick(
@@ -67,7 +73,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       }
 
       bookmarksTreeDataProvider.refresh()
-      await config.save()
+      config.saveInBackground()
     })
   )
 
@@ -87,7 +93,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
       config.setCurrentList(selectedList)
       bookmarksTreeDataProvider.refresh()
-      await config.save()
+      config.saveInBackground()
     })
   )
 
@@ -98,7 +104,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.delete', async (item: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
+    vscode.commands.registerCommand('streamline.bookmarks.delete', (item: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
       config.setBookmarks(
         config.getBookmarks().filter(bookmark => {
           if (item instanceof ListTreeItem) {
@@ -114,15 +120,15 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       )
 
       bookmarksTreeDataProvider.refresh()
-      await config.save()
+      config.saveInBackground()
     })
   )
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.bookmarks')) {
-        if (config.load()) {
-          bookmarksTreeDataProvider.refresh()
+        if (!config.isSavingInBackground) {
+          scheduleConfigLoad()
         }
       }
     })

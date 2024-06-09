@@ -2,8 +2,7 @@ import * as vscode from 'vscode'
 import { TabHistoryTreeDataProvider, type TabTreeItem } from './tab-history-tree-data-provider'
 import { TabHistoryStorage } from './tab-history-storage'
 import { TabHistoryConfig } from './tab-history-config'
-
-const BACKUP_DEBOUNCE_MS = 5_000
+import { createDebouncedFunction } from '../../utils/create-debounced-function'
 
 export function createTabHistoryFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
@@ -13,19 +12,18 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
   const tabHistoryTreeDataProvider = new TabHistoryTreeDataProvider(tabHistoryStorage, config)
   const tabHistoryTreeView = vscode.window.createTreeView('tabHistory', { treeDataProvider: tabHistoryTreeDataProvider })
 
-  let backupTimeoutId: NodeJS.Timeout | undefined
-  function scheduleBackup() {
-    if (backupTimeoutId !== undefined) {
-      clearTimeout(backupTimeoutId)
-    }
+  const scheduleBackup = createDebouncedFunction(() => {
+    if (!config.getBackupEnabled()) return
+    config.setBackupRecords(tabHistoryStorage.export(config.getBackupSize()))
+    config.saveInBackground()
+  }, 5_000)
 
-    backupTimeoutId = setTimeout(async () => {
-      if (config.getBackupEnabled()) {
-        config.setBackupRecords(tabHistoryStorage.export(config.getBackupSize()))
-        config.saveInBackground()
-      }
-    }, BACKUP_DEBOUNCE_MS)
-  }
+  const scheduleConfigLoad = createDebouncedFunction(() => {
+    if (!config.load()) return
+    tabHistoryStorage.import(config.getBackupRecords())
+    tabHistoryTreeDataProvider.refresh()
+    updateContextInBackground()
+  }, 1_000)
 
   async function updateContextInBackground() {
     try {
@@ -104,10 +102,8 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.tabHistory')) {
-        if (!config.isSavingInBackground && config.load()) {
-          tabHistoryStorage.import(config.getBackupRecords())
-          tabHistoryTreeDataProvider.refresh()
-          updateContextInBackground()
+        if (!config.isSavingInBackground) {
+          scheduleConfigLoad()
         }
       }
     }),

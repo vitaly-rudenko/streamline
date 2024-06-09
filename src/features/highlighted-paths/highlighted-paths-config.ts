@@ -1,11 +1,14 @@
 import { getConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
+import { FeatureConfig } from '../feature-config'
 
-export class HighlightedPathsConfig {
+export class HighlightedPathsConfig extends FeatureConfig {
   private _patterns: string[] = []
   private _cachedCombinedPatternRegExp: RegExp | undefined
 
-  load(): boolean {
+  constructor() { super('HighlightedPaths') }
+
+  load() {
     const config = getConfig()
     const patterns = config.get<string[]>('highlightedPaths.patterns', [])
 
@@ -21,6 +24,17 @@ export class HighlightedPathsConfig {
     console.debug('[HighlightedPaths] Config has been loaded', { hasChanged, patterns })
 
     return hasChanged
+  }
+
+  async save() {
+    const config = getConfig()
+
+    await config.update(
+      'highlightedPaths.patterns',
+      this._patterns.length > 0 ? this._patterns : undefined
+    )
+
+    console.debug('[HighlightedPaths] Config has been saved')
   }
 
   _updatePatternsCache() {

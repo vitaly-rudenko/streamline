@@ -1,13 +1,16 @@
 import * as vscode from 'vscode'
 import { getConfig } from '../../config'
 import type { Bookmark, SerializedBookmark } from './types'
+import { FeatureConfig } from '../feature-config'
 
 const defaultCurrentList = 'default'
 
-export class BookmarksConfig {
+export class BookmarksConfig extends FeatureConfig {
   private _currentList = defaultCurrentList
   private _bookmarks: Bookmark[] = []
   private _cachedSerializedBookmarks: SerializedBookmark[] = []
+
+  constructor() { super('Bookmarks') }
 
   load() {
     const config = getConfig()

@@ -5,11 +5,9 @@ import { uriToPath } from '../../utils/uri'
 import { unique } from '../../utils/unique'
 import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { ScopedPathsConfig } from './scoped-paths-config'
+import { createDebouncedFunction } from '../../utils/create-debounced-function'
 
-export async function createScopedPathsFeature(input: {
-  context: vscode.ExtensionContext
-  onChange: () => unknown
-}) {
+export function createScopedPathsFeature(input: { context: vscode.ExtensionContext, onChange: () => unknown }) {
   const { context, onChange } = input
 
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 2)
@@ -25,15 +23,15 @@ export async function createScopedPathsFeature(input: {
   const config = new ScopedPathsConfig()
   const directoryReader = new CachedDirectoryReader()
 
-  function isPathCurrentlyScoped(path: string) {
-    return config.getCachedCurrentlyScopedPathsSet().has(path)
-  }
+  const scheduleConfigLoad = createDebouncedFunction(() => {
+    if (!config.load()) return
+    onChange()
+    updateStatusBarItems()
+    updateContextInBackground()
+    updateExcludesInBackground()
+  }, 1_000)
 
-  function isParentOfCurrentlyScopedPaths(path: string) {
-    return config.getCachedParentsOfCurrentlyScopedPathsSet().has(path)
-  }
-
-  async function updateExcludes() {
+  async function updateExcludesInBackground() {
     try {
       let excludes: Record<string, unknown> | undefined = undefined
       if (config.getEnabled()) {
@@ -57,7 +55,7 @@ export async function createScopedPathsFeature(input: {
     buttonStatusBarItem.backgroundColor = config.getEnabled() ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
   }
 
-  async function updateContext() {
+  async function updateContextInBackground() {
     try {
       await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', config.getEnabled())
     } catch (error) {
@@ -65,31 +63,31 @@ export async function createScopedPathsFeature(input: {
     }
   }
 
-  async function setEnabled(value: boolean) {
+  function setEnabled(value: boolean) {
     config.setEnabled(value)
     onChange()
 
     updateStatusBarItems()
-    await updateContext()
-    await updateExcludes()
-    await config.save()
+    updateContextInBackground()
+    updateExcludesInBackground()
+    config.saveInBackground()
   }
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.enableScope', async () => {
-      await setEnabled(true)
+		vscode.commands.registerCommand('streamline.scopedPaths.enableScope', () => {
+      setEnabled(true)
 		})
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.disableScope', async () => {
-      await setEnabled(false)
+		vscode.commands.registerCommand('streamline.scopedPaths.disableScope', () => {
+      setEnabled(false)
 		})
 	)
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.toggleScope', async() => {
-      await setEnabled(!config.getEnabled())
+		vscode.commands.registerCommand('streamline.scopedPaths.toggleScope', () => {
+      setEnabled(!config.getEnabled())
 		})
 	)
 
@@ -107,7 +105,7 @@ export async function createScopedPathsFeature(input: {
   }
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
 			const paths = getTargetPathsForCommand(uri, selectedUris)
       if (paths.length === 0) return
 
@@ -121,13 +119,13 @@ export async function createScopedPathsFeature(input: {
 
       onChange()
 
-      await updateExcludes()
-      await config.save()
+      updateExcludesInBackground()
+      config.saveInBackground()
 		})
 	)
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
       const paths = new Set(getTargetPathsForCommand(uri, selectedUris))
       if (paths.size === 0) return
 
@@ -138,8 +136,8 @@ export async function createScopedPathsFeature(input: {
 
       onChange()
 
-      await updateExcludes()
-      await config.save()
+      updateExcludesInBackground()
+      config.saveInBackground()
 		})
 	)
 
@@ -163,34 +161,26 @@ export async function createScopedPathsFeature(input: {
       onChange()
 
       updateStatusBarItems()
-      await updateExcludes()
-      await config.save()
+      updateExcludesInBackground()
+      config.saveInBackground()
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', async () => {
-      config.setScopesObject({
-        ...config.getScopesObject(),
-        [config.getCurrentScope()]: []
-      })
-
+    vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', () => {
+      config.setScopesObject({ ...config.getScopesObject(), [config.getCurrentScope()]: [] })
       onChange()
 
-      await updateExcludes()
-      await config.save()
+      updateExcludesInBackground()
+      config.saveInBackground()
     })
   )
 
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration(async (event) => {
+    vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.scopedPaths')) {
-        if (config.load()) {
-          onChange()
-
-          updateStatusBarItems()
-          await updateContext()
-          await updateExcludes()
+        if (!config.isSavingInBackground) {
+          scheduleConfigLoad()
         }
       }
     }),
@@ -200,8 +190,15 @@ export async function createScopedPathsFeature(input: {
 
   config.load()
   updateStatusBarItems()
-  await updateContext()
-  await updateExcludes()
+  updateContextInBackground()
+  updateExcludesInBackground()
 
-  return { isPathCurrentlyScoped, isParentOfCurrentlyScopedPaths }
+  return {
+    isPathCurrentlyScoped(path: string) {
+      return config.getCachedCurrentlyScopedPathsSet().has(path)
+    },
+    isParentOfCurrentlyScopedPaths(path: string) {
+      return config.getCachedParentsOfCurrentlyScopedPathsSet().has(path)
+    }
+  }
 }

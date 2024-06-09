@@ -1,15 +1,18 @@
 import { getConfig } from '../../config'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
+import { FeatureConfig } from '../feature-config'
 
 const defaultUseRelativePaths = true
 const defaultUseExcludes = true
 
-export class RelatedFilesConfig {
+export class RelatedFilesConfig extends FeatureConfig {
   private _customExcludes: Record<string, unknown> = {}
   private _useRelativePaths: boolean = defaultUseRelativePaths
   private _useExcludes: boolean = defaultUseExcludes
 
-  load(): boolean {
+  constructor() { super('RelatedFiles') }
+
+  load() {
     const config = getConfig()
     const customExcludes = config.get<Record<string, unknown>>('relatedFiles.exclude', {})
     const useRelativePaths = config.get<boolean>('relatedFiles.useRelativePaths', defaultUseRelativePaths)

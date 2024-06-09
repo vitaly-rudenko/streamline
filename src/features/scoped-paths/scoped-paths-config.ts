@@ -1,10 +1,11 @@
 import { getConfig } from '../../config'
 import { getParents } from '../../utils/get-parents'
+import { FeatureConfig } from '../feature-config'
 
 const defaultEnabled = false
 const defaultCurrentScope = 'default'
 
-export class ScopedPathsConfig {
+export class ScopedPathsConfig extends FeatureConfig {
   private _enabled: boolean = defaultEnabled
   private _currentScope: string = defaultCurrentScope
   private _scopesObject: Record<string, string[]> = {}
@@ -12,7 +13,9 @@ export class ScopedPathsConfig {
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
   private _cachedParentsOfCurrentlyScopedPathsSet: Set<string> = new Set()
 
-  load(): boolean {
+  constructor() { super('ScopedPaths') }
+
+  load() {
     const config = getConfig()
     const enabled = config.get<boolean>('scopedPaths.enabled', defaultEnabled)
     const currentScope = config.get<string>('scopedPaths.currentScope', defaultCurrentScope)
@@ -55,10 +58,9 @@ export class ScopedPathsConfig {
       this._currentScope !== defaultCurrentScope ? this._currentScope : undefined
     )
 
-    const scopesObjectEntries = Object.entries(this._scopesObject)
     await config.update(
       'scopedPaths.scopes',
-      scopesObjectEntries.some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0)
+      Object.entries(this._scopesObject).some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0)
         ? this._scopesObject : undefined
     )
 
