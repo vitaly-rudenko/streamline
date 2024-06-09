@@ -10,7 +10,7 @@ export function createHighlightedPathsFeature(input: { context: vscode.Extension
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
     onChange()
-  }, 1_000)
+  }, 500)
 
   function isPathHighlighted(path: string): boolean {
     return config.getCachedCombinedPatternRegExp()?.test(path) === true

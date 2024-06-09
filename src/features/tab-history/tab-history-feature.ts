@@ -23,7 +23,7 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
     tabHistoryStorage.import(config.getBackupRecords())
     tabHistoryTreeDataProvider.refresh()
     updateContextInBackground()
-  }, 1_000)
+  }, 500)
 
   async function updateContextInBackground() {
     try {

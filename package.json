@@ -292,11 +292,11 @@
         },
         {
           "command": "streamline.bookmarks.add",
-          "group": "1_workspace@3"
+          "group": "2_workspace@1"
         },
         {
           "command": "streamline.bookmarks.addToList",
-          "group": "1_workspace@4"
+          "group": "2_workspace@2"
         }
       ],
       "editor/context": [

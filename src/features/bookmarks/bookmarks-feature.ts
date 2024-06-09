@@ -13,7 +13,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
     bookmarksTreeDataProvider.refresh()
-  }, 1_000)
+  }, 500)
 
   async function promptListSelection() {
     let selectedList = await vscode.window.showQuickPick(

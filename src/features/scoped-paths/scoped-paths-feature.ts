@@ -28,7 +28,7 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
     updateStatusBarItems()
     updateContextInBackground()
     updateExcludesInBackground()
-  }, 1_000)
+  }, 500)
 
   async function updateExcludesInBackground() {
     try {
