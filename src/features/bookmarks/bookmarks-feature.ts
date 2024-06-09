@@ -106,7 +106,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.delete', async (item: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
       if (item instanceof ListTreeItem) {
-        const result = await vscode.window.showInformationMessage(`Delete list '${item.list}'?`, 'Delete', 'Cancel')
+        const result = await vscode.window.showInformationMessage(`Delete list '${item.list}' and its bookmarks?`, 'Delete', 'Cancel')
         if (result !== 'Delete') return
       }
 

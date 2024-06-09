@@ -99,7 +99,7 @@ export class ListTreeItem extends vscode.TreeItem {
     super(list, vscode.TreeItemCollapsibleState.Expanded)
 
     this.iconPath = isCurrentList ? new vscode.ThemeIcon('folder-active') : new vscode.ThemeIcon('folder')
-    this.contextValue = 'list'
+    this.contextValue = isCurrentList ? 'activeList' : 'list'
   }
 }
 
