@@ -1,6 +1,6 @@
 # Streamline
 
-Streamline your workflow.
+A productivity-oriented VS Code extension packed with features for working on large projects.
 
 ## Scoped Paths
 
