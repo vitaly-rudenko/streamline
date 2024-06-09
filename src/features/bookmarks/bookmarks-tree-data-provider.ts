@@ -44,6 +44,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
           bookmark.list,
           bookmark.uri,
           bookmark.selection,
+          bookmark.note,
         ))
     }
 
@@ -129,9 +130,10 @@ export class FileTreeItem extends vscode.TreeItem {
 }
 
 export class SelectionTreeItem extends vscode.TreeItem {
-  constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection) {
-    super(label, vscode.TreeItemCollapsibleState.None)
+  constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection, note?: string) {
+    super(note ?? label, vscode.TreeItemCollapsibleState.None)
 
+    this.description = note ? label : undefined
     this.contextValue = 'selection'
     this.command = {
       command: 'vscode.open',

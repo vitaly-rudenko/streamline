@@ -3,6 +3,7 @@ import type * as vscode from 'vscode'
 export type Bookmark = {
   uri: vscode.Uri
   list: string
+  note?: string
 } & (
   { type: 'folder' } |
   { type: 'file' } |
@@ -15,6 +16,7 @@ export type Bookmark = {
 export type SerializedBookmark = {
   uri: string
   list: string
+  note?: string
 } & (
   { type: 'folder' } |
   { type: 'file' } |

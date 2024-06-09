@@ -11,7 +11,8 @@ Useful in large projects and monorepos to focus on modules that you're currently
 
 ## Bookmarks
 
-Bookmark folders, files and selections – and organize them into lists.
+Bookmark folders, files and selections – and organize them into lists.  
+You can also add notes to your bookmarks.
 
 ![Demo](docs/bookmarks.gif)
 

@@ -75,6 +75,7 @@ function serializeBookmark(bookmark: Bookmark): SerializedBookmark {
   return {
     uri: bookmark.uri.path,
     list: bookmark.list,
+    note: bookmark.note,
     ...bookmark.type === 'selection' ? {
       type: bookmark.type,
       preview: bookmark.preview,
@@ -95,6 +96,7 @@ function deserializeBookmark(serializedBookmark: SerializedBookmark): Bookmark {
   return {
     uri: vscode.Uri.file(serializedBookmark.uri),
     list: serializedBookmark.list,
+    note: serializedBookmark.note,
     ...serializedBookmark.type === 'selection' ? {
       type: serializedBookmark.type,
       preview: serializedBookmark.preview,

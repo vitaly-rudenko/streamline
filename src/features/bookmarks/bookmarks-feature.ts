@@ -33,7 +33,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 	context.subscriptions.push(vscode.window.registerTreeDataProvider('bookmarks', bookmarksTreeDataProvider))
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.add', async (_: never, selectedUris: vscode.Uri[] | undefined, list?: string | undefined) => {
+    vscode.commands.registerCommand('streamline.bookmarks.add', async (_: never, selectedUris: vscode.Uri[] | undefined, list?: string | undefined, note?: string | undefined) => {
       list ||= config.getCurrentList()
 
       if (selectedUris && selectedUris.length > 0) {
@@ -45,10 +45,10 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
           ...config.getBookmarks(),
           ...urisWithFileTypes
             .filter(({ fileType }) => fileType === vscode.FileType.File || fileType === vscode.FileType.SymbolicLink)
-            .map(({ uri }) => ({ type: 'file', uri, list } as const)),
+            .map(({ uri }) => ({ type: 'file', uri, list, note } as const)),
           ...urisWithFileTypes
             .filter(({ fileType }) => fileType === vscode.FileType.Directory)
-            .map(({ uri }) => ({ type: 'folder', uri, list } as const)),
+            .map(({ uri }) => ({ type: 'folder', uri, list, note } as const)),
         ])
       } else {
         const activeTextEditor = vscode.window.activeTextEditor
@@ -60,6 +60,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
             return {
               type: 'selection',
               uri: activeTextEditor.document.uri,
+              note,
               list,
               selection,
               preview: (
@@ -83,6 +84,27 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       if (!selectedList) return
 
       await vscode.commands.executeCommand('streamline.bookmarks.add', uri, selectedUris, selectedList)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.addNote', async (uri: never, selectedUris: vscode.Uri[] | undefined) => {
+      const note = await vscode.window.showInputBox({ prompt: 'Enter the note' })
+      if (!note) return
+
+      await vscode.commands.executeCommand('streamline.bookmarks.add', uri, selectedUris, undefined, note)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.addNoteToList', async (uri: never, selectedUris: vscode.Uri[] | undefined) => {
+      const note = await vscode.window.showInputBox({ prompt: 'Enter the note' })
+      if (!note) return
+
+      const selectedList = await promptListSelection()
+      if (!selectedList) return
+
+      await vscode.commands.executeCommand('streamline.bookmarks.add', uri, selectedUris, selectedList, note)
     })
   )
 
