@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, type SelectionTreeItem } from './bookmarks-tree-data-provider'
+import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
 import { unique } from '../../utils/unique'
 import { BookmarksConfig } from './bookmarks-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
@@ -14,6 +14,19 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     if (!config.load()) return
     bookmarksTreeDataProvider.refresh()
   }, 500)
+
+  async function updateContextInBackground() {
+    try {
+      const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
+      const isActiveTextEditorBookmarked = activeTextEditorUri
+        ? config.getBookmarks().some((bookmark) => bookmark.type === 'file' && bookmark.uri.path === activeTextEditorUri.path)
+        : false
+
+      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.activeTextEditorBookmarked', isActiveTextEditorBookmarked)
+    } catch (error) {
+      console.warn('[Bookmarks] Could not update context', error)
+    }
+  }
 
   async function promptListSelection() {
     let selectedList = await vscode.window.showQuickPick(
@@ -74,6 +87,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       }
 
       bookmarksTreeDataProvider.refresh()
+      updateContextInBackground()
       config.saveInBackground()
     })
   )
@@ -87,6 +101,13 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       } else {
         await vscode.commands.executeCommand('streamline.bookmarks.add', uriOrFileTreeItem, [uriOrFileTreeItem])
       }
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.deleteFile', async (uri: vscode.Uri | undefined) => {
+      if (!uri) return
+      await vscode.commands.executeCommand('streamline.bookmarks.delete', uri)
     })
   )
 
@@ -138,32 +159,36 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.delete', async (item: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
-      if (item instanceof ListTreeItem) {
-        const result = await vscode.window.showInformationMessage(`Delete list '${item.list}' and its bookmarks?`, 'Delete', 'Cancel')
+    vscode.commands.registerCommand('streamline.bookmarks.delete', async (itemOrUri: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem | vscode.Uri) => {
+      if (itemOrUri instanceof ListTreeItem) {
+        const result = await vscode.window.showInformationMessage(`Delete list '${itemOrUri.list}' and its bookmarks?`, 'Delete', 'Cancel')
         if (result !== 'Delete') return
       }
 
       config.setBookmarks(
         config.getBookmarks().filter(bookmark => {
-          if (item instanceof ListTreeItem) {
-            return !(bookmark.list === item.list)
-          } else if (item instanceof FolderTreeItem) {
-            return !(bookmark.type === 'folder' && bookmark.uri.path === item.uri.path)
-          } else if (item instanceof FileTreeItem) {
-            return !(bookmark.type === 'file' && bookmark.uri.path === item.uri.path)
+          if (itemOrUri instanceof ListTreeItem) {
+            return !(bookmark.list === itemOrUri.list)
+          } else if (itemOrUri instanceof FolderTreeItem) {
+            return !(bookmark.type === 'folder' && bookmark.uri.path === itemOrUri.uri.path)
+          } else if (itemOrUri instanceof FileTreeItem) {
+            return !(bookmark.type === 'file' && bookmark.uri.path === itemOrUri.uri.path)
+          } else if (itemOrUri instanceof SelectionTreeItem) {
+            return !(bookmark.type === 'selection' && bookmark.uri.path === itemOrUri.uri.path && bookmark.selection.isEqual(itemOrUri.selection))
           } else {
-            return !(bookmark.type === 'selection' && bookmark.uri.path === item.uri.path && bookmark.selection.isEqual(item.selection))
+            return !(bookmark.type === 'file' && bookmark.uri.path === itemOrUri.path)
           }
         })
       )
 
       bookmarksTreeDataProvider.refresh()
+      updateContextInBackground()
       config.saveInBackground()
     })
   )
 
   context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.bookmarks')) {
         if (!config.isSavingInBackground) {
@@ -174,4 +199,5 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   config.load()
+  updateContextInBackground()
 }

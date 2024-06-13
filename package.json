@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -146,7 +146,7 @@
       {
         "command": "streamline.tabHistory.clear",
         "title": "Clear Tab History",
-        "icon": "$(trash)"
+        "icon": "$(clear-all)"
       },
       {
         "command": "streamline.tabHistory.enableBackup",
@@ -171,17 +171,22 @@
       {
         "command": "streamline.bookmarks.add",
         "title": "Add Bookmark",
-        "icon": "$(bookmark)"
+        "icon": "$(star)"
       },
       {
         "command": "streamline.bookmarks.addFile",
         "title": "Add File to Bookmarks",
-        "icon": "$(bookmark)"
+        "icon": "$(star)"
+      },
+      {
+        "command": "streamline.bookmarks.deleteFile",
+        "title": "Delete File from Bookmarks",
+        "icon": "$(star-full)"
       },
       {
         "command": "streamline.bookmarks.addToList",
         "title": "Add Bookmark to List...",
-        "icon": "$(bookmark)"
+        "icon": "$(star)"
       },
       {
         "command": "streamline.bookmarks.addNote",
@@ -201,7 +206,7 @@
       {
         "command": "streamline.bookmarks.delete",
         "title": "Delete Bookmark",
-        "icon": "$(trash)"
+        "icon": "$(star-full)"
       },
       {
         "command": "streamline.bookmarks.changeCurrentList",
@@ -354,6 +359,12 @@
         },
         {
           "command": "streamline.bookmarks.addFile",
+          "when": "!streamline.bookmarks.activeTextEditorBookmarked",
+          "group": "navigation@2"
+        },
+        {
+          "command": "streamline.bookmarks.deleteFile",
+          "when": "streamline.bookmarks.activeTextEditorBookmarked",
           "group": "navigation@2"
         }
       ]
