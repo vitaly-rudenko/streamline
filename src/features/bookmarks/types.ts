@@ -10,7 +10,7 @@ export type Bookmark = {
   {
     type: 'selection'
     selection: vscode.Selection
-    preview: string
+    value: string
   }
 )
 export type SerializedBookmark = {
@@ -28,6 +28,8 @@ export type SerializedBookmark = {
       activeLine: number
       activeCharacter: number
     }
-    preview: string
+    /** @deprecated Replaced by `value` */
+    preview?: string
+    value: string;
   }
 )

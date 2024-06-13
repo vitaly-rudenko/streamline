@@ -1,9 +1,15 @@
 # Change Log
 
-All notable changes to the "streamline" extension will be documented in this file.
+## 0.14
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+### ScopedPaths
 
-## [Unreleased]
+- Fixed how files with similar paths are excluded which should improve reliability
 
-- Initial release
+### Bookmarks
+
+- Introduced "Add File to Bookmarks" command and added an icon for it to the Editor title
+- Allow bookmarking virtual files (non-bookmarked files that contain bookmarked selections)
+- Add "Change Current Bookmarks List" command
+- Selection bookmarks' values are now stored as is, without formatting or character limit
+- Selection bookmarks' previews are generated dynamically with better readability and helpful tooltips

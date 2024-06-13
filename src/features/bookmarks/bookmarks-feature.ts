@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import { stripIndent } from 'common-tags'
 import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, type SelectionTreeItem } from './bookmarks-tree-data-provider'
 import { unique } from '../../utils/unique'
 import { BookmarksConfig } from './bookmarks-config'
@@ -64,7 +63,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
               note,
               list,
               selection,
-              preview: stripIndent(
+              value: (
                 selection.isEmpty
                   ? activeTextEditor.document.getText(activeTextEditor.document.lineAt(selection.start.line).range)
                   : activeTextEditor.document.getText(selection)

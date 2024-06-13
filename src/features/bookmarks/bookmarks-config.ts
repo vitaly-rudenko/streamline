@@ -78,7 +78,7 @@ function serializeBookmark(bookmark: Bookmark): SerializedBookmark {
     note: bookmark.note,
     ...bookmark.type === 'selection' ? {
       type: bookmark.type,
-      preview: bookmark.preview,
+      value: bookmark.value,
       selection: {
         anchorLine: bookmark.selection.anchor.line,
         anchorCharacter: bookmark.selection.anchor.character,
@@ -99,7 +99,7 @@ function deserializeBookmark(serializedBookmark: SerializedBookmark): Bookmark {
     note: serializedBookmark.note,
     ...serializedBookmark.type === 'selection' ? {
       type: serializedBookmark.type,
-      preview: serializedBookmark.preview,
+      value: serializedBookmark.value ?? serializedBookmark.preview,
       selection: new vscode.Selection(
         serializedBookmark.selection.anchorLine,
         serializedBookmark.selection.anchorCharacter,

@@ -4,6 +4,7 @@ import { unique } from '../../utils/unique'
 import { getFilename } from '../../utils/get-filename'
 import type { BookmarksConfig } from './bookmarks-config'
 import type { Bookmark } from './types'
+import { stripIndent, stripIndents } from 'common-tags'
 
 type TreeItem = ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
@@ -23,7 +24,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (element === undefined) {
-      return unique([...this.config.getBookmarks().map(bookmark => bookmark.list), this.config.getCurrentList(), 'default'])
+      return unique([...this.config.getBookmarks().map(bookmark => bookmark.list), this.config.getCurrentList()])
         .sort()
         .map(list => new ListTreeItem(list, this.config.getCurrentList() === list))
     }
@@ -38,13 +39,10 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
       return bookmarks
         .sort((a, b) => a.selection.start.line - b.selection.start.line)
         .map(bookmark => new SelectionTreeItem(
-          bookmark.selection.isSingleLine
-            ? `${bookmark.selection.start.line + 1}: ${bookmark.preview}`
-            : `${bookmark.selection.start.line + 1}-${bookmark.selection.end.line + 1}: ${bookmark.preview}`,
           bookmark.list,
           bookmark.uri,
           bookmark.selection,
-          bookmark.preview,
+          bookmark.value,
           bookmark.note,
         ))
     }
@@ -133,16 +131,22 @@ export class FileTreeItem extends vscode.TreeItem {
 }
 
 export class SelectionTreeItem extends vscode.TreeItem {
-  constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection, preview: string, note?: string) {
-    super(note ?? label, vscode.TreeItemCollapsibleState.None)
+  constructor(public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection, value: string, note?: string) {
+    super(note ?? formatSelectionValue(selection, value), vscode.TreeItemCollapsibleState.None)
 
-    this.description = note ? label : undefined
+    this.description = note ? formatSelectionValue(selection, value) : undefined
     this.contextValue = 'selection'
-    this.tooltip = `${preview}\n\n${uri.path}`
+    this.tooltip = `${stripIndent(value)}\n\n${uri.path}`
     this.command = {
       command: 'vscode.open',
       arguments: [uri, { selection }],
       title: selection.isEmpty ? 'Go to line' : 'Go to selection'
     }
   }
+}
+
+function formatSelectionValue(selection: vscode.Selection, value: string) {
+  return selection.isSingleLine
+    ? `${selection.start.line + 1}: ${stripIndents(value)}`
+    : `${selection.start.line + 1}-${selection.end.line + 1}: ${stripIndents(value)}`
 }
