@@ -203,7 +203,7 @@
       },
       {
         "command": "streamline.bookmarks.changeCurrentList",
-        "title": "Change Current List",
+        "title": "Change Current Bookmarks List",
         "icon": "$(issue-closed)"
       }
     ],
@@ -263,6 +263,11 @@
           "command": "streamline.tabHistory.refresh",
           "group": "navigation@3",
           "when": "view == tabHistory"
+        },
+        {
+          "command": "streamline.bookmarks.changeCurrentList",
+          "group": "navigation@1",
+          "when": "view == bookmarks"
         }
       ],
       "view/item/context": [
