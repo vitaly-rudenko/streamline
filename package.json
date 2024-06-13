@@ -212,6 +212,11 @@
         "command": "streamline.bookmarks.changeCurrentList",
         "title": "Change Current Bookmarks List",
         "icon": "$(issue-closed)"
+      },
+      {
+        "command": "streamline.bookmarks.deleteList",
+        "title": "Delete Bookmarks List",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
@@ -295,7 +300,12 @@
         },
         {
           "command": "streamline.bookmarks.delete",
-          "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == file || viewItem == selection || viewItem == folder)",
+          "when": "view == bookmarks && (viewItem == file || viewItem == selection || viewItem == folder)",
+          "group": "inline@2"
+        },
+        {
+          "command": "streamline.bookmarks.deleteList",
+          "when": "view == bookmarks && (viewItem == list || viewItem == activeList)",
           "group": "inline@2"
         },
         {

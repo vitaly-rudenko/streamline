@@ -143,7 +143,7 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
       const scopes = Object.keys(config.getScopesObject())
 
       let selectedScope = await vscode.window.showQuickPick(
-        unique(['default', ...scopes, config.getCurrentScope(), '+ Add new scope']),
+        unique([...scopes, config.getCurrentScope(), 'default', '+ Add new scope']),
         { title: 'Select Scope' }
       )
 

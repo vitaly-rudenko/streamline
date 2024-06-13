@@ -30,7 +30,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
   async function promptListSelection() {
     let selectedList = await vscode.window.showQuickPick(
-      unique(['default', ...config.getBookmarks().map(bookmark => bookmark.list).sort(), config.getCurrentList(), '+ Add new list']),
+      unique([...config.getBookmarks().map(bookmark => bookmark.list).sort(), config.getCurrentList(), 'default', '+ Add new list']),
       { title: 'Select Bookmarks List' }
     )
     if (!selectedList) return undefined
@@ -105,13 +105,6 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.deleteFile', async (uri: vscode.Uri | undefined) => {
-      if (!uri) return
-      await vscode.commands.executeCommand('streamline.bookmarks.delete', uri)
-    })
-  )
-
-  context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.addToList', async (uri: never, selectedUris: vscode.Uri[] | undefined) => {
       const selectedList = await promptListSelection()
       if (!selectedList) return
@@ -155,6 +148,20 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.revealInExplorer', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
       await vscode.commands.executeCommand('revealInExplorer', item.uri)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.deleteFile', async (uri: vscode.Uri | undefined) => {
+      if (!uri) return
+      await vscode.commands.executeCommand('streamline.bookmarks.delete', uri)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.deleteList', async (item: ListTreeItem | undefined) => {
+      if (!item) return
+      await vscode.commands.executeCommand('streamline.bookmarks.delete', item)
     })
   )
 
