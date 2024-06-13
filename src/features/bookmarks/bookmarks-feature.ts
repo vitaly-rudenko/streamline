@@ -19,7 +19,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   async function promptListSelection() {
     let selectedList = await vscode.window.showQuickPick(
       unique(['default', ...config.getBookmarks().map(bookmark => bookmark.list).sort(), config.getCurrentList(), '+ Add new list']),
-      { title: 'Select a scope' }
+      { title: 'Select Bookmarks List' }
     )
     if (!selectedList) return undefined
 
