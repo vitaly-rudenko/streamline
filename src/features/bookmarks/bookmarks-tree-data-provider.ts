@@ -44,6 +44,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
           bookmark.list,
           bookmark.uri,
           bookmark.selection,
+          bookmark.preview,
           bookmark.note,
         ))
     }
@@ -111,6 +112,7 @@ export class FolderTreeItem extends vscode.TreeItem {
     this.iconPath = vscode.ThemeIcon.Folder
     this.resourceUri = uri
     this.contextValue = 'folder'
+    this.tooltip = uri.path
   }
 }
 
@@ -121,6 +123,7 @@ export class FileTreeItem extends vscode.TreeItem {
     this.iconPath = vscode.ThemeIcon.File
     this.resourceUri = uri
     this.contextValue = isRealFile ? 'file' : 'virtualFile'
+    this.tooltip = uri.path
     this.command = {
       command: 'vscode.open',
       arguments: [uri],
@@ -130,11 +133,12 @@ export class FileTreeItem extends vscode.TreeItem {
 }
 
 export class SelectionTreeItem extends vscode.TreeItem {
-  constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection, note?: string) {
+  constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection, preview: string, note?: string) {
     super(note ?? label, vscode.TreeItemCollapsibleState.None)
 
     this.description = note ? label : undefined
     this.contextValue = 'selection'
+    this.tooltip = `${preview}\n\n${uri.path}`
     this.command = {
       command: 'vscode.open',
       arguments: [uri, { selection }],
