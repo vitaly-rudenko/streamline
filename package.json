@@ -168,12 +168,17 @@
       },
       {
         "command": "streamline.bookmarks.add",
-        "title": "Bookmark",
+        "title": "Add Bookmark",
+        "icon": "$(bookmark)"
+      },
+      {
+        "command": "streamline.bookmarks.addFile",
+        "title": "Add File to Bookmarks",
         "icon": "$(bookmark)"
       },
       {
         "command": "streamline.bookmarks.addToList",
-        "title": "Bookmark to List...",
+        "title": "Add Bookmark to List...",
         "icon": "$(bookmark)"
       },
       {
@@ -334,6 +339,10 @@
         {
           "command": "streamline.relatedFiles.quickOpen",
           "group": "navigation@1"
+        },
+        {
+          "command": "streamline.bookmarks.addFile",
+          "group": "navigation@2"
         }
       ]
     },
