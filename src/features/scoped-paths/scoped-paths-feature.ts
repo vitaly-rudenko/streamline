@@ -34,8 +34,9 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
     try {
       let excludes: Record<string, unknown> | undefined = undefined
       if (config.getEnabled()) {
-        const excludedPaths = await generateExcludedPaths(config.getCachedCurrentlyScopedPaths() ?? [], directoryReader)
-        excludes = serializeExcludes({ excludedPaths })
+        const includedPaths = config.getCachedCurrentlyScopedPaths() ?? []
+        const excludedPaths = await generateExcludedPaths(includedPaths, directoryReader)
+        excludes = serializeExcludes({ excludedPaths, includedPaths })
       }
 
       await vscode.workspace

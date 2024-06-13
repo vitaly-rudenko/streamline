@@ -1,6 +1,4 @@
-import { unique } from '../../utils/unique'
-
-export function serializeExcludes(input: { excludedPaths: string[] }): Record<string, unknown> {
+export function serializeExcludes(input: { includedPaths: string[]; excludedPaths: string[] }): Record<string, unknown> {
   const excludes: Record<string, unknown> = {
     '**/.git': true,
     '**/.svn': true,
@@ -12,10 +10,18 @@ export function serializeExcludes(input: { excludedPaths: string[] }): Record<st
 
   // TODO: VS Code doesn't support excluding files in a specific workspace folder using workspace configuration
   //       See https://github.com/microsoft/vscode/issues/82145
-  const excludedPaths = unique(
+
+  const includedPaths = new Set(
+    input.includedPaths
+      .filter(path => path.includes('/'))
+      .map(includedPath => includedPath.replace(/^.+?\//, ''))
+  )
+
+  const excludedPaths = new Set(
     input.excludedPaths
       .filter(path => path.includes('/'))
       .map(excludedPath => excludedPath.replace(/^.+?\//, ''))
+      .filter(path => !includedPaths.has(path))
   )
 
   for (const excludedPath of excludedPaths) {

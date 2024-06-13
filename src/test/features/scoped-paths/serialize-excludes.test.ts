@@ -13,7 +13,7 @@ suite('serializeExcludes()', () => {
     ]
 
     assert.deepStrictEqual(
-      serializeExcludes({ excludedPaths }),
+      serializeExcludes({ includedPaths: [], excludedPaths }),
       {
         '**/.git': true,
         '**/.svn': true,
@@ -28,5 +28,31 @@ suite('serializeExcludes()', () => {
         'O/**': true,
       }
     )
+  })
+
+  suite('edge cases', () => {
+    test('ignores equal paths that are included in other workspace folders due to VS Code limitations', () => {
+      const includedPaths = [
+        'project-a/package.json'
+      ]
+
+      const excludedPaths = [
+        'project-b/package.json',
+        'project-b/package-lock.json'
+      ]
+
+      assert.deepStrictEqual(
+        serializeExcludes({ includedPaths, excludedPaths }),
+        {
+          '**/.git': true,
+          '**/.svn': true,
+          '**/.hg': true,
+          '**/CVS': true,
+          '**/.DS_Store': true,
+          '**/Thumbs.db': true,
+          'package-lock.json/**': true
+        }
+      )
+    })
   })
 })
