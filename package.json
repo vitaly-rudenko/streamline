@@ -269,11 +269,6 @@
         {
           "command": "streamline.relatedFiles.copyPath",
           "when": "view == relatedFiles && viewItem == relatedFile",
-          "group": "inline"
-        },
-        {
-          "command": "streamline.bookmarks.revealInExplorer",
-          "when": "view == bookmarks && (viewItem == file || viewItem == virtualFile || viewItem == folder)",
           "group": "inline@1"
         },
         {
@@ -282,19 +277,29 @@
           "group": "inline@1"
         },
         {
+          "command": "streamline.bookmarks.revealInExplorer",
+          "when": "view == bookmarks && (viewItem == file || viewItem == virtualFile || viewItem == folder)",
+          "group": "inline@1"
+        },
+        {
           "command": "streamline.bookmarks.delete",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == file || viewItem == selection || viewItem == folder)",
           "group": "inline@2"
         },
         {
+          "command": "streamline.bookmarks.addFile",
+          "when": "view == bookmarks && viewItem == virtualFile",
+          "group": "inline@2"
+        },
+        {
           "command": "streamline.tabHistory.pinTab",
           "when": "view == tabHistory && viewItem == tab",
-          "group": "inline"
+          "group": "inline@1"
         },
         {
           "command": "streamline.tabHistory.unpinTab",
           "when": "view == tabHistory && viewItem == pinnedTab",
-          "group": "inline"
+          "group": "inline@1"
         }
       ],
       "explorer/context": [
