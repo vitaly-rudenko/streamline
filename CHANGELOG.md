@@ -11,7 +11,7 @@
 
 ### TabHistory
 
-- Added "Pinned" and "Recently opened" visible categories to the view for better readability
+- Added "Pinned" and "Recently opened" section to the view for better visibility
 
 ## 0.14
 

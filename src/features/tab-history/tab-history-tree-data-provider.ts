@@ -4,7 +4,7 @@ import type { TabHistoryStorage } from './tab-history-storage'
 import { formatPaths } from '../../utils/format-paths'
 import type { TabHistoryConfig } from './tab-history-config'
 
-export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTreeItem | CategoryTreeItem> {
+export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTreeItem | SectionTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
@@ -21,11 +21,11 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     return element
   }
 
-  async getChildren(element?: TabTreeItem | CategoryTreeItem | undefined): Promise<(TabTreeItem | CategoryTreeItem)[] | undefined> {
+  async getChildren(element?: TabTreeItem | SectionTreeItem | undefined): Promise<(TabTreeItem | SectionTreeItem)[] | undefined> {
     if (element) return undefined
 
     const now = new Date()
-    const children: (TabTreeItem | CategoryTreeItem)[] = []
+    const children: (TabTreeItem | SectionTreeItem)[] = []
 
     const tabs = this.tabHistoryStorage.list()
     const remainingTabsMap = new Map(tabs.map(tab => [tab.path, tab]))
@@ -35,7 +35,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     // Pinned tabs
 
     if (this.config.getPinnedPaths().length > 0) {
-      children.push(new CategoryTreeItem('Pinned', new vscode.ThemeIcon('pinned')))
+      children.push(new SectionTreeItem('Pinned', new vscode.ThemeIcon('pinned')))
     }
 
     for (const path of this.config.getPinnedPaths().sort()) {
@@ -57,7 +57,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     // Other tabs
 
     if (tabs.length > 0) {
-      children.push(new CategoryTreeItem('Recently opened', new vscode.ThemeIcon('history')))
+      children.push(new SectionTreeItem('Recently opened', new vscode.ThemeIcon('history')))
     }
 
     for (const tab of tabs) {
@@ -78,7 +78,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
   }
 }
 
-export class CategoryTreeItem extends vscode.TreeItem {
+export class SectionTreeItem extends vscode.TreeItem {
   constructor(label: string, icon: vscode.ThemeIcon) {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.iconPath = icon
