@@ -96,7 +96,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
 export class ListTreeItem extends vscode.TreeItem {
   constructor(public readonly list: string, isCurrentList: boolean) {
-    super(list, vscode.TreeItemCollapsibleState.Expanded)
+    super(list, isCurrentList ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 
     this.iconPath = isCurrentList ? new vscode.ThemeIcon('folder-active') : new vscode.ThemeIcon('folder')
     this.contextValue = isCurrentList ? 'activeList' : 'list'
@@ -116,7 +116,14 @@ export class FolderTreeItem extends vscode.TreeItem {
 
 export class FileTreeItem extends vscode.TreeItem {
   constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean, isRealFile: boolean) {
-    super(isRealFile ? label : `[${label}]`, hasChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)
+    super(
+      isRealFile ? label : `[${label}]`,
+      hasChildren
+        ? isRealFile
+          ? vscode.TreeItemCollapsibleState.Collapsed
+          : vscode.TreeItemCollapsibleState.Expanded
+        : vscode.TreeItemCollapsibleState.None
+    )
 
     this.iconPath = vscode.ThemeIcon.File
     this.resourceUri = uri
