@@ -31,7 +31,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
         .map(list => new ListTreeItem(list, this.config.getCurrentList() === list, false))
 
       if (this.config.getArchivedLists().length > 0) {
-        children.push(new ArchivedListsTreeItem())
+        children.push(new ArchivedListsTreeItem(this.config.getArchivedLists().includes(this.config.getCurrentList())))
       }
 
       return children
@@ -107,8 +107,8 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 }
 
 export class ArchivedListsTreeItem extends vscode.TreeItem {
-  constructor() {
-    super('Archive', vscode.TreeItemCollapsibleState.Collapsed)
+  constructor(includesCurrentList: boolean) {
+    super('Archive', includesCurrentList ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 
     this.iconPath = new vscode.ThemeIcon('archive')
     this.contextValue = 'archivedLists'
