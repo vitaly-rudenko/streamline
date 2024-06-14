@@ -124,11 +124,11 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.addNoteToList', async (uri: never, selectedUris: vscode.Uri[] | undefined) => {
-      const note = await vscode.window.showInputBox({ prompt: 'Enter the note' })
-      if (!note) return
-
       const selectedList = await promptListSelection()
       if (!selectedList) return
+
+      const note = await vscode.window.showInputBox({ prompt: 'Enter the note' })
+      if (!note) return
 
       await vscode.commands.executeCommand('streamline.bookmarks.add', uri, selectedUris, selectedList, note)
     })
