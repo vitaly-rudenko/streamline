@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.14.3",
+  "version": "0.15.0",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -222,6 +222,16 @@
         "command": "streamline.bookmarks.deleteList",
         "title": "Delete Bookmarks List",
         "icon": "$(trash)"
+      },
+      {
+        "command": "streamline.bookmarks.archiveList",
+        "title": "Archive Bookmarks List",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "streamline.bookmarks.unarchiveList",
+        "title": "Unarchive Bookmarks List",
+        "icon": "$(archive)"
       }
     ],
     "menus": {
@@ -294,11 +304,6 @@
           "group": "inline@1"
         },
         {
-          "command": "streamline.bookmarks.changeCurrentList",
-          "when": "view == bookmarks && viewItem == list",
-          "group": "inline@1"
-        },
-        {
           "command": "streamline.bookmarks.revealInExplorer",
           "when": "view == bookmarks && (viewItem == file || viewItem == virtualFile || viewItem == folder)",
           "group": "inline@1"
@@ -309,14 +314,29 @@
           "group": "inline@2"
         },
         {
-          "command": "streamline.bookmarks.deleteList",
+          "command": "streamline.bookmarks.addFile",
+          "when": "view == bookmarks && viewItem == virtualFile",
+          "group": "inline@2"
+        },
+        {
+          "command": "streamline.bookmarks.changeCurrentList",
+          "when": "view == bookmarks && (viewItem == list || viewItem == archivedList)",
+          "group": "inline@1"
+        },
+        {
+          "command": "streamline.bookmarks.archiveList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList)",
           "group": "inline@2"
         },
         {
-          "command": "streamline.bookmarks.addFile",
-          "when": "view == bookmarks && viewItem == virtualFile",
+          "command": "streamline.bookmarks.unarchiveList",
+          "when": "view == bookmarks && (viewItem == archivedList || viewItem == archivedActiveList)",
           "group": "inline@2"
+        },
+        {
+          "command": "streamline.bookmarks.deleteList",
+          "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
+          "group": "inline@3"
         },
         {
           "command": "streamline.tabHistory.pinTab",
@@ -464,6 +484,14 @@
           "type": "string",
           "default": "default",
           "description": "Current bookmarks list"
+        },
+        "streamline.bookmarks.archivedLists": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Archived lists"
         },
         "streamline.bookmarks.serializedBookmarks": {
           "type": "array",

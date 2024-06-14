@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
 import { unique } from '../../utils/unique'
-import { BookmarksConfig } from './bookmarks-config'
+import { BookmarksConfig, defaultCurrentList } from './bookmarks-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 
 export function createBookmarksFeature(input: { context: vscode.ExtensionContext }) {
@@ -157,6 +157,30 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.archiveList', async (item?: ListTreeItem) => {
+      if (!item) return
+      if (config.getArchivedLists().includes(item.list)) return
+
+      config.setArchivedLists([...config.getArchivedLists(), item.list])
+
+      bookmarksTreeDataProvider.refresh()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.unarchiveList', async (item?: ListTreeItem) => {
+      if (!item) return
+      if (!config.getArchivedLists().includes(item.list)) return
+
+      config.setArchivedLists(config.getArchivedLists().filter(list => list !== item.list))
+
+      bookmarksTreeDataProvider.refresh()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.revealInExplorer', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
       await vscode.commands.executeCommand('revealInExplorer', item.uri)
     })
@@ -181,6 +205,8 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       if (itemOrUri instanceof ListTreeItem) {
         const result = await vscode.window.showInformationMessage(`Delete list '${itemOrUri.list}' and its bookmarks?`, 'Delete', 'Cancel')
         if (result !== 'Delete') return
+
+        config.setArchivedLists(config.getArchivedLists().filter(list => list !== itemOrUri.list))
 
         if (config.getCurrentList() === itemOrUri.list) {
           config.setCurrentList(defaultCurrentList)

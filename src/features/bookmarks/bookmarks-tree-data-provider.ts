@@ -6,7 +6,7 @@ import type { BookmarksConfig } from './bookmarks-config'
 import type { Bookmark } from './types'
 import { stripIndent, stripIndents } from 'common-tags'
 
-type TreeItem = ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
+type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
 export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -24,9 +24,21 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (element === undefined) {
-      return unique([...this.config.getBookmarks().map(bookmark => bookmark.list), this.config.getCurrentList()])
+      const lists = unique([...this.config.getBookmarks().map(bookmark => bookmark.list), this.config.getCurrentList()])
+
+      const children: TreeItem[] = lists.filter(list => !this.config.getArchivedLists().includes(list))
         .sort()
-        .map(list => new ListTreeItem(list, this.config.getCurrentList() === list))
+        .map(list => new ListTreeItem(list, this.config.getCurrentList() === list, false))
+
+      if (this.config.getArchivedLists().length > 0) {
+        children.push(new ArchivedListsTreeItem())
+      }
+
+      return children
+    }
+
+    if (element instanceof ArchivedListsTreeItem) {
+      return this.config.getArchivedLists().map(list => new ListTreeItem(list, this.config.getCurrentList() === list, true))
     }
 
     const listBookmarks = this.config.getBookmarks().filter(bookmark => bookmark.list === element.list)
@@ -94,12 +106,23 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
   }
 }
 
+export class ArchivedListsTreeItem extends vscode.TreeItem {
+  constructor() {
+    super('Archive', vscode.TreeItemCollapsibleState.Collapsed)
+
+    this.iconPath = new vscode.ThemeIcon('archive')
+    this.contextValue = 'archivedLists'
+  }
+}
+
 export class ListTreeItem extends vscode.TreeItem {
-  constructor(public readonly list: string, isCurrentList: boolean) {
+  constructor(public readonly list: string, isCurrentList: boolean, isArchived: boolean) {
     super(list, isCurrentList ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 
     this.iconPath = isCurrentList ? new vscode.ThemeIcon('folder-active') : new vscode.ThemeIcon('folder')
-    this.contextValue = isCurrentList ? 'activeList' : 'list'
+    this.contextValue = isArchived
+      ? isCurrentList ? 'archivedActiveList' : 'archivedList'
+      : isCurrentList ? 'activeList' : 'list'
   }
 }
 

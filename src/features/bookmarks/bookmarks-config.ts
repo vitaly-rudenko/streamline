@@ -2,11 +2,13 @@ import * as vscode from 'vscode'
 import { getConfig } from '../../config'
 import type { Bookmark, SerializedBookmark } from './types'
 import { FeatureConfig } from '../feature-config'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 
 export const defaultCurrentList = 'default'
 
 export class BookmarksConfig extends FeatureConfig {
   private _currentList = defaultCurrentList
+  private _archivedLists: string[] = []
   private _bookmarks: Bookmark[] = []
   private _cachedSerializedBookmarks: SerializedBookmark[] = []
 
@@ -15,12 +17,19 @@ export class BookmarksConfig extends FeatureConfig {
   load() {
     const config = getConfig()
     const currentList = config.get<string>('bookmarks.currentList', defaultCurrentList)
+    const archivedLists = config.get<string[]>('bookmarks.archivedLists', [])
     const serializedBookmarks = config.get<SerializedBookmark[]>('bookmarks.serializedBookmarks', [])
 
     let hasChanged = false
 
     if (this._currentList !== currentList) {
       this._currentList = currentList
+
+      hasChanged = true
+    }
+
+    if (!areArraysShallowEqual(this._archivedLists, archivedLists)) {
+      this._archivedLists = archivedLists
 
       hasChanged = true
     }
@@ -32,7 +41,7 @@ export class BookmarksConfig extends FeatureConfig {
       hasChanged = true
     }
 
-    console.debug('[Bookmarks] Config has been loaded', { hasChanged, currentList, serializedBookmarks })
+    console.debug('[Bookmarks] Config has been loaded', { hasChanged, currentList, archivedLists, serializedBookmarks })
 
     return hasChanged
   }
@@ -43,6 +52,11 @@ export class BookmarksConfig extends FeatureConfig {
     await config.update(
       'bookmarks.currentList',
       this._currentList !== defaultCurrentList ? this._currentList : undefined
+    )
+
+    await config.update(
+      'bookmarks.archivedLists',
+      this._archivedLists.length > 0 ? this._archivedLists : undefined
     )
 
     await config.update(
@@ -59,6 +73,14 @@ export class BookmarksConfig extends FeatureConfig {
 
   setCurrentList(value: string) {
     this._currentList = value
+  }
+
+  getArchivedLists() {
+    return this._archivedLists
+  }
+
+  setArchivedLists(value: string[]) {
+    this._archivedLists = value
   }
 
   getBookmarks() {
