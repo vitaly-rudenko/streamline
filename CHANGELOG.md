@@ -9,6 +9,10 @@
 - Collapse inactive lists by default, as well as non-virtual file bookmarks
 - Added icons for selection bookmarks
 
+### TabHistory
+
+- Added "Pinned" and "Recently opened" visible categories to the view for better readability
+
 ## 0.14
 
 ### ScopedPaths

@@ -4,7 +4,7 @@ import type { TabHistoryStorage } from './tab-history-storage'
 import { formatPaths } from '../../utils/format-paths'
 import type { TabHistoryConfig } from './tab-history-config'
 
-export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTreeItem> {
+export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTreeItem | CategoryTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
@@ -21,11 +21,11 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     return element
   }
 
-  async getChildren(element?: TabTreeItem | undefined): Promise<TabTreeItem[] | undefined> {
+  async getChildren(element?: TabTreeItem | CategoryTreeItem | undefined): Promise<(TabTreeItem | CategoryTreeItem)[] | undefined> {
     if (element) return undefined
 
     const now = new Date()
-    const children: TabTreeItem[] = []
+    const children: (TabTreeItem | CategoryTreeItem)[] = []
 
     const tabs = this.tabHistoryStorage.list()
     const remainingTabsMap = new Map(tabs.map(tab => [tab.path, tab]))
@@ -33,6 +33,11 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     const formattedPaths = formatPaths([...this.config.getPinnedPaths(), ...tabs.map(tab => tab.path)])
 
     // Pinned tabs
+
+    if (this.config.getPinnedPaths().length > 0) {
+      children.push(new CategoryTreeItem('Pinned', new vscode.ThemeIcon('pinned')))
+    }
+
     for (const path of this.config.getPinnedPaths().sort()) {
       const formattedPath = formattedPaths.get(path)!
       const tab = remainingTabsMap.get(path)
@@ -50,6 +55,11 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     }
 
     // Other tabs
+
+    if (tabs.length > 0) {
+      children.push(new CategoryTreeItem('Recently opened', new vscode.ThemeIcon('history')))
+    }
+
     for (const tab of tabs) {
       const formattedPath = formattedPaths.get(tab.path)!
       if (!remainingTabsMap.has(tab.path)) continue
@@ -65,6 +75,13 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     }
 
     return children
+  }
+}
+
+export class CategoryTreeItem extends vscode.TreeItem {
+  constructor(label: string, icon: vscode.ThemeIcon) {
+    super(label, vscode.TreeItemCollapsibleState.None)
+    this.iconPath = icon
   }
 }
 
