@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.15
+
+### Bookmarks
+
+- Added ability to archive/unarchive bookmarks lists
+- Changed view title button to "Create Bookmarks List"
+- Collapse inactive lists by default, as well as non-virtual file bookmarks
+
 ## 0.14
 
 ### ScopedPaths
