@@ -214,6 +214,11 @@
         "icon": "$(issue-closed)"
       },
       {
+        "command": "streamline.bookmarks.addList",
+        "title": "Create Bookmarks List",
+        "icon": "$(add)"
+      },
+      {
         "command": "streamline.bookmarks.deleteList",
         "title": "Delete Bookmarks List",
         "icon": "$(trash)"
@@ -277,7 +282,7 @@
           "when": "view == tabHistory"
         },
         {
-          "command": "streamline.bookmarks.changeCurrentList",
+          "command": "streamline.bookmarks.addList",
           "group": "navigation@1",
           "when": "view == bookmarks"
         }

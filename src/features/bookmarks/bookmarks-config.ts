@@ -3,7 +3,7 @@ import { getConfig } from '../../config'
 import type { Bookmark, SerializedBookmark } from './types'
 import { FeatureConfig } from '../feature-config'
 
-const defaultCurrentList = 'default'
+export const defaultCurrentList = 'default'
 
 export class BookmarksConfig extends FeatureConfig {
   private _currentList = defaultCurrentList

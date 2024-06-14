@@ -146,6 +146,17 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.addList', async () => {
+      const list = await vscode.window.showInputBox({ prompt: 'Enter the name of new list' })
+      if (!list) return
+
+      config.setCurrentList(list)
+      bookmarksTreeDataProvider.refresh()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.revealInExplorer', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
       await vscode.commands.executeCommand('revealInExplorer', item.uri)
     })
@@ -170,6 +181,10 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       if (itemOrUri instanceof ListTreeItem) {
         const result = await vscode.window.showInformationMessage(`Delete list '${itemOrUri.list}' and its bookmarks?`, 'Delete', 'Cancel')
         if (result !== 'Delete') return
+
+        if (config.getCurrentList() === itemOrUri.list) {
+          config.setCurrentList(defaultCurrentList)
+        }
       }
 
       config.setBookmarks(
