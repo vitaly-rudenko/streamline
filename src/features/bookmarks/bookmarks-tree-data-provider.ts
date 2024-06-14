@@ -160,13 +160,17 @@ export class FileTreeItem extends vscode.TreeItem {
   }
 }
 
+const MAX_LABEL_LENGTH = 64
+const MAX_DESCRIPTION_LENGTH = 64
+const MAX_TOOLTIP_SELECTION_VALUE_LINES = 15
+
 export class SelectionTreeItem extends vscode.TreeItem {
   constructor(public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection, value: string, note?: string) {
-    super(note ?? formatSelectionValue(selection, value), vscode.TreeItemCollapsibleState.None)
+    super(trimTextLength(note ?? formatSelectionValue(selection, value), MAX_LABEL_LENGTH), vscode.TreeItemCollapsibleState.None)
 
-    this.description = note ? formatSelectionValue(selection, value) : undefined
+    this.description = note ? trimTextLength(formatSelectionValue(selection, value), MAX_DESCRIPTION_LENGTH) : undefined
     this.contextValue = 'selection'
-    this.tooltip = `${note ? `${note}\n\n` : ''}${stripIndent(value)}\n\n${uri.path}`
+    this.tooltip = `${note ? `${note}\n\n` : ''}${trimTextLines(stripIndent(value), MAX_TOOLTIP_SELECTION_VALUE_LINES)}\n\n${uri.path}`
     this.iconPath = note ? new vscode.ThemeIcon('note') : new vscode.ThemeIcon('selection')
     this.command = {
       command: 'vscode.open',
@@ -174,6 +178,23 @@ export class SelectionTreeItem extends vscode.TreeItem {
       title: selection.isEmpty ? 'Go to line' : 'Go to selection'
     }
   }
+}
+
+function trimTextLines(text: string, maxLines: number) {
+  const lines = text.split('\n')
+  if (lines.length > maxLines) {
+    return lines.slice(0, maxLines).join('\n') + '…'
+  }
+
+  return text
+}
+
+function trimTextLength(text: string, maxLength: number) {
+  if (text.length > maxLength) {
+    return text.substring(0, maxLength) + '…'
+  }
+
+  return text
 }
 
 function formatSelectionValue(selection: vscode.Selection, value: string) {
