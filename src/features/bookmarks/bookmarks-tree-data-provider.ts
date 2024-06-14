@@ -136,7 +136,7 @@ export class SelectionTreeItem extends vscode.TreeItem {
 
     this.description = note ? formatSelectionValue(selection, value) : undefined
     this.contextValue = 'selection'
-    this.tooltip = `${stripIndent(value)}\n\n${uri.path}`
+    this.tooltip = `${note ? `${note}\n\n` : ''}${stripIndent(value)}\n\n${uri.path}`
     this.command = {
       command: 'vscode.open',
       arguments: [uri, { selection }],
