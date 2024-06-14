@@ -57,7 +57,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     // Other tabs
 
     if (tabs.length > 0) {
-      children.push(new SectionTreeItem('Recently opened', new vscode.ThemeIcon('history')))
+      children.push(new SectionTreeItem('Recently opened', new vscode.ThemeIcon('history'), 'recentlyOpened'))
     }
 
     for (const tab of tabs) {
@@ -79,9 +79,10 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
 }
 
 export class SectionTreeItem extends vscode.TreeItem {
-  constructor(label: string, icon: vscode.ThemeIcon) {
+  constructor(label: string, icon: vscode.ThemeIcon, contextValue?: string) {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.iconPath = icon
+    this.contextValue = contextValue
   }
 }
 
@@ -95,9 +96,7 @@ export class TabTreeItem extends vscode.TreeItem {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.resourceUri = uri
     this.contextValue = isPinned ? 'pinnedTab' : 'tab'
-    this.description = isPinned
-      ? (date ? `pinned – ${date}` : 'pinned')
-      : date
+    this.description = date
 
     this.command = {
       command: 'vscode.open',

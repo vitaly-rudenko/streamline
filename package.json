@@ -282,13 +282,8 @@
           "when": "view == tabHistory && streamline.tabHistory.backup.enabled"
         },
         {
-          "command": "streamline.tabHistory.clear",
-          "group": "navigation@2",
-          "when": "view == tabHistory"
-        },
-        {
           "command": "streamline.tabHistory.refresh",
-          "group": "navigation@3",
+          "group": "navigation@2",
           "when": "view == tabHistory"
         },
         {
@@ -347,6 +342,11 @@
           "command": "streamline.tabHistory.unpinTab",
           "when": "view == tabHistory && viewItem == pinnedTab",
           "group": "inline@1"
+        },
+        {
+          "command": "streamline.tabHistory.clear",
+          "group": "inline@1",
+          "when": "view == tabHistory && viewItem == recentlyOpened"
         }
       ],
       "explorer/context": [
