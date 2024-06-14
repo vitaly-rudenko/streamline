@@ -390,16 +390,17 @@
       "editor/title": [
         {
           "command": "streamline.relatedFiles.quickOpen",
+          "when": "resourceScheme == file",
           "group": "navigation@1"
         },
         {
           "command": "streamline.bookmarks.addFile",
-          "when": "!streamline.bookmarks.activeTextEditorBookmarked",
+          "when": "resourceScheme == file && !streamline.bookmarks.activeTextEditorBookmarked",
           "group": "navigation@2"
         },
         {
           "command": "streamline.bookmarks.deleteFile",
-          "when": "streamline.bookmarks.activeTextEditorBookmarked",
+          "when": "resourceScheme == file && streamline.bookmarks.activeTextEditorBookmarked",
           "group": "navigation@2"
         }
       ]
