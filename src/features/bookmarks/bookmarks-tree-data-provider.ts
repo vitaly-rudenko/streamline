@@ -1,6 +1,5 @@
 import * as vscode from 'vscode'
 import { formatPaths } from '../../utils/format-paths'
-import { unique } from '../../utils/unique'
 import { getFilename } from '../../utils/get-filename'
 import type { BookmarksConfig } from './bookmarks-config'
 import type { Bookmark } from './types'
@@ -24,10 +23,8 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (element === undefined) {
-      const lists = unique([...this.config.getBookmarks().map(bookmark => bookmark.list), this.config.getCurrentList()])
-
-      const children: TreeItem[] = lists.filter(list => !this.config.getArchivedLists().includes(list))
-        .sort()
+      const children: TreeItem[] = this.config.getCachedSortedLists()
+        .filter(list => !this.config.getArchivedLists().includes(list))
         .map(list => new ListTreeItem(list, this.config.getCurrentList() === list, false))
 
       if (this.config.getArchivedLists().length > 0) {
@@ -38,7 +35,8 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
     }
 
     if (element instanceof ArchivedListsTreeItem) {
-      return this.config.getArchivedLists().map(list => new ListTreeItem(list, this.config.getCurrentList() === list, true))
+      return this.config.getCachedSortedArchivedLists()
+        .map(list => new ListTreeItem(list, this.config.getCurrentList() === list, true))
     }
 
     const listBookmarks = this.config.getBookmarks().filter(bookmark => bookmark.list === element.list)
