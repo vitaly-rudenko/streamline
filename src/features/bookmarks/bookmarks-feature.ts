@@ -8,6 +8,10 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
   const config = new BookmarksConfig()
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(config)
+  const bookmarksTreeView = vscode.window.createTreeView('bookmarks', {
+    treeDataProvider: bookmarksTreeDataProvider,
+    showCollapseAll: true,
+  })
 
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
@@ -42,7 +46,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     return selectedList
   }
 
-	context.subscriptions.push(vscode.window.registerTreeDataProvider('bookmarks', bookmarksTreeDataProvider))
+	context.subscriptions.push(bookmarksTreeView)
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.add', async (_: never, selectedUris: vscode.Uri[] | undefined, list?: string | undefined, note?: string | undefined) => {
