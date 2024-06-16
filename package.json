@@ -179,11 +179,6 @@
         "icon": "$(star)"
       },
       {
-        "command": "streamline.bookmarks.deleteFile",
-        "title": "Delete File from Bookmarks",
-        "icon": "$(star-full)"
-      },
-      {
         "command": "streamline.bookmarks.addToList",
         "title": "Add Bookmark to List...",
         "icon": "$(star)"
@@ -199,14 +194,19 @@
         "icon": "$(note)"
       },
       {
-        "command": "streamline.bookmarks.revealInExplorer",
-        "title": "Reveal Bookmark in Explorer",
-        "icon": "$(eye)"
-      },
-      {
         "command": "streamline.bookmarks.delete",
         "title": "Delete Bookmark",
         "icon": "$(star-full)"
+      },
+      {
+        "command": "streamline.bookmarks.deleteFile",
+        "title": "Delete File from Bookmarks",
+        "icon": "$(star-full)"
+      },
+      {
+        "command": "streamline.bookmarks.revealInExplorer",
+        "title": "Reveal Bookmark in Explorer",
+        "icon": "$(eye)"
       },
       {
         "command": "streamline.bookmarks.changeCurrentList",
