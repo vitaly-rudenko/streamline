@@ -1,6 +1,5 @@
 import * as vscode from 'vscode'
 import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
-import { unique } from '../../utils/unique'
 import { BookmarksConfig, defaultCurrentList } from './bookmarks-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 
@@ -30,7 +29,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
   async function promptListSelection() {
     let selectedList = await vscode.window.showQuickPick(
-      unique([...config.getBookmarks().map(bookmark => bookmark.list).sort(), config.getCurrentList(), 'default', '+ Add new list']),
+      [...config.getCachedSortedLists(), '+ Add new list'],
       { title: 'Select Bookmarks List' }
     )
     if (!selectedList) return undefined
