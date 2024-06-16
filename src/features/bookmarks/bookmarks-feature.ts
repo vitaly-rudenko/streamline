@@ -96,7 +96,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       if (!uriOrFileTreeItem) return
 
       if (uriOrFileTreeItem instanceof FileTreeItem) {
-        await vscode.commands.executeCommand('streamline.bookmarks.add', uriOrFileTreeItem.uri, [uriOrFileTreeItem.uri])
+        await vscode.commands.executeCommand('streamline.bookmarks.add', uriOrFileTreeItem.uri, [uriOrFileTreeItem.uri], uriOrFileTreeItem.list)
       } else {
         await vscode.commands.executeCommand('streamline.bookmarks.add', uriOrFileTreeItem, [uriOrFileTreeItem])
       }
