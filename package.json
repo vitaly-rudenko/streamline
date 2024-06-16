@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.15.4",
+  "version": "0.16.0",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -224,6 +224,11 @@
         "icon": "$(trash)"
       },
       {
+        "command": "streamline.bookmarks.renameList",
+        "title": "Rename Bookmarks List",
+        "icon": "$(edit)"
+      },
+      {
         "command": "streamline.bookmarks.archiveList",
         "title": "Archive Bookmarks List",
         "icon": "$(archive)"
@@ -319,19 +324,24 @@
           "group": "inline@1"
         },
         {
+          "command": "streamline.bookmarks.renameList",
+          "when": "view == bookmarks && (viewItem == list || viewItem == archivedList || viewItem == activeList || viewItem == archivedActiveList)",
+          "group": "inline@3"
+        },
+        {
           "command": "streamline.bookmarks.archiveList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList)",
-          "group": "inline@2"
+          "group": "inline@4"
         },
         {
           "command": "streamline.bookmarks.unarchiveList",
           "when": "view == bookmarks && (viewItem == archivedList || viewItem == archivedActiveList)",
-          "group": "inline@2"
+          "group": "inline@4"
         },
         {
           "command": "streamline.bookmarks.deleteList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
-          "group": "inline@3"
+          "group": "inline@5"
         },
         {
           "command": "streamline.tabHistory.pinTab",

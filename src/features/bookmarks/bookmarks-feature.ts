@@ -156,6 +156,41 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.renameList', async (item?: ListTreeItem) => {
+      if (!item) return
+
+      const oldName = item.list
+      const newName = await vscode.window.showInputBox({ prompt: 'Enter new name of the list', value: oldName })
+      if (!newName || newName === item.list) return
+
+      let isNewList = !config.getCachedSortedLists().includes(newName)
+      if (!isNewList) {
+        const result = await vscode.window.showInformationMessage(`List ${newName} already exists. Do you want to merge bookmarks?`, 'Yes, merge', 'Cancel')
+        if (result !== 'Yes, merge') return
+      }
+
+      if (config.getCurrentList() === oldName) {
+        config.setCurrentList(newName)
+      }
+
+      if (config.getArchivedLists().includes(oldName)) {
+        config.setArchivedLists(config.getArchivedLists().filter(list => list !== oldName))
+
+        if (isNewList) {
+          config.setArchivedLists([...config.getArchivedLists(), newName])
+        }
+      }
+
+      config.setBookmarks(
+        config.getBookmarks().map((bookmark) => bookmark.list === oldName ? {...bookmark, list: newName} : bookmark)
+      )
+
+      bookmarksTreeDataProvider.refresh()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.archiveList', async (item?: ListTreeItem) => {
       if (!item) return
       if (config.getArchivedLists().includes(item.list)) return

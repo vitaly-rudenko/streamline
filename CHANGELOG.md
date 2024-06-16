@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.16
+
+### Bookmarks
+
+- **Added ability to rename bookmarks lists**
+
 ## 0.15
 
 ### Bookmarks
