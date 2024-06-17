@@ -56,7 +56,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
 
     // Other tabs
 
-    if (tabs.length > 0) {
+    if (remainingTabsMap.size > 0) {
       children.push(new SectionTreeItem('Recently opened', new vscode.ThemeIcon('history'), 'recentlyOpened'))
     }
 
