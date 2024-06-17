@@ -5,6 +5,7 @@
 ### Bookmarks
 
 - **Added ability to rename bookmarks lists**
+- **Added ability to edit bookmark notes**
 
 ## 0.15
 

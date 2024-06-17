@@ -126,6 +126,31 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.editNote', async (item?: SelectionTreeItem) => {
+      if (!item) return
+
+      const oldNote = item.note
+      const newNote = await vscode.window.showInputBox({ prompt: 'Enter the note', value: item?.note })
+      if (newNote === undefined || oldNote === newNote) return
+
+      const bookmarks = config.getBookmarks()
+      if (!bookmarks.includes(item.bookmark)) {
+        bookmarksTreeDataProvider.refresh()
+        await vscode.window.showWarningMessage('Something went wrong, please try again')
+        return
+      }
+
+      config.setBookmarks([
+        ...bookmarks.filter((bookmark) => bookmark !== item.bookmark),
+        {...item.bookmark, note: newNote === '' ? undefined : newNote},
+      ])
+
+      bookmarksTreeDataProvider.refresh()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.addNoteToList', async (_: never, selectedUris: vscode.Uri[] | undefined) => {
       const selectedList = await promptListSelection()
       if (!selectedList) return

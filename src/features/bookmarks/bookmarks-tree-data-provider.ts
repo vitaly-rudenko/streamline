@@ -49,6 +49,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
       return bookmarks
         .sort((a, b) => a.selection.start.line - b.selection.start.line)
         .map(bookmark => new SelectionTreeItem(
+          bookmark,
           bookmark.list,
           bookmark.uri,
           bookmark.selection,
@@ -163,7 +164,7 @@ const MAX_DESCRIPTION_LENGTH = 64
 const MAX_TOOLTIP_SELECTION_VALUE_LINES = 15
 
 export class SelectionTreeItem extends vscode.TreeItem {
-  constructor(public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection, value: string, note?: string) {
+  constructor(public readonly bookmark: Bookmark, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection, value: string, public readonly note?: string) {
     super(trimTextLength(note ?? formatSelectionValue(selection, value), MAX_LABEL_LENGTH), vscode.TreeItemCollapsibleState.None)
 
     this.description = note ? trimTextLength(formatSelectionValue(selection, value), MAX_DESCRIPTION_LENGTH) : undefined
