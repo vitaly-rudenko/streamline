@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.17
+## 0.16
 
 ### RelatedFiles
 
@@ -9,14 +9,9 @@
 
 ### Bookmarks
 
-- Move archived lists to the bottom of list selection popup
-
-## 0.16
-
-### Bookmarks
-
 - **Added ability to rename bookmarks lists**
 - **Added ability to edit bookmark notes**
+- Move archived lists to the bottom of list selection popup
 
 ## 0.15
 
