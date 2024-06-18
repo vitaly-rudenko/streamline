@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.17
+
+### RelatedFiles
+
+- **Improved Tree View** – it will now match filenames that contain current file's basename at any position
+- **Improved Quick Open** - hyphens and underscores are now replaced with whitespace so that similar files with different cases are properly matched
+
 ## 0.16
 
 ### Bookmarks
