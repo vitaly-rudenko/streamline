@@ -35,7 +35,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
       uri ||= vscode.window.activeTextEditor?.document.uri
       if (!uri) return
 
-      const basename = getBasename(uri.path)
+      const basename = getBasename(uri.path).replaceAll(/[-_]/g, ' ')
       const workspaceFolder = isMultiRootWorkspace() ? vscode.workspace.getWorkspaceFolder(uri) : undefined
       const query = workspaceFolder ? `${workspaceFolder.name}/${basename}` : basename
 
