@@ -23,8 +23,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (element === undefined) {
-      const children: TreeItem[] = this.config.getCachedSortedLists()
-        .filter(list => !this.config.getArchivedLists().includes(list))
+      const children: TreeItem[] = this.config.getCachedSortedUnarchivedLists()
         .map(list => new ListTreeItem(list, this.config.getCurrentList() === list, false))
 
       if (this.config.getArchivedLists().length > 0) {

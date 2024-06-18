@@ -32,11 +32,20 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   }
 
   async function promptListSelection() {
+    const archiveItem = '-------------------------'
+
     let selectedList = await vscode.window.showQuickPick(
-      [...config.getCachedSortedLists(), '+ Add new list'],
+      [
+        ...config.getCachedSortedUnarchivedLists(),
+        '+ Add new list',
+        ...config.getCachedSortedArchivedLists().length > 0 ? [archiveItem, ...config.getCachedSortedArchivedLists()] : [],
+      ],
       { title: 'Select Bookmarks List' }
     )
     if (!selectedList) return undefined
+    if (selectedList === archiveItem) {
+      return promptListSelection()
+    }
 
     if (selectedList === '+ Add new list') {
       selectedList = await vscode.window.showInputBox({ prompt: 'Enter the name of new list' })
@@ -192,7 +201,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       const newName = await vscode.window.showInputBox({ prompt: 'Enter new name of the list', value: oldName })
       if (!newName || newName === item.list) return
 
-      let isNewList = !config.getCachedSortedLists().includes(newName)
+      let isNewList = !config.getCachedUnsortedLists().includes(newName)
       if (!isNewList) {
         const result = await vscode.window.showInformationMessage(`List ${newName} already exists. Do you want to merge bookmarks?`, 'Yes, merge', 'Cancel')
         if (result !== 'Yes, merge') return

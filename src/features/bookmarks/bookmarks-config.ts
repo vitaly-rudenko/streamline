@@ -12,7 +12,8 @@ export class BookmarksConfig extends FeatureConfig {
   private _archivedLists: string[] = []
   private _bookmarks: Bookmark[] = []
   private _cachedSerializedBookmarks: SerializedBookmark[] = []
-  private _cachedSortedLists: string[] = []
+  private _cachedUnsortedLists: string[] = []
+  private _cachedSortedUnarchivedLists: string[] = []
   private _cachedSortedArchivedLists: string[] = []
 
   constructor() { super('Bookmarks') }
@@ -72,20 +73,21 @@ export class BookmarksConfig extends FeatureConfig {
   }
 
   private _updateListsCache() {
+    this._cachedUnsortedLists = unique(this._bookmarks.map((bookmark) => bookmark.list))
+    this._cachedSortedUnarchivedLists = this._cachedUnsortedLists.filter((list) => !this.getArchivedLists().includes(list)).sort()
     this._cachedSortedArchivedLists = [...this.getArchivedLists()].sort()
-    this._cachedSortedLists = unique([
-      ...this._bookmarks.map((bookmark) => bookmark.list),
-      ...this.getArchivedLists(),
-      this.getCurrentList()
-    ]).sort()
   }
 
   getCachedSortedArchivedLists() {
     return this._cachedSortedArchivedLists
   }
 
-  getCachedSortedLists() {
-    return this._cachedSortedLists
+  getCachedSortedUnarchivedLists() {
+    return this._cachedSortedUnarchivedLists
+  }
+
+  getCachedUnsortedLists() {
+    return this._cachedUnsortedLists
   }
 
   getCurrentList() {
