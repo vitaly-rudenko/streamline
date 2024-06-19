@@ -6,6 +6,7 @@ const defaultUseRelativePaths = true
 const defaultUseExcludes = true
 const defaultUseStricterQuickOpenQuery = false
 const defaultUseGlobalSearch = false
+const defaultUseCompactPaths = false
 
 export class RelatedFilesConfig extends FeatureConfig {
   private _customExcludes: Record<string, unknown> = {}
@@ -13,6 +14,7 @@ export class RelatedFilesConfig extends FeatureConfig {
   private _useExcludes: boolean = defaultUseExcludes
   private _useStricterQuickOpenQuery: boolean = defaultUseStricterQuickOpenQuery
   private _useGlobalSearch: boolean = defaultUseGlobalSearch
+  private _useCompactPaths: boolean = defaultUseCompactPaths
 
   constructor() { super('RelatedFiles') }
 
@@ -23,6 +25,7 @@ export class RelatedFilesConfig extends FeatureConfig {
     const useExcludes = config.get<boolean>('relatedFiles.useExcludes', defaultUseExcludes)
     const useStricterQuickOpenQuery = config.get<boolean>('relatedFiles.useStricterQuickOpenQuery', defaultUseStricterQuickOpenQuery)
     const useGlobalSearch = config.get<boolean>('relatedFiles.useGlobalSearch', defaultUseGlobalSearch)
+    const useCompactPaths = config.get<boolean>('relatedFiles.useCompactPaths', defaultUseCompactPaths)
 
     let hasChanged = false
 
@@ -32,17 +35,19 @@ export class RelatedFilesConfig extends FeatureConfig {
       || this._useExcludes !== useExcludes
       || this._useStricterQuickOpenQuery !== useStricterQuickOpenQuery
       || this._useGlobalSearch !== useGlobalSearch
+      || this._useCompactPaths !== useCompactPaths
     ) {
       this._customExcludes = customExcludes
       this._useRelativePaths = useRelativePaths
       this._useExcludes = useExcludes
       this._useStricterQuickOpenQuery = useStricterQuickOpenQuery
       this._useGlobalSearch = useGlobalSearch
+      this._useCompactPaths = useCompactPaths
 
       hasChanged = true
     }
 
-    console.debug('[RelatedFiles] Config has been loaded', { hasChanged, customExcludes, useRelativePaths, useExcludes, useStricterQuickOpenQuery, useGlobalSearch })
+    console.debug('[RelatedFiles] Config has been loaded', { hasChanged, customExcludes, useRelativePaths, useExcludes, useStricterQuickOpenQuery, useGlobalSearch, useCompactPaths })
 
     return hasChanged
   }
@@ -65,6 +70,11 @@ export class RelatedFilesConfig extends FeatureConfig {
       this._useGlobalSearch !== defaultUseGlobalSearch ? this._useGlobalSearch : undefined
     )
 
+    await config.update(
+      'relatedFiles.useCompactPaths',
+      this._useCompactPaths !== defaultUseCompactPaths ? this._useCompactPaths : undefined
+    )
+
     console.debug('[RelatedFiles] Config has been saved')
   }
 
@@ -74,6 +84,14 @@ export class RelatedFilesConfig extends FeatureConfig {
 
   getUseStricterQuickOpenQuery() {
     return this._useStricterQuickOpenQuery
+  }
+
+  setUseCompactPaths(value: boolean) {
+    this._useCompactPaths = value
+  }
+
+  getUseCompactPaths() {
+    return this._useCompactPaths
   }
 
   setUseGlobalSearch(value: boolean) {

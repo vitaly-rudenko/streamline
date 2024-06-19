@@ -7,8 +7,10 @@
 - **Improved Tree View** – it will now match filenames that contain current file's basename at any position
 - **Improved Quick Open** - hyphens and underscores are now removed so that similar files with different cases are properly matched
   > Can be disabled by setting `streamline.relatedFiles.useStricterQuickOpenQuery` to `true`.
-- **Added "Use Global Search in Related Files" toggle** to allow searching for related files across all workspace folders
+- **Added "Use Global Search" toggle** to allow searching for related files across all workspace folders
   > Enables global search in both Related Files view and in Quick Open Related Files command.
+- **Added experimental "Use Compact Paths" toggle** to make absolute paths more readable
+  > When enabled, folders are completely removed from paths except for files with equal filenames.
 
 ### Bookmarks
 

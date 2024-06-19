@@ -5,6 +5,7 @@ import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
 import { getBasename } from '../../utils/get-basename'
 import { getRelatedFilesQueries } from './get-related-files-queries'
 import type { RelatedFilesConfig } from './related-files-config'
+import { formatPaths } from '../../utils/format-paths'
 
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -78,32 +79,43 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     const children: RelatedFileTreeItem[] = []
     const ignoredPaths = new Set([currentUri.path])
 
-    for (const relatedUri of bestMatchedUris) {
-      if (ignoredPaths.has(relatedUri.path)) continue
-      ignoredPaths.add(relatedUri.path)
-      children.push(this._createRelatedFileTreeItem(currentUri, relatedUri, getBasename(relatedUri.path) === currentBasename))
+    const uris = [...bestMatchedUris, ...worstMatchedUris]
+    let pathLabels: Map<string, string>
+
+    if (this.config.getUseRelativePaths()) {
+      pathLabels = new Map(
+        uris.map((uri) => {
+          const label = path.relative(currentUri.path, uri.path).replace('../', '')
+          return [uri.path, label.startsWith('../') ? label : ('./' + label)]
+        })
+      )
+    } else {
+      pathLabels = new Map(
+        uris.map((uri) => [uri.path, vscode.workspace.asRelativePath(uri, this.config.getUseGlobalSearch())])
+      )
+
+      if (this.config.getUseCompactPaths()) {
+        const formattedPaths = formatPaths([...pathLabels.values()])
+        for (const [path, label] of pathLabels) {
+          pathLabels.set(path, formattedPaths.get(label)!)
+        }
+      }
     }
 
-    for (const relatedUri of worstMatchedUris) {
-      if (ignoredPaths.has(relatedUri.path)) continue
-      ignoredPaths.add(relatedUri.path)
-      children.push(this._createRelatedFileTreeItem(currentUri, relatedUri))
+    for (const uri of bestMatchedUris) {
+      if (ignoredPaths.has(uri.path)) continue
+      ignoredPaths.add(uri.path)
+      children.push(new RelatedFileTreeItem(pathLabels.get(uri.path)!, uri, getBasename(uri.path) === currentBasename))
+    }
+
+    for (const uri of worstMatchedUris) {
+      if (ignoredPaths.has(uri.path)) continue
+      ignoredPaths.add(uri.path)
+      children.push(new RelatedFileTreeItem(pathLabels.get(uri.path)!, uri, false))
     }
 
     this._cache.set(currentUri.path, children)
     return children
-  }
-
-  private _createRelatedFileTreeItem(originalUri: vscode.Uri, relatedUri: vscode.Uri, isBestMatch?: boolean) {
-    let label: string
-    if (this.config.getUseRelativePaths()) {
-      label = path.relative(originalUri.path, relatedUri.path).replace('../', '')
-      if (!label.startsWith('../')) label = './' + label
-    } else {
-      label = vscode.workspace.asRelativePath(relatedUri, this.config.getUseGlobalSearch())
-    }
-
-    return new RelatedFileTreeItem(label, relatedUri, label, isBestMatch)
   }
 
   // TODO: Does not belong here? Also we do not need to regenerate it every time.
@@ -121,7 +133,6 @@ export class RelatedFileTreeItem extends vscode.TreeItem {
   constructor(
     label: string,
     uri: vscode.Uri,
-    public readonly textToCopy: string,
     isBestMatch?: boolean,
   ) {
     super(label, vscode.TreeItemCollapsibleState.None)

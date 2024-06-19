@@ -25,6 +25,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useExcludes', config.getUseExcludes())
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useRelativePaths', config.getUseRelativePaths())
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useGlobalSearch', config.getUseGlobalSearch())
+      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useCompactPaths', config.getUseCompactPaths())
     } catch (error) {
       console.warn('[ScopedPaths] Could not update context', error)
     }
@@ -78,6 +79,26 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   )
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.relatedFiles.enableUseCompactPaths', () => {
+      config.setUseCompactPaths(true)
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+
+      updateContextInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.relatedFiles.disableUseCompactPaths', () => {
+      config.setUseCompactPaths(false)
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+
+      updateContextInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.enableUseExcludes', () => {
       config.setUseExcludes(true)
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
@@ -114,12 +135,6 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
 
       updateContextInBackground()
       config.saveInBackground()
-    })
-  )
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.copyPath', async (item: RelatedFileTreeItem) => {
-      await vscode.env.clipboard.writeText(item.textToCopy)
     })
   )
 

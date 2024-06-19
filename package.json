@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -139,9 +139,14 @@
         "icon": "$(compass-dot)"
       },
       {
-        "command": "streamline.relatedFiles.copyPath",
-        "title": "Copy Path of Related File",
-        "icon": "$(files)"
+        "command": "streamline.relatedFiles.enableUseCompactPaths",
+        "title": "Enable Compact Paths in Related Files",
+        "icon": "$(layers)"
+      },
+      {
+        "command": "streamline.relatedFiles.disableUseCompactPaths",
+        "title": "Disable Compact Paths in Related Files",
+        "icon": "$(layers-dot)"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
@@ -287,18 +292,28 @@
           "when": "view == relatedFiles && streamline.relatedFiles.useExcludes"
         },
         {
-          "command": "streamline.relatedFiles.enableUseRelativePaths",
+          "command": "streamline.relatedFiles.enableUseCompactPaths",
           "group": "navigation@3",
+          "when": "view == relatedFiles && !streamline.relatedFiles.useRelativePaths && !streamline.relatedFiles.useCompactPaths"
+        },
+        {
+          "command": "streamline.relatedFiles.disableUseCompactPaths",
+          "group": "navigation@3",
+          "when": "view == relatedFiles && !streamline.relatedFiles.useRelativePaths && streamline.relatedFiles.useCompactPaths"
+        },
+        {
+          "command": "streamline.relatedFiles.enableUseRelativePaths",
+          "group": "navigation@4",
           "when": "view == relatedFiles && !streamline.relatedFiles.useRelativePaths"
         },
         {
           "command": "streamline.relatedFiles.disableUseRelativePaths",
-          "group": "navigation@3",
+          "group": "navigation@5",
           "when": "view == relatedFiles && streamline.relatedFiles.useRelativePaths"
         },
         {
           "command": "streamline.relatedFiles.refresh",
-          "group": "navigation@4",
+          "group": "navigation@6",
           "when": "view == relatedFiles"
         },
         {
@@ -323,11 +338,6 @@
         }
       ],
       "view/item/context": [
-        {
-          "command": "streamline.relatedFiles.copyPath",
-          "when": "view == relatedFiles && viewItem == relatedFile",
-          "group": "inline@1"
-        },
         {
           "command": "streamline.bookmarks.revealInExplorer",
           "when": "view == bookmarks && (viewItem == file || viewItem == virtualFile || viewItem == folder)",
@@ -496,6 +506,11 @@
           "type": "boolean",
           "default": false,
           "description": "Search related files across all workspace folders"
+        },
+        "streamline.relatedFiles.useCompactPaths": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use compact paths in related files view when 'Use Relative Paths' is disabled (only shows folders if files have same filename)"
         },
         "streamline.relatedFiles.exclude": {
           "type": "object",
