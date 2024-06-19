@@ -129,6 +129,16 @@
         "icon": "$(exclude)"
       },
       {
+        "command": "streamline.relatedFiles.enableUseGlobalSearch",
+        "title": "Enable Global Search in Related Files",
+        "icon": "$(compass)"
+      },
+      {
+        "command": "streamline.relatedFiles.disableUseGlobalSearch",
+        "title": "Disable Global Search in Related Files",
+        "icon": "$(compass-dot)"
+      },
+      {
         "command": "streamline.relatedFiles.copyPath",
         "title": "Copy Path of Related File",
         "icon": "$(files)"
@@ -257,28 +267,38 @@
           "when": "view == 'workbench.explorer.fileView' && streamline.scopedPaths.enabled"
         },
         {
-          "command": "streamline.relatedFiles.enableUseExcludes",
+          "command": "streamline.relatedFiles.enableUseGlobalSearch",
           "group": "navigation@1",
+          "when": "view == relatedFiles && !streamline.relatedFiles.useGlobalSearch"
+        },
+        {
+          "command": "streamline.relatedFiles.disableUseGlobalSearch",
+          "group": "navigation@1",
+          "when": "view == relatedFiles && streamline.relatedFiles.useGlobalSearch"
+        },
+        {
+          "command": "streamline.relatedFiles.enableUseExcludes",
+          "group": "navigation@2",
           "when": "view == relatedFiles && !streamline.relatedFiles.useExcludes"
         },
         {
           "command": "streamline.relatedFiles.disableUseExcludes",
-          "group": "navigation@1",
+          "group": "navigation@2",
           "when": "view == relatedFiles && streamline.relatedFiles.useExcludes"
         },
         {
           "command": "streamline.relatedFiles.enableUseRelativePaths",
-          "group": "navigation@2",
+          "group": "navigation@3",
           "when": "view == relatedFiles && !streamline.relatedFiles.useRelativePaths"
         },
         {
           "command": "streamline.relatedFiles.disableUseRelativePaths",
-          "group": "navigation@2",
+          "group": "navigation@3",
           "when": "view == relatedFiles && streamline.relatedFiles.useRelativePaths"
         },
         {
           "command": "streamline.relatedFiles.refresh",
-          "group": "navigation@3",
+          "group": "navigation@4",
           "when": "view == relatedFiles"
         },
         {
@@ -466,6 +486,16 @@
           "type": "boolean",
           "default": true,
           "description": "Use excludes in related files view"
+        },
+        "streamline.relatedFiles.useStricterQuickOpenQuery": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not remove hyphens or underscores in filenames when using Quick Open Related Files command"
+        },
+        "streamline.relatedFiles.useGlobalSearch": {
+          "type": "boolean",
+          "default": false,
+          "description": "Search related files across all workspace folders"
         },
         "streamline.relatedFiles.exclude": {
           "type": "object",

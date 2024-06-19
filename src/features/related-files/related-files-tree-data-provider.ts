@@ -37,7 +37,9 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     if (cache) return cache
 
     const currentBasename = getBasename(currentUri.path)
-    const workspaceFolder = isMultiRootWorkspace() ? vscode.workspace.getWorkspaceFolder(currentUri) : undefined
+    const workspaceFolder = !this.config.getUseGlobalSearch() && isMultiRootWorkspace()
+      ? vscode.workspace.getWorkspaceFolder(currentUri)
+      : undefined
 
     const relatedFilesQueries = getRelatedFilesQueries(currentUri.path)
     const bestInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, relatedFilesQueries.best) : relatedFilesQueries.best

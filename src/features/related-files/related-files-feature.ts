@@ -23,6 +23,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     try {
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useExcludes', config.getUseExcludes())
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useRelativePaths', config.getUseRelativePaths())
+      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useGlobalSearch', config.getUseGlobalSearch())
     } catch (error) {
       console.warn('[ScopedPaths] Could not update context', error)
     }
@@ -35,8 +36,14 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
       uri ||= vscode.window.activeTextEditor?.document.uri
       if (!uri) return
 
-      const basename = getBasename(uri.path).replaceAll(/[-_]/g, ' ')
-      const workspaceFolder = isMultiRootWorkspace() ? vscode.workspace.getWorkspaceFolder(uri) : undefined
+      const workspaceFolder = !config.getUseGlobalSearch() && isMultiRootWorkspace()
+        ? vscode.workspace.getWorkspaceFolder(uri)
+        : undefined
+
+      const basename = config.getUseStricterQuickOpenQuery()
+        ? getBasename(uri.path)
+        : getBasename(uri.path).replaceAll(/[-_]/g, '')
+
       const query = workspaceFolder ? `${workspaceFolder.name}/${basename}` : basename
 
       await vscode.commands.executeCommand('workbench.action.quickOpen', query)
@@ -82,6 +89,26 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.disableUseExcludes', () => {
       config.setUseExcludes(false)
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+
+      updateContextInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.relatedFiles.enableUseGlobalSearch', () => {
+      config.setUseGlobalSearch(true)
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+
+      updateContextInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.relatedFiles.disableUseGlobalSearch', () => {
+      config.setUseGlobalSearch(false)
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       updateContextInBackground()
