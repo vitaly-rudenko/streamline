@@ -10,24 +10,11 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
-  private _excludePattern: string | undefined
   private readonly _cache = new LRUCache<string, RelatedFileTreeItem[]>({ max: 100 })
 
   constructor(private readonly config: RelatedFilesConfig) {}
 
   refresh(): void {
-    // TODO: generate this outside of the data provider and pass it here instead
-    if (this.config.getUseExcludes()) {
-      const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
-
-      const excludeEntries = Object.entries({ ...searchExcludes, ...this.config.getCustomExcludes() })
-      this._excludePattern = excludeEntries.length > 0
-        ? `{${excludeEntries.filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
-        : undefined
-    } else {
-      this._excludePattern = undefined
-    }
-
 		this._onDidChangeTreeData.fire()
 	}
 
@@ -59,10 +46,11 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
     // TODO: Exclude files from search.exclude and files.exclude configurations
+    const excludePattern = this._generateExcludePattern()
     const [bestMatchedUris, worstMatchedUris] = (
       await Promise.all([
-        vscode.workspace.findFiles(bestInclude, this._excludePattern, 10),
-        vscode.workspace.findFiles(worstInclude, this._excludePattern, 10),
+        vscode.workspace.findFiles(bestInclude, excludePattern, 10),
+        vscode.workspace.findFiles(worstInclude, excludePattern, 10),
       ])
     ).map(uris => {
       // Sort files by name to stabilize list order
@@ -91,20 +79,20 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     for (const relatedUri of bestMatchedUris) {
       if (ignoredPaths.has(relatedUri.path)) continue
       ignoredPaths.add(relatedUri.path)
-      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri, getBasename(relatedUri.path) === currentBasename))
+      children.push(this._createRelatedFileTreeItem(currentUri, relatedUri, getBasename(relatedUri.path) === currentBasename))
     }
 
     for (const relatedUri of worstMatchedUris) {
       if (ignoredPaths.has(relatedUri.path)) continue
       ignoredPaths.add(relatedUri.path)
-      children.push(this.createRelatedFileTreeItem(currentUri, relatedUri))
+      children.push(this._createRelatedFileTreeItem(currentUri, relatedUri))
     }
 
     this._cache.set(currentUri.path, children)
     return children
   }
 
-  createRelatedFileTreeItem(originalUri: vscode.Uri, relatedUri: vscode.Uri, isBestMatch?: boolean) {
+  private _createRelatedFileTreeItem(originalUri: vscode.Uri, relatedUri: vscode.Uri, isBestMatch?: boolean) {
     let label: string
     if (this.config.getUseRelativePaths()) {
       label = path.relative(originalUri.path, relatedUri.path).replace('../', '')
@@ -114,6 +102,16 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     }
 
     return new RelatedFileTreeItem(label, relatedUri, label, isBestMatch)
+  }
+
+  // TODO: Does not belong here? Also we do not need to regenerate it every time.
+  private _generateExcludePattern() {
+    const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
+    const excludeEntries = Object.entries({ ...searchExcludes, ...this.config.getCustomExcludes() })
+
+    return excludeEntries.length > 0
+      ? `{${excludeEntries.filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
+      : undefined
   }
 }
 
