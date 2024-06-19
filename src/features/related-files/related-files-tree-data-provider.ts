@@ -100,7 +100,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       label = path.relative(originalUri.path, relatedUri.path).replace('../', '')
       if (!label.startsWith('../')) label = './' + label
     } else {
-      label = vscode.workspace.asRelativePath(relatedUri)
+      label = vscode.workspace.asRelativePath(relatedUri, this.config.getUseGlobalSearch())
     }
 
     return new RelatedFileTreeItem(label, relatedUri, label, isBestMatch)
