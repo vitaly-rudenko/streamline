@@ -17,6 +17,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
     relatedFilesTreeDataProvider.clearCacheAndRefresh()
+    updateContextInBackground()
   }, 500)
 
   async function updateContextInBackground() {
