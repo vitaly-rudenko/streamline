@@ -19,7 +19,7 @@ export function formatPaths(paths: string[]): Map<string, string> {
 
     const filename = getFilename(path)
     const sharedPath = filenameSharedPaths.get(filename)!
-    results.set(path, path.replace(sharedPath + '/', ''))
+    results.set(path, sharedPath !== '' ? path.slice(sharedPath.length + 1) : path)
   }
 
   return results
