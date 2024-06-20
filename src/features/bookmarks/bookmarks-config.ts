@@ -77,7 +77,7 @@ export class BookmarksConfig extends FeatureConfig {
   }
 
   private _updateListsCache() {
-    this._cachedUnsortedLists = unique(this._bookmarks.map((bookmark) => bookmark.list))
+    this._cachedUnsortedLists = unique([...this._bookmarks.map((bookmark) => bookmark.list), this.getCurrentList()])
     this._cachedSortedUnarchivedLists = this._cachedUnsortedLists.filter((list) => !this.getArchivedLists().includes(list)).sort()
     this._cachedSortedArchivedLists = [...this.getArchivedLists()].sort()
   }
