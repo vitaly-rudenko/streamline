@@ -32,7 +32,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   }
 
   async function promptListSelection() {
-    const archiveItem = '-------------------------'
+    const archiveItem = '------------ Archive ------------'
 
     let selectedList = await vscode.window.showQuickPick(
       [
