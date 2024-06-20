@@ -14,7 +14,10 @@ export class TabHistoryConfig extends FeatureConfig {
   private _pinnedPaths: string[] = []
   private _cachedPinnedPathsSet: Set<string> = new Set()
 
-  constructor() { super('TabHistory') }
+  constructor() {
+    super('TabHistory')
+    this._updatePinnedPathsCache()
+  }
 
   load() {
     const config = getConfig()
@@ -26,26 +29,21 @@ export class TabHistoryConfig extends FeatureConfig {
     let hasChanged = false
 
     if (
-      this._backupEnabled !== backupEnabled ||
-      this._backupSize !== backupSize
+      this._backupEnabled !== backupEnabled
+      || this._backupSize !== backupSize
+      || !areObjectsShallowEqual(this._backupRecords, backupRecords)
+      || !areArraysShallowEqual(this._pinnedPaths, pinnedPaths)
     ) {
       this._backupEnabled = backupEnabled
       this._backupSize = backupSize
-
-      hasChanged = true
-    }
-
-    if (!areObjectsShallowEqual(this._backupRecords, backupRecords)) {
       this._backupRecords = backupRecords
+      this._pinnedPaths = pinnedPaths
 
       hasChanged = true
     }
 
-    if (!areArraysShallowEqual(this._pinnedPaths, pinnedPaths)) {
-      this._pinnedPaths = pinnedPaths
+    if (hasChanged) {
       this._updatePinnedPathsCache()
-
-      hasChanged = true
     }
 
     console.debug('[TabHistory] Config has been loaded', { hasChanged, backupEnabled, backupSize, backupRecords, pinnedPaths })

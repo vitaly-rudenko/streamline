@@ -13,7 +13,10 @@ export class ScopedPathsConfig extends FeatureConfig {
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
   private _cachedParentsOfCurrentlyScopedPathsSet: Set<string> = new Set()
 
-  constructor() { super('ScopedPaths') }
+  constructor() {
+    super('ScopedPaths')
+    this._updateScopedPathsCache()
+  }
 
   load() {
     const config = getConfig()
@@ -23,21 +26,20 @@ export class ScopedPathsConfig extends FeatureConfig {
 
     let hasChanged = false
 
-    if (this._enabled !== enabled) {
+    if (
+      this._enabled !== enabled
+      || this._currentScope !== currentScope
+      || JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)
+    ) {
       this._enabled = enabled
+      this._currentScope = currentScope
+      this._scopesObject = scopesObject
 
       hasChanged = true
     }
 
-    if (
-      this._currentScope !== currentScope ||
-      JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)
-    ) {
-      this._currentScope = currentScope
-      this._scopesObject = scopesObject
+    if (hasChanged) {
       this._updateScopedPathsCache()
-
-      hasChanged = true
     }
 
     console.debug('[ScopedPaths] Config has been loaded', { hasChanged, enabled, currentScope, scopesObject })

@@ -12,11 +12,14 @@ export class BookmarksConfig extends FeatureConfig {
   private _archivedLists: string[] = []
   private _bookmarks: Bookmark[] = []
   private _cachedSerializedBookmarks: SerializedBookmark[] = []
-  private _cachedUnsortedLists: string[] = [defaultCurrentList]
-  private _cachedSortedUnarchivedLists: string[] = [defaultCurrentList]
+  private _cachedUnsortedLists: string[] = []
+  private _cachedSortedUnarchivedLists: string[] = []
   private _cachedSortedArchivedLists: string[] = []
 
-  constructor() { super('Bookmarks') }
+  constructor() {
+    super('Bookmarks')
+    this._updateListsCache()
+  }
 
   load() {
     const config = getConfig()
@@ -26,13 +29,11 @@ export class BookmarksConfig extends FeatureConfig {
 
     let hasChanged = false
 
-    if (this._currentList !== currentList) {
+    if (
+      this._currentList !== currentList
+      || !areArraysShallowEqual(this._archivedLists, archivedLists)
+    ) {
       this._currentList = currentList
-
-      hasChanged = true
-    }
-
-    if (!areArraysShallowEqual(this._archivedLists, archivedLists)) {
       this._archivedLists = archivedLists
 
       hasChanged = true

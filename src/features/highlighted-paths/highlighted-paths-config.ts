@@ -6,7 +6,10 @@ export class HighlightedPathsConfig extends FeatureConfig {
   private _patterns: string[] = []
   private _cachedCombinedPatternRegExp: RegExp | undefined
 
-  constructor() { super('HighlightedPaths') }
+  constructor() {
+    super('HighlightedPaths')
+    this._updatePatternsCache()
+  }
 
   load() {
     const config = getConfig()
@@ -16,9 +19,12 @@ export class HighlightedPathsConfig extends FeatureConfig {
 
     if (!areArraysShallowEqual(this._patterns, patterns)) {
       this._patterns = patterns
-      this._updatePatternsCache()
 
       hasChanged = true
+    }
+
+    if (hasChanged) {
+      this._updatePatternsCache()
     }
 
     console.debug('[HighlightedPaths] Config has been loaded', { hasChanged, patterns })
