@@ -11,6 +11,7 @@
   > Enables global search in both Related Files view and in Quick Open Related Files command.
 - **Added experimental "Use Compact Paths" toggle** to make absolute paths more readable
   > When enabled, folders are completely removed from paths except for files with equal filenames.
+- **Added "Open to the Side" button** to quickly open related file in split view
 
 ### Bookmarks
 
