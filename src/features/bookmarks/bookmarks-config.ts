@@ -41,9 +41,12 @@ export class BookmarksConfig extends FeatureConfig {
     if (JSON.stringify(this._cachedSerializedBookmarks) !== JSON.stringify(serializedBookmarks)) {
       this._cachedSerializedBookmarks = serializedBookmarks
       this._bookmarks = serializedBookmarks.map((serializedBookmark) => deserializeBookmark(serializedBookmark))
-      this._updateListsCache()
 
       hasChanged = true
+    }
+
+    if (hasChanged) {
+      this._updateListsCache()
     }
 
     console.debug('[Bookmarks] Config has been loaded', { hasChanged, currentList, archivedLists, serializedBookmarks })
