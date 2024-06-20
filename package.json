@@ -151,6 +151,11 @@
         "icon": "$(sparkle)"
       },
       {
+        "command": "streamline.relatedFiles.openToSide",
+        "title": "Open to the Side",
+        "icon": "$(split-horizontal)"
+      },
+      {
         "command": "streamline.tabHistory.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
@@ -296,6 +301,10 @@
         },
         {
           "command": "streamline.relatedFiles.setViewRenderModeToCompact",
+          "when": "false"
+        },
+        {
+          "command": "streamline.relatedFiles.openToSide",
           "when": "false"
         },
         {
@@ -468,6 +477,11 @@
           "command": "streamline.bookmarks.deleteList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
           "group": "info@2"
+        },
+        {
+          "command": "streamline.relatedFiles.openToSide",
+          "when": "view == relatedFiles",
+          "group": "inline@1"
         },
         {
           "command": "streamline.tabHistory.pinTab",

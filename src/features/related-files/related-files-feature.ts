@@ -59,6 +59,13 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   )
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.relatedFiles.openToSide', async (item?: RelatedFileTreeItem) => {
+      if (!item?.resourceUri) return
+      await vscode.commands.executeCommand('explorer.openToSide', item.resourceUri)
+    })
+  )
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToRelative', () => {
       config.setViewRenderMode('relative')
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
