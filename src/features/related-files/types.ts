@@ -1,0 +1,1 @@
+export type ViewRenderMode = 'relative' | 'absolute' | 'compact'

@@ -23,9 +23,8 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   async function updateContextInBackground() {
     try {
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useExcludes', config.getUseExcludes())
-      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useRelativePaths', config.getUseRelativePaths())
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useGlobalSearch', config.getUseGlobalSearch())
-      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useCompactPaths', config.getUseCompactPaths())
+      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.viewRenderMode', config.getViewRenderMode())
     } catch (error) {
       console.warn('[ScopedPaths] Could not update context', error)
     }
@@ -55,42 +54,27 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.refresh', () => {
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
+      updateContextInBackground()
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.enableUseRelativePaths', () => {
-      config.setUseRelativePaths(true)
+    vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToRelative', () => {
+      config.setViewRenderMode('relative')
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       updateContextInBackground()
       config.saveInBackground()
-    })
-  )
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.disableUseRelativePaths', () => {
-      config.setUseRelativePaths(false)
+    }),
+    vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToAbsolute', () => {
+      config.setViewRenderMode('absolute')
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       updateContextInBackground()
       config.saveInBackground()
-    })
-  )
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.enableUseCompactPaths', () => {
-      config.setUseCompactPaths(true)
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-      updateContextInBackground()
-      config.saveInBackground()
-    })
-  )
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.disableUseCompactPaths', () => {
-      config.setUseCompactPaths(false)
+    }),
+    vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToCompact', () => {
+      config.setViewRenderMode('compact')
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
 
       updateContextInBackground()
@@ -105,10 +89,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
 
       updateContextInBackground()
       config.saveInBackground()
-    })
-  )
-
-  context.subscriptions.push(
+    }),
     vscode.commands.registerCommand('streamline.relatedFiles.disableUseExcludes', () => {
       config.setUseExcludes(false)
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
@@ -125,10 +106,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
 
       updateContextInBackground()
       config.saveInBackground()
-    })
-  )
-
-  context.subscriptions.push(
+    }),
     vscode.commands.registerCommand('streamline.relatedFiles.disableUseGlobalSearch', () => {
       config.setUseGlobalSearch(false)
       relatedFilesTreeDataProvider.clearCacheAndRefresh()

@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.16.3",
+  "version": "0.16.4",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -109,16 +109,6 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "streamline.relatedFiles.enableUseRelativePaths",
-        "title": "Enable Relative Paths in Related Files",
-        "icon": "$(list-unordered)"
-      },
-      {
-        "command": "streamline.relatedFiles.disableUseRelativePaths",
-        "title": "Disable Relative Paths in Related Files",
-        "icon": "$(selection)"
-      },
-      {
         "command": "streamline.relatedFiles.enableUseExcludes",
         "title": "Enable Excludes in Related Files",
         "icon": "$(gear)"
@@ -139,14 +129,19 @@
         "icon": "$(compass-dot)"
       },
       {
-        "command": "streamline.relatedFiles.enableUseCompactPaths",
-        "title": "Enable Compact Paths in Related Files",
-        "icon": "$(layers)"
+        "command": "streamline.relatedFiles.setViewRenderModeToRelative",
+        "title": "Use Relative Paths in Related Files View",
+        "icon": "$(list-selection)"
       },
       {
-        "command": "streamline.relatedFiles.disableUseCompactPaths",
-        "title": "Disable Compact Paths in Related Files",
-        "icon": "$(layers-dot)"
+        "command": "streamline.relatedFiles.setViewRenderModeToAbsolute",
+        "title": "Use Absolute Paths in Related Files View",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "streamline.relatedFiles.setViewRenderModeToCompact",
+        "title": "Use Compact Paths in Related Files View",
+        "icon": "$(list-tree)"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
@@ -292,29 +287,24 @@
           "when": "view == relatedFiles && streamline.relatedFiles.useExcludes"
         },
         {
-          "command": "streamline.relatedFiles.enableUseCompactPaths",
-          "group": "navigation@3",
-          "when": "view == relatedFiles && !streamline.relatedFiles.useRelativePaths && !streamline.relatedFiles.useCompactPaths"
-        },
-        {
-          "command": "streamline.relatedFiles.disableUseCompactPaths",
-          "group": "navigation@3",
-          "when": "view == relatedFiles && !streamline.relatedFiles.useRelativePaths && streamline.relatedFiles.useCompactPaths"
-        },
-        {
-          "command": "streamline.relatedFiles.enableUseRelativePaths",
-          "group": "navigation@4",
-          "when": "view == relatedFiles && !streamline.relatedFiles.useRelativePaths"
-        },
-        {
-          "command": "streamline.relatedFiles.disableUseRelativePaths",
-          "group": "navigation@5",
-          "when": "view == relatedFiles && streamline.relatedFiles.useRelativePaths"
-        },
-        {
           "command": "streamline.relatedFiles.refresh",
-          "group": "navigation@6",
+          "group": "navigation@3",
           "when": "view == relatedFiles"
+        },
+        {
+          "command": "streamline.relatedFiles.setViewRenderModeToCompact",
+          "group": "info@1",
+          "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'compact'"
+        },
+        {
+          "command": "streamline.relatedFiles.setViewRenderModeToRelative",
+          "group": "info@2",
+          "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'relative'"
+        },
+        {
+          "command": "streamline.relatedFiles.setViewRenderModeToAbsolute",
+          "group": "info@3",
+          "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'absolute'"
         },
         {
           "command": "streamline.tabHistory.enableBackup",
@@ -487,11 +477,6 @@
           },
           "description": "Highlighted paths"
         },
-        "streamline.relatedFiles.useRelativePaths": {
-          "type": "boolean",
-          "default": true,
-          "description": "Use relative paths in related files view"
-        },
         "streamline.relatedFiles.useExcludes": {
           "type": "boolean",
           "default": true,
@@ -507,10 +492,11 @@
           "default": false,
           "description": "Search related files across all workspace folders"
         },
-        "streamline.relatedFiles.useCompactPaths": {
-          "type": "boolean",
-          "default": false,
-          "description": "Use compact paths in related files view when 'Use Relative Paths' is disabled (only shows folders if files have same filename)"
+        "streamline.relatedFiles.viewRenderMode": {
+          "type": "string",
+          "default": "compact",
+          "enum": ["relative", "absolute", "compact"],
+          "description": "Use relative, absolute or compact paths in the Related Files view"
         },
         "streamline.relatedFiles.exclude": {
           "type": "object",

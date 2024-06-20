@@ -60,7 +60,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       uris.sort((a, b) => a.path.localeCompare(b.path))
 
       // Sort files by distance
-      if (this.config.getUseRelativePaths()) {
+      if (this.config.getViewRenderMode() === 'relative') {
         uris.sort((a, b) => a.path.split('/').length - b.path.split('/').length)
       }
 
@@ -82,7 +82,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     const uris = [...bestMatchedUris, ...worstMatchedUris]
     let pathLabels: Map<string, string>
 
-    if (this.config.getUseRelativePaths()) {
+    if (this.config.getViewRenderMode() === 'relative') {
       pathLabels = new Map(
         uris.map((uri) => {
           const label = path.relative(currentUri.path, uri.path).replace('../', '')
@@ -94,7 +94,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
         uris.map((uri) => [uri.path, vscode.workspace.asRelativePath(uri, this.config.getUseGlobalSearch())])
       )
 
-      if (this.config.getUseCompactPaths()) {
+      if (this.config.getViewRenderMode() === 'compact') {
         const formattedPaths = formatPaths([...pathLabels.values()])
         for (const [path, label] of pathLabels) {
           pathLabels.set(path, formattedPaths.get(label)!)
@@ -102,16 +102,34 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       }
     }
 
+    const showWorkspaceFolder = this.config.getUseGlobalSearch() && this.config.getViewRenderMode() === 'compact'
+
     for (const uri of bestMatchedUris) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-      children.push(new RelatedFileTreeItem(pathLabels.get(uri.path)!, uri, getBasename(uri.path) === currentBasename))
+
+      children.push(
+        new RelatedFileTreeItem(
+          pathLabels.get(uri.path)!,
+          uri,
+          getBasename(uri.path) === currentBasename,
+          showWorkspaceFolder ? vscode.workspace.asRelativePath(uri, true).split('/')[0] : undefined
+        )
+      )
     }
 
     for (const uri of worstMatchedUris) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-      children.push(new RelatedFileTreeItem(pathLabels.get(uri.path)!, uri, false))
+
+      children.push(
+        new RelatedFileTreeItem(
+          pathLabels.get(uri.path)!,
+          uri,
+          false,
+          showWorkspaceFolder ? vscode.workspace.asRelativePath(uri, true).split('/')[0] : undefined
+        )
+      )
     }
 
     this._cache.set(currentUri.path, children)
@@ -134,11 +152,13 @@ export class RelatedFileTreeItem extends vscode.TreeItem {
     label: string,
     uri: vscode.Uri,
     isBestMatch?: boolean,
+    description?: string,
   ) {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.iconPath = isBestMatch ? new vscode.ThemeIcon('star-full') : undefined
     this.resourceUri = uri
     this.contextValue = 'relatedFile'
+    this.description = description
     this.command = {
       command: 'vscode.open',
       arguments: [uri],
