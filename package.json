@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.16.4",
+  "version": "0.16.5",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -469,24 +469,24 @@
           "group": "inline@1"
         },
         {
-          "command": "streamline.bookmarks.archiveList",
-          "when": "view == bookmarks && (viewItem == list || viewItem == activeList)",
-          "group": "inline@2"
-        },
-        {
-          "command": "streamline.bookmarks.unarchiveList",
-          "when": "view == bookmarks && (viewItem == archivedList || viewItem == archivedActiveList)",
-          "group": "inline@2"
-        },
-        {
           "command": "streamline.bookmarks.renameList",
           "when": "view == bookmarks && (viewItem == list || viewItem == archivedList || viewItem == activeList || viewItem == archivedActiveList)",
           "group": "info@1"
         },
         {
+          "command": "streamline.bookmarks.archiveList",
+          "when": "view == bookmarks && (viewItem == list || viewItem == activeList)",
+          "group": "info@2"
+        },
+        {
+          "command": "streamline.bookmarks.unarchiveList",
+          "when": "view == bookmarks && (viewItem == archivedList || viewItem == archivedActiveList)",
+          "group": "info@2"
+        },
+        {
           "command": "streamline.bookmarks.deleteList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
-          "group": "info@2"
+          "group": "info@3"
         },
         {
           "command": "streamline.relatedFiles.openToSide",
