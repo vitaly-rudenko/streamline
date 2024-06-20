@@ -17,6 +17,8 @@
 
 - **Added ability to rename bookmarks lists**
 - **Added ability to edit bookmark notes**
+- **Added "Undo" button to restore recently deleted bookmarks**
+  > History is reset when window is re-opened.
 - Move archived lists to the bottom of list selection popup
 
 ## 0.15

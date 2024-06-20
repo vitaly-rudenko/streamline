@@ -2,9 +2,15 @@ import * as vscode from 'vscode'
 import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
 import { BookmarksConfig, defaultCurrentList } from './bookmarks-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
+import type { Bookmark } from './types'
+import { filter } from '../../utils/filter'
+
+const UNDO_HISTORY_SIZE = 10
 
 export function createBookmarksFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
+
+  let undoHistory: Bookmark[][] = []
 
   const config = new BookmarksConfig()
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(config)
@@ -26,6 +32,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
         : false
 
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.activeTextEditorBookmarked', isActiveTextEditorBookmarked)
+      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isUndoHistoryEmpty', undoHistory.length === 0)
     } catch (error) {
       console.warn('[Bookmarks] Could not update context', error)
     }
@@ -278,9 +285,6 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.delete', async (itemOrUri: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem | vscode.Uri) => {
       if (itemOrUri instanceof ListTreeItem) {
-        const result = await vscode.window.showInformationMessage(`Delete list '${itemOrUri.list}' and its bookmarks?`, 'Delete', 'Cancel')
-        if (result !== 'Delete') return
-
         config.setArchivedLists(config.getArchivedLists().filter(list => list !== itemOrUri.list))
 
         if (config.getCurrentList() === itemOrUri.list) {
@@ -288,8 +292,9 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
         }
       }
 
-      config.setBookmarks(
-        config.getBookmarks().filter(bookmark => {
+      const [bookmarks, removedBookmarks] = filter(
+        config.getBookmarks(),
+        (bookmark) => {
           if (itemOrUri instanceof ListTreeItem) {
             return !(bookmark.list === itemOrUri.list)
           } else if (itemOrUri instanceof FolderTreeItem) {
@@ -301,8 +306,26 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
           } else {
             return !(bookmark.type === 'file' && bookmark.uri.path === itemOrUri.path)
           }
-        })
+        }
       )
+
+      if (removedBookmarks.length === 0) return
+
+      undoHistory = [...undoHistory, removedBookmarks].slice(0, UNDO_HISTORY_SIZE)
+      config.setBookmarks(bookmarks)
+
+      bookmarksTreeDataProvider.refresh()
+      updateContextInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.undo', async () => {
+      const bookmarksToRestore = undoHistory.pop()
+      if (!bookmarksToRestore) return
+
+      config.setBookmarks([...config.getBookmarks(), ...bookmarksToRestore])
 
       bookmarksTreeDataProvider.refresh()
       updateContextInBackground()

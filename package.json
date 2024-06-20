@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.16.7",
+  "version": "0.16.8",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -259,6 +259,11 @@
         "command": "streamline.bookmarks.unarchiveList",
         "title": "Unarchive",
         "icon": "$(archive)"
+      },
+      {
+        "command": "streamline.bookmarks.undo",
+        "title": "Undo",
+        "icon": "$(discard)"
       }
     ],
     "menus": {
@@ -437,8 +442,13 @@
           "when": "view == tabHistory"
         },
         {
-          "command": "streamline.bookmarks.addList",
+          "command": "streamline.bookmarks.undo",
           "group": "navigation@1",
+          "when": "view == bookmarks && !streamline.bookmarks.isUndoHistoryEmpty"
+        },
+        {
+          "command": "streamline.bookmarks.addList",
+          "group": "navigation@2",
           "when": "view == bookmarks"
         }
       ],
