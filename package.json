@@ -77,7 +77,7 @@
     "commands": [
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
-        "title": "Select Current Scope",
+        "title": "Change Current Scope",
         "icon": "$(chevron-down)"
       },
       {
@@ -237,7 +237,7 @@
       },
       {
         "command": "streamline.bookmarks.addList",
-        "title": "Create Bookmarks List",
+        "title": "Add Bookmarks List",
         "icon": "$(add)"
       },
       {
@@ -361,6 +361,16 @@
         }
       ],
       "view/title": [
+        {
+          "command": "streamline.scopedPaths.changeCurrentScope",
+          "group": "info@1",
+          "when": "view == 'workbench.explorer.fileView'"
+        },
+        {
+          "command": "streamline.scopedPaths.clearCurrentScope",
+          "group": "info@2",
+          "when": "view == 'workbench.explorer.fileView'"
+        },
         {
           "command": "streamline.scopedPaths.enableScope",
           "group": "navigation@1",
