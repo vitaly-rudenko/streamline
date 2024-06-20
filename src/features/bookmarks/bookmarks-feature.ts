@@ -309,6 +309,20 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
+    vscode.workspace.onDidRenameFiles((event) => {
+      const oldPathNewUriMap = new Map(event.files.map(file => [file.oldUri.path, file.newUri]))
+
+      config.setBookmarks(
+        config.getBookmarks().map((bookmark) =>
+          oldPathNewUriMap.has(bookmark.uri.path)
+            ? { ...bookmark, uri: oldPathNewUriMap.get(bookmark.uri.path)! }
+            : bookmark
+        )
+      )
+
+      bookmarksTreeDataProvider.refresh()
+      config.saveInBackground()
+    }),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.bookmarks')) {
         if (!config.isSavingInBackground) {
