@@ -155,8 +155,8 @@
       },
       {
         "command": "streamline.tabHistory.clear",
-        "title": "Clear Tab History",
-        "icon": "$(clear-all)"
+        "title": "Clear Recently Opened in Tab History",
+        "icon": "$(close)"
       },
       {
         "command": "streamline.tabHistory.enableBackup",

@@ -12,8 +12,8 @@ export class BookmarksConfig extends FeatureConfig {
   private _archivedLists: string[] = []
   private _bookmarks: Bookmark[] = []
   private _cachedSerializedBookmarks: SerializedBookmark[] = []
-  private _cachedUnsortedLists: string[] = []
-  private _cachedSortedUnarchivedLists: string[] = []
+  private _cachedUnsortedLists: string[] = [defaultCurrentList]
+  private _cachedSortedUnarchivedLists: string[] = [defaultCurrentList]
   private _cachedSortedArchivedLists: string[] = []
 
   constructor() { super('Bookmarks') }
