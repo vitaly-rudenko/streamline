@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.17
+
+### RelatedFiles
+
+- **Improved Global Search** by grouping results into workspace folders
+- Workspace folders can now be hidden from Global Search results
+  > Right click on a workspace folder in Related Files view to hide it.
+
 ## 0.16
 
 ### RelatedFiles

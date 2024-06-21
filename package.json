@@ -318,6 +318,10 @@
           "when": "false"
         },
         {
+          "command": "streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch",
+          "when": "false"
+        },
+        {
           "command": "streamline.tabHistory.refresh",
           "when": "false"
         },
