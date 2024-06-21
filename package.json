@@ -241,6 +241,11 @@
         "icon": "$(issue-closed)"
       },
       {
+        "command": "streamline.bookmarks.setListAsCurrent",
+        "title": "Set as Current List",
+        "icon": "$(issue-closed)"
+      },
+      {
         "command": "streamline.bookmarks.addList",
         "title": "Add Bookmarks List...",
         "icon": "$(add)"
@@ -355,6 +360,10 @@
         },
         {
           "command": "streamline.bookmarks.revealInExplorer",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.setListAsCurrent",
           "when": "false"
         },
         {
@@ -483,7 +492,7 @@
           "group": "inline@2"
         },
         {
-          "command": "streamline.bookmarks.changeCurrentList",
+          "command": "streamline.bookmarks.setListAsCurrent",
           "when": "view == bookmarks && (viewItem == list || viewItem == archivedList)",
           "group": "inline@1"
         },

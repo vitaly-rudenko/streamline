@@ -182,11 +182,21 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.changeCurrentList', async (item?: ListTreeItem) => {
-      const selectedList = item?.list ?? await promptListSelection()
+    vscode.commands.registerCommand('streamline.bookmarks.changeCurrentList', async () => {
+      const selectedList = await promptListSelection()
       if (!selectedList) return
 
       config.setCurrentList(selectedList)
+      bookmarksTreeDataProvider.refresh()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.setListAsCurrent', async (item?: ListTreeItem) => {
+      if (!item?.list) return
+
+      config.setCurrentList(item?.list)
       bookmarksTreeDataProvider.refresh()
       config.saveInBackground()
     })
