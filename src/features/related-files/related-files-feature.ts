@@ -1,9 +1,10 @@
 import * as vscode from 'vscode'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
-import { RelatedFilesTreeDataProvider, type RelatedFileTreeItem } from './related-files-tree-data-provider'
+import { RelatedFilesTreeDataProvider, type RelatedFileTreeItem, type WorkspaceFolderTreeItem } from './related-files-tree-data-provider'
 import { RelatedFilesConfig } from './related-files-config'
 import { getBasename } from '../../utils/get-basename'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
+import { unique } from '../../utils/unique'
 
 export function createRelatedFilesFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
@@ -62,6 +63,22 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     vscode.commands.registerCommand('streamline.relatedFiles.openToSide', async (item?: RelatedFileTreeItem) => {
       if (!item?.resourceUri) return
       await vscode.commands.executeCommand('explorer.openToSide', item.resourceUri)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch', async (item?: WorkspaceFolderTreeItem) => {
+      if (!item) return
+
+      config.setHiddenWorkspaceFoldersInGlobalSearch(
+        unique([
+          ...config.getHiddenWorkspaceFoldersInGlobalSearch(),
+          item.workspaceFolder.name,
+        ])
+      )
+
+      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+      config.saveInBackground()
     })
   )
 

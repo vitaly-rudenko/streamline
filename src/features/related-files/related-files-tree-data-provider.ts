@@ -7,11 +7,11 @@ import { getRelatedFilesQueries } from './get-related-files-queries'
 import type { RelatedFilesConfig } from './related-files-config'
 import { formatPaths } from '../../utils/format-paths'
 
-export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem> {
+export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem | WorkspaceFolderTreeItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
-  private readonly _cache = new LRUCache<string, RelatedFileTreeItem[]>({ max: 100 })
+  private readonly _cache = new LRUCache<string, (RelatedFileTreeItem | WorkspaceFolderTreeItem)[]>({ max: 100 })
 
   constructor(private readonly config: RelatedFilesConfig) {}
 
@@ -24,23 +24,59 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     this.refresh()
   }
 
-  getTreeItem(element: RelatedFileTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+  getTreeItem(element: RelatedFileTreeItem | WorkspaceFolderTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element
   }
 
-  async getChildren(element?: unknown): Promise<RelatedFileTreeItem[] | undefined> {
-    if (element) return
-
+  async getChildren(element?: WorkspaceFolderTreeItem | RelatedFileTreeItem): Promise<(RelatedFileTreeItem | WorkspaceFolderTreeItem)[] | undefined> {
     const currentUri = vscode.window.activeTextEditor?.document.uri
     if (!currentUri) return
+
+    if (element instanceof WorkspaceFolderTreeItem) {
+      return element.children
+    }
+
+    if (element) return
 
     const cache = this._cache.get(currentUri.path)
     if (cache) return cache
 
+    let children: (WorkspaceFolderTreeItem | RelatedFileTreeItem)[] = []
+
+    const currentUriWorkspaceFolder = vscode.workspace.getWorkspaceFolder(currentUri)
+    if (isMultiRootWorkspace() && this.config.getUseGlobalSearch()) {
+      const sortedWorkspaceFolders = [
+        currentUriWorkspaceFolder,
+        ...(vscode.workspace.workspaceFolders ?? [])
+          .filter(workspaceFolder => workspaceFolder.name !== currentUriWorkspaceFolder?.name)
+          .sort((a, b) => a.index - b.index),
+      ]
+        .filter(isDefined)
+        .filter((workspaceFolder) => (
+          workspaceFolder.name === currentUriWorkspaceFolder?.name ||
+          !this.config.getHiddenWorkspaceFoldersInGlobalSearch().includes(workspaceFolder.name)
+        ))
+
+      const workspaceFolderChildrenList = await Promise.all(
+        sortedWorkspaceFolders.map(async (workspaceFolder) => [
+          workspaceFolder,
+          await this._getRelatedFilesChildren(currentUri, workspaceFolder)
+        ] as const)
+      )
+
+      children = workspaceFolderChildrenList
+        .filter(([_workspaceFolder, children]) => children.length > 0)
+        .map(([workspaceFolder, children]) => new WorkspaceFolderTreeItem(workspaceFolder, children))
+    } else {
+      children = await this._getRelatedFilesChildren(currentUri, currentUriWorkspaceFolder)
+    }
+
+    this._cache.set(currentUri.path, children)
+    return children
+  }
+
+  private async _getRelatedFilesChildren(currentUri: vscode.Uri, workspaceFolder?: vscode.WorkspaceFolder): Promise<RelatedFileTreeItem[]> {
     const currentBasename = getBasename(currentUri.path)
-    const workspaceFolder = !this.config.getUseGlobalSearch() && isMultiRootWorkspace()
-      ? vscode.workspace.getWorkspaceFolder(currentUri)
-      : undefined
 
     const relatedFilesQueries = getRelatedFilesQueries(currentUri.path)
     const bestInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, relatedFilesQueries.best) : relatedFilesQueries.best
@@ -91,7 +127,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       )
     } else {
       pathLabels = new Map(
-        uris.map((uri) => [uri.path, vscode.workspace.asRelativePath(uri, this.config.getUseGlobalSearch())])
+        uris.map((uri) => [uri.path, vscode.workspace.asRelativePath(uri, false)])
       )
 
       if (this.config.getViewRenderMode() === 'compact') {
@@ -102,37 +138,18 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       }
     }
 
-    const showWorkspaceFolder = this.config.getUseGlobalSearch() && this.config.getViewRenderMode() === 'compact'
-
     for (const uri of bestMatchedUris) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-
-      children.push(
-        new RelatedFileTreeItem(
-          pathLabels.get(uri.path)!,
-          uri,
-          getBasename(uri.path) === currentBasename,
-          showWorkspaceFolder ? vscode.workspace.asRelativePath(uri, true).split('/')[0] : undefined
-        )
-      )
+      children.push(new RelatedFileTreeItem(pathLabels.get(uri.path)!, uri, getBasename(uri.path) === currentBasename))
     }
 
     for (const uri of worstMatchedUris) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-
-      children.push(
-        new RelatedFileTreeItem(
-          pathLabels.get(uri.path)!,
-          uri,
-          false,
-          showWorkspaceFolder ? vscode.workspace.asRelativePath(uri, true).split('/')[0] : undefined
-        )
-      )
+      children.push(new RelatedFileTreeItem(pathLabels.get(uri.path)!, uri, false))
     }
 
-    this._cache.set(currentUri.path, children)
     return children
   }
 
@@ -147,22 +164,27 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   }
 }
 
+export class WorkspaceFolderTreeItem extends vscode.TreeItem {
+  constructor(public readonly workspaceFolder: vscode.WorkspaceFolder, public readonly children: RelatedFileTreeItem[]) {
+    super(workspaceFolder.name, vscode.TreeItemCollapsibleState.Expanded)
+    this.contextValue = 'workspaceFolder'
+  }
+}
+
 export class RelatedFileTreeItem extends vscode.TreeItem {
-  constructor(
-    label: string,
-    uri: vscode.Uri,
-    isBestMatch?: boolean,
-    description?: string,
-  ) {
+  constructor(label: string, uri: vscode.Uri, isBestMatch?: boolean) {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.iconPath = isBestMatch ? new vscode.ThemeIcon('star-full') : undefined
     this.resourceUri = uri
     this.contextValue = 'relatedFile'
-    this.description = description
     this.command = {
       command: 'vscode.open',
       arguments: [uri],
       title: 'Open file'
     }
   }
+}
+
+function isDefined<T>(i: T | undefined): i is T {
+  return i !== undefined
 }
