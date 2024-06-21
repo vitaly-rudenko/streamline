@@ -636,6 +636,14 @@
           },
           "description": "Custom exclude patterns for related files view"
         },
+        "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Hide these workspace folders in Related Files view view when Global Search is enabled"
+        },
         "streamline.tabHistory.backup.enabled": {
           "type": "boolean",
           "default": false,

@@ -1,4 +1,5 @@
 import { getConfig } from '../../config'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { FeatureConfig } from '../feature-config'
 import type { ViewRenderMode } from './types'
@@ -14,6 +15,7 @@ export class RelatedFilesConfig extends FeatureConfig {
   private _useStricterQuickOpenQuery: boolean = defaultUseStricterQuickOpenQuery
   private _useGlobalSearch: boolean = defaultUseGlobalSearch
   private _viewRenderMode: ViewRenderMode = defaultViewRenderMode
+  private _hiddenWorkspaceFoldersInGlobalSearch: string[] = []
 
   constructor() { super('RelatedFiles') }
 
@@ -24,6 +26,7 @@ export class RelatedFilesConfig extends FeatureConfig {
     const useStricterQuickOpenQuery = config.get<boolean>('relatedFiles.useStricterQuickOpenQuery', defaultUseStricterQuickOpenQuery)
     const useGlobalSearch = config.get<boolean>('relatedFiles.useGlobalSearch', defaultUseGlobalSearch)
     const viewRenderMode = config.get<ViewRenderMode>('relatedFiles.viewRenderMode', defaultViewRenderMode)
+    const hiddenWorkspaceFoldersInGlobalSearch = config.get<string[]>('relatedFiles.hiddenWorkspaceFoldersInGlobalSearch', [])
 
     let hasChanged = false
 
@@ -33,12 +36,14 @@ export class RelatedFilesConfig extends FeatureConfig {
       || this._useStricterQuickOpenQuery !== useStricterQuickOpenQuery
       || this._useGlobalSearch !== useGlobalSearch
       || this._viewRenderMode !== viewRenderMode
+      || !areArraysShallowEqual(this._hiddenWorkspaceFoldersInGlobalSearch, hiddenWorkspaceFoldersInGlobalSearch)
     ) {
       this._customExcludes = customExcludes
       this._useExcludes = useExcludes
       this._useStricterQuickOpenQuery = useStricterQuickOpenQuery
       this._useGlobalSearch = useGlobalSearch
       this._viewRenderMode = viewRenderMode
+      this._hiddenWorkspaceFoldersInGlobalSearch = hiddenWorkspaceFoldersInGlobalSearch
 
       hasChanged = true
     }
@@ -66,6 +71,11 @@ export class RelatedFilesConfig extends FeatureConfig {
       this._useGlobalSearch !== defaultUseGlobalSearch ? this._useGlobalSearch : undefined
     )
 
+    await config.update(
+      'relatedFiles.hiddenWorkspaceFoldersInGlobalSearch',
+      this._hiddenWorkspaceFoldersInGlobalSearch.length > 0 ? this._hiddenWorkspaceFoldersInGlobalSearch : undefined
+    )
+
     console.debug('[RelatedFiles] Config has been saved')
   }
 
@@ -75,6 +85,14 @@ export class RelatedFilesConfig extends FeatureConfig {
 
   getUseStricterQuickOpenQuery() {
     return this._useStricterQuickOpenQuery
+  }
+
+  setHiddenWorkspaceFoldersInGlobalSearch(value: string[]) {
+    this._hiddenWorkspaceFoldersInGlobalSearch = value
+  }
+
+  getHiddenWorkspaceFoldersInGlobalSearch() {
+    return this._hiddenWorkspaceFoldersInGlobalSearch
   }
 
   setViewRenderMode(value: ViewRenderMode) {
