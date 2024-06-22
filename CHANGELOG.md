@@ -8,6 +8,12 @@
 - Workspace folders can now be hidden from Global Search results
   > Right click on a workspace folder in Related Files view to hide it.
 
+### ScopedPaths
+
+- Improved algorithm's reliability
+  > Due to VS Code limitations for `files.excludes` in multi-Workspace Folder environments, some non-scoped files may be shown.  
+  > The priority is to always show scoped files even if it means showing some non-scoped ones.
+
 ## 0.16
 
 ### RelatedFiles
