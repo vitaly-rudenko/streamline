@@ -10,7 +10,8 @@
 
 ### ScopedPaths
 
-- Improved algorithm's reliability
+- Adding workspace folders to a scope now correctly hides files in other workspace folders
+- Improved algorithm for better reliability
   > Due to VS Code limitations for `files.excludes` in multi-Workspace Folder environments, some non-scoped files may be shown.  
   > The priority is to always show scoped files even if it means showing some non-scoped ones.
 
