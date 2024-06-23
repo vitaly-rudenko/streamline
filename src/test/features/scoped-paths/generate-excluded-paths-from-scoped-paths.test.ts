@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { generateScopeExcludes } from '../../../features/scoped-paths/generate-scope-excludes'
+import { generateExcludedPathsFromScopedPaths } from '../../../features/scoped-paths/generate-excluded-paths-from-scoped-paths'
 import type { DirectoryReader } from '../../../utils/types'
 
 function createFakeDirectoryReader(paths: string[]): DirectoryReader {
@@ -84,10 +84,20 @@ suite('createFakeDirectoryReader()', () => {
       await directoryReader.read('workspace-folder-2/folder-2/file-2'),
       []
     )
+
+    assert.deepStrictEqual(
+      await directoryReader.read('non-existing-workspace-folder/folder-3'),
+      []
+    )
+
+    assert.deepStrictEqual(
+      await directoryReader.read('workspace-folder-1/non-existing-file'),
+      []
+    )
   })
 })
 
-suite('generateScopeExcludes()', () => {
+suite('generateExcludedPathsFromScopedPaths()', () => {
   test('single workspace folder', async () => {
     const paths = [
       'workspace-folder-1',
@@ -101,19 +111,19 @@ suite('generateScopeExcludes()', () => {
     ]
 
     assert.deepStrictEqual(
-      await generateScopeExcludes([], createFakeDirectoryReader(paths)),
+      await generateExcludedPathsFromScopedPaths([], createFakeDirectoryReader(paths)),
       []
     )
 
     assert.deepStrictEqual(
-      await generateScopeExcludes([
+      await generateExcludedPathsFromScopedPaths([
         'workspace-folder-1',
       ], createFakeDirectoryReader(paths)),
       []
     )
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-1/folder-2/file-1',
       ], createFakeDirectoryReader(paths))).sort(),
       [
@@ -125,7 +135,7 @@ suite('generateScopeExcludes()', () => {
     )
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-1/folder-2',
       ], createFakeDirectoryReader(paths))).sort(),
       [
@@ -136,7 +146,7 @@ suite('generateScopeExcludes()', () => {
     )
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-1/file-2',
       ], createFakeDirectoryReader(paths))).sort(),
       [
@@ -167,7 +177,7 @@ suite('generateScopeExcludes()', () => {
     ]
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-1',
       ], createFakeDirectoryReader(paths))).sort(),
       [
@@ -178,7 +188,7 @@ suite('generateScopeExcludes()', () => {
     )
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-1',
         'workspace-folder-2',
       ], createFakeDirectoryReader(paths))).sort(),
@@ -189,7 +199,7 @@ suite('generateScopeExcludes()', () => {
     )
 
     assert.deepStrictEqual(
-      await generateScopeExcludes([
+      await generateExcludedPathsFromScopedPaths([
         'workspace-folder-2',
         'workspace-folder-3',
       ], createFakeDirectoryReader(paths)),
@@ -221,7 +231,7 @@ suite('generateScopeExcludes()', () => {
     ]
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-2',
       ], createFakeDirectoryReader(paths))).sort(),
       [
@@ -230,7 +240,7 @@ suite('generateScopeExcludes()', () => {
     )
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-1/folder',
         'workspace-folder-2/folder/sub-folder',
       ], createFakeDirectoryReader(paths))).sort(),
@@ -244,7 +254,7 @@ suite('generateScopeExcludes()', () => {
     )
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-1/folder/file-d',
         'workspace-folder-2/folder/sub-folder/file-g'
       ], createFakeDirectoryReader(paths))).sort(),
@@ -261,7 +271,7 @@ suite('generateScopeExcludes()', () => {
     )
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-2/file-b',
       ], createFakeDirectoryReader(paths))).sort(),
       [
@@ -291,7 +301,7 @@ suite('generateScopeExcludes()', () => {
     ]
 
     assert.deepStrictEqual(
-      (await generateScopeExcludes([
+      (await generateExcludedPathsFromScopedPaths([
         'workspace-folder-2/folder-2/file-f',
       ], createFakeDirectoryReader(paths))).sort(),
       [
