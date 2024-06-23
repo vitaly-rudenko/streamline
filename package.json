@@ -640,7 +640,7 @@
         "streamline.relatedFiles.useStricterQuickOpenQuery": {
           "type": "boolean",
           "default": false,
-          "description": "Do not remove hyphens or underscores in filenames when using Quick Open Related Files command"
+          "description": "Do not remove hyphens or underscores in filenames when using 'Quick Open Related Files' command"
         },
         "streamline.relatedFiles.useGlobalSearch": {
           "type": "boolean",
@@ -651,7 +651,7 @@
           "type": "string",
           "default": "compact",
           "enum": ["relative", "absolute", "compact"],
-          "description": "Use relative, absolute or compact paths in the Related Files view"
+          "description": "Use relative, absolute or compact paths in the related files view"
         },
         "streamline.relatedFiles.exclude": {
           "type": "object",
@@ -667,7 +667,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Hide these workspace folders in Related Files view view when Global Search is enabled"
+          "description": "Hide these workspace folders in related files view when Global Search is enabled"
         },
         "streamline.tabHistory.backup.enabled": {
           "type": "boolean",
