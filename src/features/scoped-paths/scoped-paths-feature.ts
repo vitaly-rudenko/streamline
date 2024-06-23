@@ -1,11 +1,10 @@
 import * as vscode from 'vscode'
-import { generateExcludedPaths } from './generate-excluded-paths'
-import { serializeExcludes } from './serialize-excludes'
 import { uriToPath } from '../../utils/uri'
 import { unique } from '../../utils/unique'
-import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { ScopedPathsConfig } from './scoped-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
+import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
+import { generateExcludedPathsFromScopedPaths } from './generate-excluded-paths-from-scoped-paths'
 
 export function createScopedPathsFeature(input: { context: vscode.ExtensionContext, onChange: () => unknown }) {
   const { context, onChange } = input
@@ -34,9 +33,18 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
     try {
       let excludes: Record<string, unknown> | undefined = undefined
       if (config.getEnabled()) {
-        const includedPaths = config.getCachedCurrentlyScopedPaths() ?? []
-        const excludedPaths = await generateExcludedPaths(includedPaths, directoryReader)
-        excludes = serializeExcludes({ excludedPaths, includedPaths })
+        const scopedPaths = config.getCachedCurrentlyScopedPaths() ?? []
+        const excludedPaths = await generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader)
+
+        excludes = {
+          '**/.git': true,
+          '**/.svn': true,
+          '**/.hg': true,
+          '**/CVS': true,
+          '**/.DS_Store': true,
+          '**/Thumbs.db': true,
+          ...Object.fromEntries(excludedPaths.map(excludedPath => [`${excludedPath}/**`, true]))
+        }
       }
 
       await vscode.workspace
