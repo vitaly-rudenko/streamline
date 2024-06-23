@@ -274,7 +274,7 @@
       },
       {
         "command": "streamline.bookmarks.undo",
-        "title": "Undo",
+        "title": "Restore Deleted Bookmarks",
         "icon": "$(discard)"
       }
     ],
