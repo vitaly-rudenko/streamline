@@ -2,15 +2,22 @@
 
 ## 0.17
 
-### RelatedFiles
+### Related Files
 
 - **Improved Global Search** by grouping results into workspace folders
 - Workspace folders can now be hidden from Global Search results
   > Right click on a workspace folder in Related Files view to hide it.
 
+### Scoped Paths
+
+- Adding workspace folders to a scope now correctly hides files in other workspace folders
+- Improved algorithm for better reliability
+  > Due to VS Code limitations for `files.excludes` in multi-folder workspaces, some non-scoped files may be shown.  
+  > The priority is to always show scoped files even if it means showing some non-scoped ones.
+
 ## 0.16
 
-### RelatedFiles
+### Related Files
 
 - **Improved Tree View** – it will now match filenames that contain current file's basename at any position
 - **Improved Quick Open** - hyphens and underscores are now removed so that similar files with different cases are properly matched
@@ -38,13 +45,13 @@
 - Collapse inactive lists by default, as well as non-virtual file bookmarks
 - Added icons for selection bookmarks
 
-### TabHistory
+### Tab History
 
 - Added "Pinned" and "Recently opened" section to the view for better visibility
 
 ## 0.14
 
-### ScopedPaths
+### Scoped Paths
 
 - Fixed how files with similar paths are excluded which should improve reliability
 

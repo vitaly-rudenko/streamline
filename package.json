@@ -18,11 +18,13 @@
     "vscode:prepublish": "npm run compile",
     "compile": "rimraf ./out && tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "pretest": "npm run compile",
     "lint": "eslint src --ext ts",
     "test": "vscode-test",
     "dev": " nodemon -x 'npm run compile'",
-    "deploy": "npm run compile && npm run test && vsce package && vsce publish"
+    "deploy": "npm run compile && npm run lint && npm run test && vsce package && vsce publish",
+    "deploy:pre-release": "npm run compile && npm run lint && npm run test && vsce package --pre-release && vsce publish --pre-release",
+    "deploy:beta": "npm run deploy:pre-release"
   },
   "devDependencies": {
     "@types/common-tags": "^1.8.4",
