@@ -1,4 +1,4 @@
-import { getConfig } from '../../config'
+import { getConfig, initialConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { FeatureConfig } from '../feature-config'
 
@@ -8,11 +8,11 @@ export class HighlightedPathsConfig extends FeatureConfig {
 
   constructor() {
     super('HighlightedPaths')
+    this.load()
     this._updatePatternsCache()
   }
 
-  load() {
-    const config = getConfig()
+  load(config = initialConfig) {
     const patterns = config.get<string[]>('highlightedPaths.patterns', [])
 
     let hasChanged = false

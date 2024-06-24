@@ -368,6 +368,5 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     })
   )
 
-  config.load()
   updateContextInBackground()
 }

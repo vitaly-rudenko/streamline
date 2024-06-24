@@ -5,9 +5,12 @@ import { createRelatedFilesFeature } from './features/related-files/related-file
 import { uriToPath } from './utils/uri'
 import { createTabHistoryFeature } from './features/tab-history/tab-history-feature'
 import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
+import { getConfig } from './config'
 
 export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
+
+	const initialConfig = getConfig()
 
 	const highlightedPathsFeature = createHighlightedPathsFeature({
 		context,
@@ -20,8 +23,8 @@ export function activate(context: vscode.ExtensionContext) {
 	})
 
 	createRelatedFilesFeature({ context })
-	createTabHistoryFeature({ context })
 	createBookmarksFeature({ context })
+	createTabHistoryFeature({ context })
 
 	const fileDecorationProvider: vscode.FileDecorationProvider = {
 		onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,

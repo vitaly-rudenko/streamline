@@ -6,7 +6,10 @@ import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { generateExcludedPathsFromScopedPaths } from './generate-excluded-paths-from-scoped-paths'
 
-export function createScopedPathsFeature(input: { context: vscode.ExtensionContext, onChange: () => unknown }) {
+export function createScopedPathsFeature(input: {
+  context: vscode.ExtensionContext
+  onChange: () => unknown
+}) {
   const { context, onChange } = input
 
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 2)
@@ -193,7 +196,6 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
     vscode.workspace.onDidRenameFiles(() => directoryReader.clearCache()),
   )
 
-  config.load()
   updateStatusBarItems()
   updateContextInBackground()
   updateExcludesInBackground()

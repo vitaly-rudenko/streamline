@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { getConfig } from '../../config'
+import { getConfig, initialConfig } from '../../config'
 import type { Bookmark, SerializedBookmark } from './types'
 import { FeatureConfig } from '../feature-config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
@@ -18,11 +18,11 @@ export class BookmarksConfig extends FeatureConfig {
 
   constructor() {
     super('Bookmarks')
+    this.load()
     this._updateListsCache()
   }
 
-  load() {
-    const config = getConfig()
+  load(config = initialConfig) {
     const currentList = config.get<string>('bookmarks.currentList', defaultCurrentList)
     const archivedLists = config.get<string[]>('bookmarks.archivedLists', [])
     const serializedBookmarks = config.get<SerializedBookmark[]>('bookmarks.serializedBookmarks', [])

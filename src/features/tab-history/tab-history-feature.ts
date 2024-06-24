@@ -9,6 +9,8 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
 
   const config = new TabHistoryConfig()
   const tabHistoryStorage = new TabHistoryStorage(100)
+  tabHistoryStorage.import(config.getBackupRecords())
+
   const tabHistoryTreeDataProvider = new TabHistoryTreeDataProvider(tabHistoryStorage, config)
   const tabHistoryTreeView = vscode.window.createTreeView('tabHistory', { treeDataProvider: tabHistoryTreeDataProvider })
 
@@ -118,10 +120,7 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
     }),
   )
 
-  config.load()
-  tabHistoryStorage.import(config.getBackupRecords())
-  updateContextInBackground()
-
   // Update timestamps once a minute
   setInterval(() => tabHistoryTreeDataProvider.refresh(), 60_000)
+  updateContextInBackground()
 }

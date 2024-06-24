@@ -158,6 +158,5 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     vscode.workspace.onDidRenameFiles(() => scheduleClearCacheAndRefresh()),
   )
 
-  config.load()
   updateContextInBackground()
 }

@@ -1,4 +1,4 @@
-import { getConfig } from '../../config'
+import { getConfig, initialConfig } from '../../config'
 import { getParents } from '../../utils/get-parents'
 import { FeatureConfig } from '../feature-config'
 
@@ -15,11 +15,11 @@ export class ScopedPathsConfig extends FeatureConfig {
 
   constructor() {
     super('ScopedPaths')
+    this.load()
     this._updateScopedPathsCache()
   }
 
-  load() {
-    const config = getConfig()
+  load(config = initialConfig) {
     const enabled = config.get<boolean>('scopedPaths.enabled', defaultEnabled)
     const currentScope = config.get<string>('scopedPaths.currentScope', defaultCurrentScope)
     const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
