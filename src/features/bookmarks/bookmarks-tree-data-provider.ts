@@ -7,6 +7,18 @@ import { stripIndent, stripIndents } from 'common-tags'
 
 type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
+export class ArchivedListsTreeItem extends vscode.TreeItem {
+  constructor(expanded: boolean) {
+    super('Archive', expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
+
+    this.iconPath = new vscode.ThemeIcon('archive')
+    this.contextValue = 'archivedLists'
+  }
+}
+
+const expandedArchivedListsTreeItem = new ArchivedListsTreeItem(true)
+const collapsedArchivedListsTreeItem = new ArchivedListsTreeItem(false)
+
 export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
@@ -27,7 +39,11 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
         .map(list => new ListTreeItem(list, this.config.getCurrentList() === list, false))
 
       if (this.config.getArchivedLists().length > 0) {
-        children.push(new ArchivedListsTreeItem(this.config.getArchivedLists().includes(this.config.getCurrentList())))
+        children.push(
+          this.config.getArchivedLists().includes(this.config.getCurrentList())
+            ? expandedArchivedListsTreeItem
+            : collapsedArchivedListsTreeItem
+        )
       }
 
       return children
@@ -104,20 +120,14 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
   }
 }
 
-export class ArchivedListsTreeItem extends vscode.TreeItem {
-  constructor(includesCurrentList: boolean) {
-    super('Archive', includesCurrentList ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
-
-    this.iconPath = new vscode.ThemeIcon('archive')
-    this.contextValue = 'archivedLists'
-  }
-}
+const activeListThemeIcon = new vscode.ThemeIcon('folder-active')
+const inactiveListThemeIcon = new vscode.ThemeIcon('folder')
 
 export class ListTreeItem extends vscode.TreeItem {
   constructor(public readonly list: string, isCurrentList: boolean, isArchived: boolean) {
     super(list, isCurrentList ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 
-    this.iconPath = isCurrentList ? new vscode.ThemeIcon('folder-active') : new vscode.ThemeIcon('folder')
+    this.iconPath = isCurrentList ? activeListThemeIcon : inactiveListThemeIcon
     this.contextValue = isArchived
       ? isCurrentList ? 'archivedActiveList' : 'archivedList'
       : isCurrentList ? 'activeList' : 'list'
@@ -162,14 +172,25 @@ const MAX_LABEL_LENGTH = 64
 const MAX_DESCRIPTION_LENGTH = 64
 const MAX_TOOLTIP_SELECTION_VALUE_LINES = 15
 
-export class SelectionTreeItem extends vscode.TreeItem {
-  constructor(public readonly bookmark: Bookmark, public readonly list: string, public readonly uri: vscode.Uri, public readonly selection: vscode.Selection, value: string, public readonly note?: string) {
-    super(trimTextLength(note ?? formatSelectionValue(selection, value), MAX_LABEL_LENGTH), vscode.TreeItemCollapsibleState.None)
+const noteThemeIcon = new vscode.ThemeIcon('note')
+const selectionThemeIcon = new vscode.ThemeIcon('selection')
 
-    this.description = note ? trimTextLength(formatSelectionValue(selection, value), MAX_DESCRIPTION_LENGTH) : undefined
+export class SelectionTreeItem extends vscode.TreeItem {
+  constructor(
+    public readonly bookmark: Bookmark,
+    public readonly list: string,
+    public readonly uri: vscode.Uri,
+    public readonly selection: vscode.Selection,
+    value: string,
+    public readonly note?: string,
+    formattedSelectionValue = formatSelectionValue(selection, value)
+  ) {
+    super(trimTextLength(note ?? formattedSelectionValue, MAX_LABEL_LENGTH), vscode.TreeItemCollapsibleState.None)
+
+    this.description = note ? trimTextLength(formattedSelectionValue, MAX_DESCRIPTION_LENGTH) : undefined
     this.contextValue = 'selection'
     this.tooltip = `${note ? `${note}\n\n` : ''}${trimTextLines(stripIndent(value), MAX_TOOLTIP_SELECTION_VALUE_LINES)}\n\n${uri.path}`
-    this.iconPath = note ? new vscode.ThemeIcon('note') : new vscode.ThemeIcon('selection')
+    this.iconPath = note ? noteThemeIcon : selectionThemeIcon
     this.command = {
       command: 'vscode.open',
       arguments: [uri, { selection }],

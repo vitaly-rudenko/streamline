@@ -3,6 +3,37 @@ import type { TabHistoryStorage } from './tab-history-storage'
 import { formatPaths } from '../../utils/format-paths'
 import type { TabHistoryConfig } from './tab-history-config'
 
+export class SectionTreeItem extends vscode.TreeItem {
+  constructor(label: string, icon: vscode.ThemeIcon, contextValue?: string) {
+    super(label, vscode.TreeItemCollapsibleState.None)
+    this.iconPath = icon
+    this.contextValue = contextValue
+  }
+}
+
+const pinnedTreeItem = new SectionTreeItem('Pinned', new vscode.ThemeIcon('pinned'))
+const recentlyOpenedTreeItem = new SectionTreeItem('Recently opened', new vscode.ThemeIcon('history'), 'recentlyOpened')
+
+export class TabTreeItem extends vscode.TreeItem {
+  constructor(
+    label: string,
+    date: string | undefined,
+    public readonly uri: vscode.Uri,
+    isPinned: boolean
+  ) {
+    super(label, vscode.TreeItemCollapsibleState.None)
+    this.resourceUri = uri
+    this.contextValue = isPinned ? 'pinnedTab' : 'tab'
+    this.description = date
+
+    this.command = {
+      command: 'vscode.open',
+      arguments: [uri],
+      title: 'Open file'
+    }
+  }
+}
+
 export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTreeItem | SectionTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
@@ -34,7 +65,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     // Pinned tabs
 
     if (this.config.getPinnedPaths().length > 0) {
-      children.push(new SectionTreeItem('Pinned', new vscode.ThemeIcon('pinned')))
+      children.push(pinnedTreeItem)
     }
 
     for (const path of this.config.getPinnedPaths().sort()) {
@@ -56,7 +87,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     // Other tabs
 
     if (remainingTabsMap.size > 0) {
-      children.push(new SectionTreeItem('Recently Opened', new vscode.ThemeIcon('history'), 'recentlyOpened'))
+      children.push(recentlyOpenedTreeItem)
     }
 
     for (const tab of tabs) {
@@ -74,34 +105,6 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     }
 
     return children
-  }
-}
-
-export class SectionTreeItem extends vscode.TreeItem {
-  constructor(label: string, icon: vscode.ThemeIcon, contextValue?: string) {
-    super(label, vscode.TreeItemCollapsibleState.None)
-    this.iconPath = icon
-    this.contextValue = contextValue
-  }
-}
-
-export class TabTreeItem extends vscode.TreeItem {
-  constructor(
-    label: string,
-    date: string | undefined,
-    public readonly uri: vscode.Uri,
-    isPinned: boolean
-  ) {
-    super(label, vscode.TreeItemCollapsibleState.None)
-    this.resourceUri = uri
-    this.contextValue = isPinned ? 'pinnedTab' : 'tab'
-    this.description = date
-
-    this.command = {
-      command: 'vscode.open',
-      arguments: [uri],
-      title: 'Open file'
-    }
   }
 }
 

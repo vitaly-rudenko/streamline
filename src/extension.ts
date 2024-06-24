@@ -26,6 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 	createBookmarksFeature({ context })
 	createTabHistoryFeature({ context })
 
+	const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
 	const fileDecorationProvider: vscode.FileDecorationProvider = {
 		onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,
 		provideFileDecoration: (uri: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> => {
@@ -40,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
 				return new vscode.FileDecoration(
 					isScoped ? '•' : isParentOfScoped ? '›' : undefined,
 					undefined,
-					isHighlighted ? new vscode.ThemeColor('textLink.foreground') : undefined
+					isHighlighted ? highlightThemeColor : undefined
 				)
 			}
 
