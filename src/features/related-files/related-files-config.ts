@@ -19,10 +19,10 @@ export class RelatedFilesConfig extends FeatureConfig {
 
   constructor() {
     super('RelatedFiles')
-    this.load()
+    this.load(initialConfig)
   }
 
-  load(config = initialConfig) {
+  load(config = getConfig()) {
     const customExcludes = config.get<Record<string, unknown>>('relatedFiles.exclude', {})
     const useExcludes = config.get<boolean>('relatedFiles.useExcludes', defaultUseExcludes)
     const useStricterQuickOpenQuery = config.get<boolean>('relatedFiles.useStricterQuickOpenQuery', defaultUseStricterQuickOpenQuery)

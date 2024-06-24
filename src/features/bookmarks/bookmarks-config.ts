@@ -18,11 +18,11 @@ export class BookmarksConfig extends FeatureConfig {
 
   constructor() {
     super('Bookmarks')
-    this.load()
+    this.load(initialConfig)
     this._updateListsCache()
   }
 
-  load(config = initialConfig) {
+  load(config = getConfig()) {
     const currentList = config.get<string>('bookmarks.currentList', defaultCurrentList)
     const archivedLists = config.get<string[]>('bookmarks.archivedLists', [])
     const serializedBookmarks = config.get<SerializedBookmark[]>('bookmarks.serializedBookmarks', [])

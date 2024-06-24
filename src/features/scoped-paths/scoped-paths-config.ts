@@ -15,11 +15,11 @@ export class ScopedPathsConfig extends FeatureConfig {
 
   constructor() {
     super('ScopedPaths')
-    this.load()
+    this.load(initialConfig)
     this._updateScopedPathsCache()
   }
 
-  load(config = initialConfig) {
+  load(config = getConfig()) {
     const enabled = config.get<boolean>('scopedPaths.enabled', defaultEnabled)
     const currentScope = config.get<string>('scopedPaths.currentScope', defaultCurrentScope)
     const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', {})

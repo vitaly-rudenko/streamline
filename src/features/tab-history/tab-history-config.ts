@@ -16,10 +16,11 @@ export class TabHistoryConfig extends FeatureConfig {
 
   constructor() {
     super('TabHistory')
+    this.load(initialConfig)
     this._updatePinnedPathsCache()
   }
 
-  load(config = initialConfig) {
+  load(config = getConfig()) {
     const backupEnabled = config.get<boolean>('tabHistory.backup.enabled', defaultBackupEnabled)
     const backupSize = config.get<number>('tabHistory.backup.size', defaultBackupSize)
     const backupRecords = config.get<Record<string, number>>('tabHistory.backup.records', defaultBackupRecords)

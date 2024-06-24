@@ -8,11 +8,11 @@ export class HighlightedPathsConfig extends FeatureConfig {
 
   constructor() {
     super('HighlightedPaths')
-    this.load()
+    this.load(initialConfig)
     this._updatePatternsCache()
   }
 
-  load(config = initialConfig) {
+  load(config = getConfig()) {
     const patterns = config.get<string[]>('highlightedPaths.patterns', [])
 
     let hasChanged = false
