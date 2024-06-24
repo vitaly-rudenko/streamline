@@ -75,7 +75,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
     const nestedBookmarks = element instanceof FolderTreeItem || element instanceof FileTreeItem
       ? listBookmarks.filter(bookmark => bookmark.uri.path.startsWith(element.uri.path + '/'))
-      : [...listBookmarks]
+      : listBookmarks
 
     const bookmarks = nestedBookmarks.filter(bookmark => nestedBookmarks.every(b => !bookmark.uri.path.startsWith(b.uri.path + '/')))
 
