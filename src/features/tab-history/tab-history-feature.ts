@@ -27,6 +27,14 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
     updateContextInBackground()
   }, 500)
 
+  const scheduleNewTab = createDebouncedFunction((path: string, openedAt: number) => {
+    // Do not refresh tree view unless it's a new item to keep item focused after clicked
+    const isNew = tabHistoryStorage.put({ path, openedAt })
+    if (isNew) tabHistoryTreeDataProvider.refresh()
+
+    scheduleBackup()
+  }, 100)
+
   async function updateContextInBackground() {
     try {
       await vscode.commands.executeCommand('setContext', 'streamline.tabHistory.backup.enabled', config.getBackupEnabled())
@@ -110,13 +118,11 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
       }
     }),
     vscode.window.onDidChangeActiveTextEditor((event) => {
-      const uri = event?.document.uri
-      if (!uri) return
+      const path = event?.document.uri.path
+      if (!path) return
 
-      const isNew = tabHistoryStorage.put({ path: uri.path, openedAt: Date.now() })
-      if (isNew) tabHistoryTreeDataProvider.refresh()
-
-      scheduleBackup()
+      const openedAt = Date.now()
+      scheduleNewTab(path, openedAt)
     }),
   )
 
