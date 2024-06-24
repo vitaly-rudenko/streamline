@@ -118,7 +118,7 @@ const TWO_DAY_MS = 2 * DAY_MS
 
 function fastFormatRelativeDate(from: number, to: number) {
   const ms = to - from
-  if (ms < MINUTE_MS) return 'less then a minute ago'
+  if (ms < MINUTE_MS) return 'just now'
   if (ms < TWO_MINUTE_MS) return 'a minute ago'
   if (ms < HOUR_MS) return `${Math.floor(ms / MINUTE_MS)} minutes ago`
   if (ms < TWO_HOUR_MS) return 'an hour ago'
