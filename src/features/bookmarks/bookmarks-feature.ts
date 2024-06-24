@@ -28,7 +28,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     try {
       const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
       const isActiveTextEditorBookmarked = activeTextEditorUri
-        ? config.getBookmarks().some((bookmark) => bookmark.type === 'file' && bookmark.uri.path === activeTextEditorUri.path)
+        ? config.getCachedBookmarkedFilePathsSet().has(activeTextEditorUri.path)
         : false
 
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.activeTextEditorBookmarked', isActiveTextEditorBookmarked)
