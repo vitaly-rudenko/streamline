@@ -43,6 +43,8 @@ export function activate(context: vscode.ExtensionContext) {
 					isHighlighted ? new vscode.ThemeColor('textLink.foreground') : undefined
 				)
 			}
+
+			return undefined
 		}
 	}
 
