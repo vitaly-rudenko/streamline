@@ -5,9 +5,12 @@ import { createRelatedFilesFeature } from './features/related-files/related-file
 import { uriToPath } from './utils/uri'
 import { createTabHistoryFeature } from './features/tab-history/tab-history-feature'
 import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
+import { getConfig } from './config'
 
 export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
+
+	const initialConfig = getConfig()
 
 	const highlightedPathsFeature = createHighlightedPathsFeature({
 		context,
@@ -20,9 +23,10 @@ export function activate(context: vscode.ExtensionContext) {
 	})
 
 	createRelatedFilesFeature({ context })
-	createTabHistoryFeature({ context })
 	createBookmarksFeature({ context })
+	createTabHistoryFeature({ context })
 
+	const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
 	const fileDecorationProvider: vscode.FileDecorationProvider = {
 		onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,
 		provideFileDecoration: (uri: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> => {
@@ -37,9 +41,11 @@ export function activate(context: vscode.ExtensionContext) {
 				return new vscode.FileDecoration(
 					isScoped ? '•' : isParentOfScoped ? '›' : undefined,
 					undefined,
-					isHighlighted ? new vscode.ThemeColor('textLink.foreground') : undefined
+					isHighlighted ? highlightThemeColor : undefined
 				)
 			}
+
+			return undefined
 		}
 	}
 

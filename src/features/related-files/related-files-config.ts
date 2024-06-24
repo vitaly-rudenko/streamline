@@ -1,4 +1,4 @@
-import { getConfig } from '../../config'
+import { getConfig, initialConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { FeatureConfig } from '../feature-config'
@@ -17,10 +17,12 @@ export class RelatedFilesConfig extends FeatureConfig {
   private _viewRenderMode: ViewRenderMode = defaultViewRenderMode
   private _hiddenWorkspaceFoldersInGlobalSearch: string[] = []
 
-  constructor() { super('RelatedFiles') }
+  constructor() {
+    super('RelatedFiles')
+    this.load(initialConfig)
+  }
 
-  load() {
-    const config = getConfig()
+  load(config = getConfig()) {
     const customExcludes = config.get<Record<string, unknown>>('relatedFiles.exclude', {})
     const useExcludes = config.get<boolean>('relatedFiles.useExcludes', defaultUseExcludes)
     const useStricterQuickOpenQuery = config.get<boolean>('relatedFiles.useStricterQuickOpenQuery', defaultUseStricterQuickOpenQuery)

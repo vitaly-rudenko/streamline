@@ -2,11 +2,13 @@ import * as vscode from 'vscode'
 import { HighlightedPathsConfig } from './highlighted-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 
-export function createHighlightedPathsFeature(input: { context: vscode.ExtensionContext, onChange: () => unknown }) {
+export function createHighlightedPathsFeature(input: {
+  context: vscode.ExtensionContext
+  onChange: () => unknown
+}) {
   const { context, onChange } = input
 
   const config = new HighlightedPathsConfig()
-
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
     onChange()
@@ -25,8 +27,6 @@ export function createHighlightedPathsFeature(input: { context: vscode.Extension
       }
     }),
   )
-
-  config.load()
 
   return { isPathHighlighted }
 }

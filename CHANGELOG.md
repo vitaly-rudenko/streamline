@@ -2,6 +2,8 @@
 
 ## 0.17
 
+- Significantly optimized extension startup time and overall performance
+
 ### Related Files
 
 - **Improved Global Search** by grouping results into workspace folders

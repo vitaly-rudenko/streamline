@@ -6,7 +6,10 @@ import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { generateExcludedPathsFromScopedPaths } from './generate-excluded-paths-from-scoped-paths'
 
-export function createScopedPathsFeature(input: { context: vscode.ExtensionContext, onChange: () => unknown }) {
+export function createScopedPathsFeature(input: {
+  context: vscode.ExtensionContext
+  onChange: () => unknown
+}) {
   const { context, onChange } = input
 
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 2)
@@ -55,13 +58,14 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
     }
   }
 
+  const enabledThemeColor = new vscode.ThemeColor('statusBarItem.warningBackground')
   function updateStatusBarItems() {
     textStatusBarItem.text = `Scope: ${config.getCurrentScope()}`
-    textStatusBarItem.backgroundColor = config.getEnabled() ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
+    textStatusBarItem.backgroundColor = config.getEnabled() ? enabledThemeColor : undefined
 
     buttonStatusBarItem.command = config.getEnabled() ? 'streamline.scopedPaths.disableScope' : 'streamline.scopedPaths.enableScope'
     buttonStatusBarItem.text = config.getEnabled() ? '$(pass-filled)' : '$(circle-large-outline)'
-    buttonStatusBarItem.backgroundColor = config.getEnabled() ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
+    buttonStatusBarItem.backgroundColor = config.getEnabled() ? enabledThemeColor : undefined
   }
 
   async function updateContextInBackground() {
@@ -193,7 +197,6 @@ export function createScopedPathsFeature(input: { context: vscode.ExtensionConte
     vscode.workspace.onDidRenameFiles(() => directoryReader.clearCache()),
   )
 
-  config.load()
   updateStatusBarItems()
   updateContextInBackground()
   updateExcludesInBackground()

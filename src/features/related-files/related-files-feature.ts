@@ -12,7 +12,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
   const config = new RelatedFilesConfig()
   const relatedFilesTreeDataProvider = new RelatedFilesTreeDataProvider(config)
 
-  const scheduleRefresh = createDebouncedFunction(() => relatedFilesTreeDataProvider.refresh(), 100)
+  const scheduleRefresh = createDebouncedFunction(() => relatedFilesTreeDataProvider.refresh(), 50)
   const scheduleClearCacheAndRefresh = createDebouncedFunction(() => relatedFilesTreeDataProvider.clearCacheAndRefresh(), 500)
 
   const scheduleConfigLoad = createDebouncedFunction(() => {
@@ -158,6 +158,5 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     vscode.workspace.onDidRenameFiles(() => scheduleClearCacheAndRefresh()),
   )
 
-  config.load()
   updateContextInBackground()
 }

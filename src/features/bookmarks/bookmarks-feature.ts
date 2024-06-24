@@ -28,7 +28,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     try {
       const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
       const isActiveTextEditorBookmarked = activeTextEditorUri
-        ? config.getBookmarks().some((bookmark) => bookmark.type === 'file' && bookmark.uri.path === activeTextEditorUri.path)
+        ? config.getCachedBookmarkedFilePathsSet().has(activeTextEditorUri.path)
         : false
 
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.activeTextEditorBookmarked', isActiveTextEditorBookmarked)
@@ -112,7 +112,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.addFile', async (uriOrFileTreeItem: vscode.Uri | FileTreeItem | undefined, ...args) => {
+    vscode.commands.registerCommand('streamline.bookmarks.addFile', async (uriOrFileTreeItem: vscode.Uri | FileTreeItem | undefined) => {
       if (uriOrFileTreeItem instanceof FileTreeItem) {
         await vscode.commands.executeCommand('streamline.bookmarks.add', uriOrFileTreeItem.uri, [uriOrFileTreeItem.uri], uriOrFileTreeItem.list)
       } else if (uriOrFileTreeItem) {
@@ -368,6 +368,5 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     })
   )
 
-  config.load()
   updateContextInBackground()
 }

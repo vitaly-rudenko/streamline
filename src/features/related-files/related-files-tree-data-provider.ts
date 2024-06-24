@@ -171,10 +171,11 @@ export class WorkspaceFolderTreeItem extends vscode.TreeItem {
   }
 }
 
+const bestMatchThemeIcon = new vscode.ThemeIcon('star-full')
 export class RelatedFileTreeItem extends vscode.TreeItem {
   constructor(label: string, uri: vscode.Uri, isBestMatch?: boolean) {
     super(label, vscode.TreeItemCollapsibleState.None)
-    this.iconPath = isBestMatch ? new vscode.ThemeIcon('star-full') : undefined
+    this.iconPath = isBestMatch ? bestMatchThemeIcon : undefined
     this.resourceUri = uri
     this.contextValue = 'relatedFile'
     this.command = {

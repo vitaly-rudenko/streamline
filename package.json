@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -47,7 +47,6 @@
   },
   "dependencies": {
     "common-tags": "^1.8.2",
-    "date-fns": "^3.6.0",
     "lru-cache": "^10.2.2"
   },
   "contributes": {
@@ -650,7 +649,11 @@
         "streamline.relatedFiles.viewRenderMode": {
           "type": "string",
           "default": "compact",
-          "enum": ["relative", "absolute", "compact"],
+          "enum": [
+            "relative",
+            "absolute",
+            "compact"
+          ],
           "description": "Use relative, absolute or compact paths in the related files view"
         },
         "streamline.relatedFiles.exclude": {

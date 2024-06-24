@@ -9,6 +9,8 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
 
   const config = new TabHistoryConfig()
   const tabHistoryStorage = new TabHistoryStorage(100)
+  tabHistoryStorage.import(config.getBackupRecords())
+
   const tabHistoryTreeDataProvider = new TabHistoryTreeDataProvider(tabHistoryStorage, config)
   const tabHistoryTreeView = vscode.window.createTreeView('tabHistory', { treeDataProvider: tabHistoryTreeDataProvider })
 
@@ -24,6 +26,14 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
     tabHistoryTreeDataProvider.refresh()
     updateContextInBackground()
   }, 500)
+
+  const scheduleNewTab = createDebouncedFunction((path: string, openedAt: number) => {
+    // Do not refresh tree view unless it's a new item to keep item focused after clicked
+    const isNew = tabHistoryStorage.put({ path, openedAt })
+    if (isNew) tabHistoryTreeDataProvider.refresh()
+
+    scheduleBackup()
+  }, 100)
 
   async function updateContextInBackground() {
     try {
@@ -108,20 +118,15 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
       }
     }),
     vscode.window.onDidChangeActiveTextEditor((event) => {
-      const uri = event?.document.uri
-      if (!uri) return
+      const path = event?.document.uri.path
+      if (!path) return
 
-      const isNew = tabHistoryStorage.put({ path: uri.path, openedAt: Date.now() })
-      if (isNew) tabHistoryTreeDataProvider.refresh()
-
-      scheduleBackup()
+      const openedAt = Date.now()
+      scheduleNewTab(path, openedAt)
     }),
   )
 
-  config.load()
-  tabHistoryStorage.import(config.getBackupRecords())
-  updateContextInBackground()
-
   // Update timestamps once a minute
   setInterval(() => tabHistoryTreeDataProvider.refresh(), 60_000)
+  updateContextInBackground()
 }

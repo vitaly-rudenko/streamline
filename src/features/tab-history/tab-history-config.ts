@@ -1,4 +1,4 @@
-import { getConfig } from '../../config'
+import { getConfig, initialConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { FeatureConfig } from '../feature-config'
@@ -16,11 +16,11 @@ export class TabHistoryConfig extends FeatureConfig {
 
   constructor() {
     super('TabHistory')
+    this.load(initialConfig)
     this._updatePinnedPathsCache()
   }
 
-  load() {
-    const config = getConfig()
+  load(config = getConfig()) {
     const backupEnabled = config.get<boolean>('tabHistory.backup.enabled', defaultBackupEnabled)
     const backupSize = config.get<number>('tabHistory.backup.size', defaultBackupSize)
     const backupRecords = config.get<Record<string, number>>('tabHistory.backup.records', defaultBackupRecords)

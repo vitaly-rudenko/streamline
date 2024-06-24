@@ -1,8 +1,38 @@
 import * as vscode from 'vscode'
-import { formatDistance } from 'date-fns'
 import type { TabHistoryStorage } from './tab-history-storage'
 import { formatPaths } from '../../utils/format-paths'
 import type { TabHistoryConfig } from './tab-history-config'
+
+export class SectionTreeItem extends vscode.TreeItem {
+  constructor(label: string, icon: vscode.ThemeIcon, contextValue?: string) {
+    super(label, vscode.TreeItemCollapsibleState.None)
+    this.iconPath = icon
+    this.contextValue = contextValue
+  }
+}
+
+const pinnedTreeItem = new SectionTreeItem('Pinned', new vscode.ThemeIcon('pinned'))
+const recentlyOpenedTreeItem = new SectionTreeItem('Recently opened', new vscode.ThemeIcon('history'), 'recentlyOpened')
+
+export class TabTreeItem extends vscode.TreeItem {
+  constructor(
+    label: string,
+    date: string | undefined,
+    public readonly uri: vscode.Uri,
+    isPinned: boolean
+  ) {
+    super(label, vscode.TreeItemCollapsibleState.None)
+    this.resourceUri = uri
+    this.contextValue = isPinned ? 'pinnedTab' : 'tab'
+    this.description = date
+
+    this.command = {
+      command: 'vscode.open',
+      arguments: [uri],
+      title: 'Open file'
+    }
+  }
+}
 
 export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTreeItem | SectionTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -24,7 +54,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
   async getChildren(element?: TabTreeItem | SectionTreeItem | undefined): Promise<(TabTreeItem | SectionTreeItem)[] | undefined> {
     if (element) return undefined
 
-    const now = new Date()
+    const now = Date.now()
     const children: (TabTreeItem | SectionTreeItem)[] = []
 
     const tabs = this.tabHistoryStorage.list()
@@ -35,7 +65,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     // Pinned tabs
 
     if (this.config.getPinnedPaths().length > 0) {
-      children.push(new SectionTreeItem('Pinned', new vscode.ThemeIcon('pinned')))
+      children.push(pinnedTreeItem)
     }
 
     for (const path of this.config.getPinnedPaths().sort()) {
@@ -45,7 +75,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
       children.push(
         new TabTreeItem(
           formattedPath,
-          tab ? formatDistance(tab.openedAt, now, { addSuffix: true }) : undefined,
+          tab ? fastFormatRelativeDate(tab.openedAt, now) : undefined,
           vscode.Uri.file(path),
           true
         )
@@ -57,7 +87,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     // Other tabs
 
     if (remainingTabsMap.size > 0) {
-      children.push(new SectionTreeItem('Recently Opened', new vscode.ThemeIcon('history'), 'recentlyOpened'))
+      children.push(recentlyOpenedTreeItem)
     }
 
     for (const tab of tabs) {
@@ -67,7 +97,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
       children.push(
         new TabTreeItem(
           formattedPath,
-          formatDistance(tab.openedAt, now, { addSuffix: true }),
+          fastFormatRelativeDate(tab.openedAt, now),
           vscode.Uri.file(tab.path),
           false,
         )
@@ -78,30 +108,21 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
   }
 }
 
-export class SectionTreeItem extends vscode.TreeItem {
-  constructor(label: string, icon: vscode.ThemeIcon, contextValue?: string) {
-    super(label, vscode.TreeItemCollapsibleState.None)
-    this.iconPath = icon
-    this.contextValue = contextValue
-  }
-}
+const MINUTE_MS = 60_000
+const HOUR_MS = 60 * MINUTE_MS
+const DAY_MS = 24 * HOUR_MS
 
-export class TabTreeItem extends vscode.TreeItem {
-  constructor(
-    label: string,
-    date: string | undefined,
-    public readonly uri: vscode.Uri,
-    isPinned: boolean
-  ) {
-    super(label, vscode.TreeItemCollapsibleState.None)
-    this.resourceUri = uri
-    this.contextValue = isPinned ? 'pinnedTab' : 'tab'
-    this.description = date
+const TWO_MINUTE_MS = 2 * MINUTE_MS
+const TWO_HOUR_MS = 2 * HOUR_MS
+const TWO_DAY_MS = 2 * DAY_MS
 
-    this.command = {
-      command: 'vscode.open',
-      arguments: [uri],
-      title: 'Open file'
-    }
-  }
+function fastFormatRelativeDate(from: number, to: number) {
+  const ms = to - from
+  if (ms < MINUTE_MS) return 'less then a minute ago'
+  if (ms < TWO_MINUTE_MS) return 'a minute ago'
+  if (ms < HOUR_MS) return `${Math.floor(ms / MINUTE_MS)} minutes ago`
+  if (ms < TWO_HOUR_MS) return 'an hour ago'
+  if (ms < DAY_MS) return `${Math.floor(ms / HOUR_MS)} hours ago`
+  if (ms < TWO_DAY_MS) return 'a day ago'
+  return `${Math.floor(ms / TWO_DAY_MS)} days ago`
 }

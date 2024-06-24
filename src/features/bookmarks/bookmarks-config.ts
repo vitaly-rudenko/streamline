@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { getConfig } from '../../config'
+import { getConfig, initialConfig } from '../../config'
 import type { Bookmark, SerializedBookmark } from './types'
 import { FeatureConfig } from '../feature-config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
@@ -15,14 +15,15 @@ export class BookmarksConfig extends FeatureConfig {
   private _cachedUnsortedLists: string[] = []
   private _cachedSortedUnarchivedLists: string[] = []
   private _cachedSortedArchivedLists: string[] = []
+  private _cachedBookmarkedFilePathsSet: Set<string> = new Set()
 
   constructor() {
     super('Bookmarks')
-    this._updateListsCache()
+    this.load(initialConfig)
+    this._updateCache()
   }
 
-  load() {
-    const config = getConfig()
+  load(config = getConfig()) {
     const currentList = config.get<string>('bookmarks.currentList', defaultCurrentList)
     const archivedLists = config.get<string[]>('bookmarks.archivedLists', [])
     const serializedBookmarks = config.get<SerializedBookmark[]>('bookmarks.serializedBookmarks', [])
@@ -47,7 +48,7 @@ export class BookmarksConfig extends FeatureConfig {
     }
 
     if (hasChanged) {
-      this._updateListsCache()
+      this._updateCache()
     }
 
     console.debug('[Bookmarks] Config has been loaded', { hasChanged, currentList, archivedLists, serializedBookmarks })
@@ -76,10 +77,11 @@ export class BookmarksConfig extends FeatureConfig {
     console.debug('[Bookmarks] Config has been saved')
   }
 
-  private _updateListsCache() {
+  private _updateCache() {
     this._cachedUnsortedLists = unique([...this._bookmarks.map((bookmark) => bookmark.list), this.getCurrentList()])
     this._cachedSortedUnarchivedLists = this._cachedUnsortedLists.filter((list) => !this.getArchivedLists().includes(list)).sort()
     this._cachedSortedArchivedLists = [...this.getArchivedLists()].sort()
+    this._cachedBookmarkedFilePathsSet = new Set(this._bookmarks.filter(b => b.type === 'file').map(b => b.uri.path))
   }
 
   getCachedSortedArchivedLists() {
@@ -94,13 +96,17 @@ export class BookmarksConfig extends FeatureConfig {
     return this._cachedUnsortedLists
   }
 
+  getCachedBookmarkedFilePathsSet() {
+    return this._cachedBookmarkedFilePathsSet
+  }
+
   getCurrentList() {
     return this._currentList
   }
 
   setCurrentList(value: string) {
     this._currentList = value
-    this._updateListsCache()
+    this._updateCache()
   }
 
   getArchivedLists() {
@@ -109,7 +115,7 @@ export class BookmarksConfig extends FeatureConfig {
 
   setArchivedLists(value: string[]) {
     this._archivedLists = value
-    this._updateListsCache()
+    this._updateCache()
   }
 
   getBookmarks() {
@@ -119,7 +125,7 @@ export class BookmarksConfig extends FeatureConfig {
   setBookmarks(value: Bookmark[]) {
     this._bookmarks = value
     this._cachedSerializedBookmarks = this._bookmarks.map((bookmark) => serializeBookmark(bookmark))
-    this._updateListsCache()
+    this._updateCache()
   }
 }
 
