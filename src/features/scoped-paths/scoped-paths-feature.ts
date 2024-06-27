@@ -32,6 +32,11 @@ export function createScopedPathsFeature(input: {
     updateExcludesInBackground()
   }, 500)
 
+  const scheduleClearCacheAndUpdateExcludes = createDebouncedFunction(() => {
+    directoryReader.clearCache()
+    updateExcludesInBackground()
+  }, 250)
+
   async function updateExcludesInBackground() {
     try {
       let excludes: Record<string, unknown> | undefined = undefined
@@ -193,8 +198,9 @@ export function createScopedPathsFeature(input: {
         }
       }
     }),
-    vscode.workspace.onDidCreateFiles(() => directoryReader.clearCache()),
-    vscode.workspace.onDidRenameFiles(() => directoryReader.clearCache()),
+    vscode.workspace.onDidCreateFiles(() => scheduleClearCacheAndUpdateExcludes()),
+    vscode.workspace.onDidRenameFiles(() => scheduleClearCacheAndUpdateExcludes()),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleClearCacheAndUpdateExcludes())
   )
 
   updateStatusBarItems()
