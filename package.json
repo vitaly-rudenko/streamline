@@ -53,6 +53,14 @@
     "views": {
       "explorer": [
         {
+          "type": "webview",
+          "id": "streamline.threads",
+          "name": "Threads",
+          "contextualTitle": "Threads",
+          "visibility": "collapsed",
+          "icon": "$(type-hierarchy)"
+        },
+        {
           "id": "tabHistory",
           "name": "Tab history",
           "contextualTitle": "Tab history",
