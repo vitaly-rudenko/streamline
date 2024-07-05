@@ -6,6 +6,8 @@ import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { generateExcludedPathsFromScopedPaths } from './generate-excluded-paths-from-scoped-paths'
 
+const SCOPED_PATHS_KEY = '__set_by_scoped_paths__'
+
 export function createScopedPathsFeature(input: {
   context: vscode.ExtensionContext
   onChange: () => unknown
@@ -39,12 +41,16 @@ export function createScopedPathsFeature(input: {
 
   async function updateExcludesInBackground() {
     try {
-      let excludes: Record<string, unknown> | undefined = undefined
+      const workspaceConfig = await vscode.workspace.getConfiguration('files', null)
+      const currentExcludes = workspaceConfig.get('exclude', undefined)
+      const isScopedPathsEnabled = currentExcludes?.[SCOPED_PATHS_KEY] === false
+
       if (config.getEnabled()) {
         const scopedPaths = config.getCachedCurrentlyScopedPaths() ?? []
         const excludedPaths = await generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader)
 
-        excludes = {
+        const excludes = {
+          [SCOPED_PATHS_KEY]: false,
           '**/.git': true,
           '**/.svn': true,
           '**/.hg': true,
@@ -53,11 +59,13 @@ export function createScopedPathsFeature(input: {
           '**/Thumbs.db': true,
           ...Object.fromEntries(excludedPaths.map(excludedPath => [`${excludedPath}/**`, true]))
         }
-      }
 
-      await vscode.workspace
-        .getConfiguration('files', null)
-        .update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
+        await workspaceConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
+      } else if (isScopedPathsEnabled) {
+        // only remove current excludes when they're explicitly set by ScopedPaths feature
+        // this prevents VS Code from creating .vscode/settings.json when it's not necessary
+        await workspaceConfig.update('exclude', undefined, vscode.ConfigurationTarget.Workspace)
+      }
     } catch (error) {
       console.warn('[ScopedPaths] Could not update workspace configuration', error)
     }
