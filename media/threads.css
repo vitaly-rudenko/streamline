@@ -15,10 +15,6 @@ html {
   -ms-overflow-style: none;  /* IE 10+ */
 }
 
-.mermaid svg {
-  margin: 100px;
-}
-
 .mermaid .node {
   cursor: pointer;
 }
