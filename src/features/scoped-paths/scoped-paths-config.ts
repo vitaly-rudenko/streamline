@@ -1,14 +1,25 @@
+import { Uri, type WorkspaceFolder } from 'vscode'
 import { getConfig, initialConfig } from '../../config'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getParents } from '../../utils/get-parents'
 import { FeatureConfig } from '../feature-config'
 
 const defaultEnabled = false
 const defaultCurrentScope = 'default'
+const defaultHideWorkspaceFolders = false
+
+type SerializedWorkspaceFolder = {
+  name: string;
+  uri: string;
+  index: number;
+}
 
 export class ScopedPathsConfig extends FeatureConfig {
   private _enabled: boolean = defaultEnabled
   private _currentScope: string = defaultCurrentScope
   private _scopesObject: Record<string, string[]> = {}
+  private _workspaceFoldersBackup: WorkspaceFolder[] = []
+  private _hideWorkspaceFolders: boolean = defaultHideWorkspaceFolders
   private _cachedCurrentlyScopedPaths: string[] = []
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
   private _cachedParentsOfCurrentlyScopedPathsSet: Set<string> = new Set()
@@ -23,6 +34,9 @@ export class ScopedPathsConfig extends FeatureConfig {
     const enabled = config.get<boolean>('scopedPaths.enabled', defaultEnabled)
     const currentScope = config.get<string>('scopedPaths.currentScope', defaultCurrentScope)
     const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
+    const workspaceFoldersBackup = config.get<SerializedWorkspaceFolder[]>('scopedPaths.workspaceFoldersBackup', [])
+      .map(wf => ({ ...wf, uri: Uri.parse(wf.uri) }))
+    const hideWorkspaceFolders = config.get<boolean>('scopedPaths.hideWorkspaceFolders', defaultHideWorkspaceFolders)
 
     let hasChanged = false
 
@@ -30,10 +44,14 @@ export class ScopedPathsConfig extends FeatureConfig {
       this._enabled !== enabled
       || this._currentScope !== currentScope
       || JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)
+      || !areArraysShallowEqual(this._workspaceFoldersBackup, workspaceFoldersBackup)
+      || this._hideWorkspaceFolders !== hideWorkspaceFolders
     ) {
       this._enabled = enabled
       this._currentScope = currentScope
       this._scopesObject = scopesObject
+      this._workspaceFoldersBackup = workspaceFoldersBackup
+      this._hideWorkspaceFolders = hideWorkspaceFolders
 
       hasChanged = true
     }
@@ -42,7 +60,7 @@ export class ScopedPathsConfig extends FeatureConfig {
       this._updateScopedPathsCache()
     }
 
-    console.debug('[ScopedPaths] Config has been loaded', { hasChanged, enabled, currentScope, scopesObject })
+    console.debug('[ScopedPaths] Config has been loaded', { hasChanged, enabled, currentScope, scopesObject, workspaceFoldersBackup, hideWorkspaceFolders })
 
     return hasChanged
   }
@@ -64,6 +82,13 @@ export class ScopedPathsConfig extends FeatureConfig {
       'scopedPaths.scopes',
       Object.entries(this._scopesObject).some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0)
         ? this._scopesObject : undefined
+    )
+
+    await config.update(
+      'scopedPaths.workspaceFoldersBackup',
+      this._workspaceFoldersBackup.length > 0
+        ? this._workspaceFoldersBackup.map(wf => ({ ...wf, uri: wf.uri.toString() }))
+        : undefined
     )
 
     console.debug('[ScopedPaths] Config has been saved')
@@ -93,6 +118,18 @@ export class ScopedPathsConfig extends FeatureConfig {
 
   getEnabled() {
     return this._enabled
+  }
+
+  getHideWorkspaceFolders() {
+    return this._hideWorkspaceFolders
+  }
+
+  setWorkspaceFoldersBackup(value: WorkspaceFolder[]) {
+    this._workspaceFoldersBackup = value
+  }
+
+  getWorkspaceFoldersBackup() {
+    return this._workspaceFoldersBackup
   }
 
   setCurrentScope(value: string) {

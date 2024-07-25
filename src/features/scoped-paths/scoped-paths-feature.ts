@@ -61,10 +61,47 @@ export function createScopedPathsFeature(input: {
         }
 
         await workspaceConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
+
+        // Do not update workspace folders if scoped paths are already enabled to avoid issues
+        if (config.getHideWorkspaceFolders() && !isScopedPathsEnabled) {
+          try {
+            const workspaceFolders = vscode.workspace.workspaceFolders
+            if (workspaceFolders) {
+              config.setWorkspaceFoldersBackup([...workspaceFolders])
+              await config.saveInBackground()
+
+              const visibleWorkspaceFolders = unique(scopedPaths.map(scopedPath => scopedPath.split('/')[0]))
+              await vscode.workspace.updateWorkspaceFolders(
+                0,
+                workspaceFolders.length,
+                ...workspaceFolders
+                  .filter(wf => visibleWorkspaceFolders.some(vwf => wf.uri.path.includes(vwf)))
+                  .sort((a, b) => a.index - b.index)
+              )
+            }
+          } catch (error) {
+            console.warn('Could not hide workspace folders', error)
+          }
+        }
       } else if (isScopedPathsEnabled) {
         // only remove current excludes when they're explicitly set by ScopedPaths feature
         // this prevents VS Code from creating .vscode/settings.json when it's not necessary
         await workspaceConfig.update('exclude', undefined, vscode.ConfigurationTarget.Workspace)
+
+        if (config.getHideWorkspaceFolders()) {
+          const workspaceFolders = vscode.workspace.workspaceFolders
+          const workspaceFoldersBackup = config.getWorkspaceFoldersBackup()
+          if (workspaceFolders && workspaceFoldersBackup.length > 0) {
+            await vscode.workspace.updateWorkspaceFolders(
+              0,
+              workspaceFolders.length,
+              ...workspaceFoldersBackup.sort((a, b) => a.index - b.index)
+            )
+
+            config.setWorkspaceFoldersBackup([])
+            await config.saveInBackground()
+          }
+        }
       }
     } catch (error) {
       console.warn('[ScopedPaths] Could not update workspace configuration', error)
