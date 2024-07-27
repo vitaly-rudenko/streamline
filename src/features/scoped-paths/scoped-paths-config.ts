@@ -7,6 +7,7 @@ import { FeatureConfig } from '../feature-config'
 const defaultEnabled = false
 const defaultCurrentScope = 'default'
 const defaultHideWorkspaceFolders = false
+const defaultHighlightStatusBarWhenEnabled = true
 
 type SerializedWorkspaceFolder = {
   name: string;
@@ -20,6 +21,7 @@ export class ScopedPathsConfig extends FeatureConfig {
   private _scopesObject: Record<string, string[]> = {}
   private _workspaceFoldersBackup: WorkspaceFolder[] = []
   private _hideWorkspaceFolders: boolean = defaultHideWorkspaceFolders
+  private _highlightStatusBarWhenEnabled: boolean = defaultHighlightStatusBarWhenEnabled
   private _cachedCurrentlyScopedPaths: string[] = []
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
   private _cachedCurrentlyScopedWorkspaceFolderNamesSet: Set<string> = new Set()
@@ -38,6 +40,7 @@ export class ScopedPathsConfig extends FeatureConfig {
     const workspaceFoldersBackup = config.get<SerializedWorkspaceFolder[]>('scopedPaths.workspaceFoldersBackup', [])
       .map(wf => ({ ...wf, uri: Uri.parse(wf.uri) }))
     const hideWorkspaceFolders = config.get<boolean>('scopedPaths.hideWorkspaceFolders', defaultHideWorkspaceFolders)
+    const highlightStatusBarWhenEnabled = config.get<boolean>('scopedPaths.highlightStatusBarWhenEnabled', defaultHighlightStatusBarWhenEnabled)
 
     let hasChanged = false
 
@@ -47,12 +50,14 @@ export class ScopedPathsConfig extends FeatureConfig {
       || JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)
       || !areArraysShallowEqual(this._workspaceFoldersBackup, workspaceFoldersBackup)
       || this._hideWorkspaceFolders !== hideWorkspaceFolders
+      || this._highlightStatusBarWhenEnabled !== highlightStatusBarWhenEnabled
     ) {
       this._enabled = enabled
       this._currentScope = currentScope
       this._scopesObject = scopesObject
       this._workspaceFoldersBackup = workspaceFoldersBackup
       this._hideWorkspaceFolders = hideWorkspaceFolders
+      this._highlightStatusBarWhenEnabled = highlightStatusBarWhenEnabled
 
       hasChanged = true
     }
@@ -61,7 +66,7 @@ export class ScopedPathsConfig extends FeatureConfig {
       this._updateScopedPathsCache()
     }
 
-    console.debug('[ScopedPaths] Config has been loaded', { hasChanged, enabled, currentScope, scopesObject, workspaceFoldersBackup, hideWorkspaceFolders })
+    console.debug('[ScopedPaths] Config has been loaded', { hasChanged, enabled, currentScope, scopesObject, workspaceFoldersBackup, hideWorkspaceFolders, highlightStatusBarWhenEnabled })
 
     return hasChanged
   }
@@ -128,6 +133,10 @@ export class ScopedPathsConfig extends FeatureConfig {
 
   getHideWorkspaceFolders() {
     return this._hideWorkspaceFolders
+  }
+
+  getHighlightStatusBarWhenEnabled() {
+    return this._highlightStatusBarWhenEnabled
   }
 
   setWorkspaceFoldersBackup(value: WorkspaceFolder[]) {

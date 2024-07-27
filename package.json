@@ -628,6 +628,11 @@
           "default": false,
           "description": "(Experimental) Hide unscoped workspace folders"
         },
+        "streamline.scopedPaths.highlightStatusBarWhenEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight status bar items when scope is enabled"
+        },
         "streamline.scopedPaths.workspaceFoldersBackup": {
           "type": "array",
           "default": [],

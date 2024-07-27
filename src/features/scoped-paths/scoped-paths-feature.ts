@@ -118,11 +118,11 @@ export function createScopedPathsFeature(input: {
   const enabledThemeColor = new vscode.ThemeColor('statusBarItem.warningBackground')
   function updateStatusBarItems() {
     textStatusBarItem.text = `Scope: ${config.getCurrentScope()}`
-    textStatusBarItem.backgroundColor = config.getEnabled() ? enabledThemeColor : undefined
+    textStatusBarItem.backgroundColor = config.getEnabled() && config.getHighlightStatusBarWhenEnabled() ? enabledThemeColor : undefined
 
     buttonStatusBarItem.command = config.getEnabled() ? 'streamline.scopedPaths.disableScope' : 'streamline.scopedPaths.enableScope'
     buttonStatusBarItem.text = config.getEnabled() ? '$(pass-filled)' : '$(circle-large-outline)'
-    buttonStatusBarItem.backgroundColor = config.getEnabled() ? enabledThemeColor : undefined
+    buttonStatusBarItem.backgroundColor = config.getEnabled() && config.getHighlightStatusBarWhenEnabled() ? enabledThemeColor : undefined
   }
 
   async function updateContextInBackground() {
