@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.18
+
+### Scoped Paths
+
+- **Added experimental "Hide Workspace Folders" setting** to completely hide workspace folders outside of the current scope
+- **Added configurable "Highlight status bar items when scope is enabled" setting** (enabled by default)
+
 ## 0.17
 
 - Significantly optimized extension startup time and overall performance
