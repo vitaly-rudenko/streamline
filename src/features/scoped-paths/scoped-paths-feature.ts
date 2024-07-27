@@ -62,25 +62,31 @@ export function createScopedPathsFeature(input: {
 
         await workspaceConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
 
-        // Do not update workspace folders if scoped paths are already enabled to avoid issues
-        if (config.getHideWorkspaceFolders() && !isScopedPathsEnabled) {
+        // TODO: test that workspace folder sorting is stable after using this feature
+
+        if (config.getHideWorkspaceFolders()) {
           try {
-            const workspaceFolders = vscode.workspace.workspaceFolders
-            if (workspaceFolders) {
-              config.setWorkspaceFoldersBackup([...workspaceFolders])
+            const currentWorkspaceFolders = vscode.workspace.workspaceFolders
+            const workspaceFoldersBackup = config.getWorkspaceFoldersBackup()
+
+            if (currentWorkspaceFolders) {
+              const allWorkspaceFolders = [...workspaceFoldersBackup, ...currentWorkspaceFolders]
+                // deduplicate workspace folders
+                .filter((workspaceFolder, index, workspaceFolders) => index === workspaceFolders.findIndex(wf => wf.uri.path === workspaceFolder.uri.path))
+                // re-sort workspace folders
+                .sort((a, b) => a.index - b.index)
+                // update indexes, for new workspace folders and for existing ones,
+                // because VS Code sometimes assigns identical index for multiple workspace folders
+                .map((wf, index) => ({ ...wf, index }))
+
+              config.setWorkspaceFoldersBackup(allWorkspaceFolders)
               await config.saveInBackground()
 
-              const visibleWorkspaceFolders = unique(scopedPaths.map(scopedPath => scopedPath.split('/')[0]))
-              await vscode.workspace.updateWorkspaceFolders(
-                0,
-                workspaceFolders.length,
-                ...workspaceFolders
-                  .filter(wf => visibleWorkspaceFolders.some(vwf => wf.uri.path.includes(vwf)))
-                  .sort((a, b) => a.index - b.index)
-              )
+              const visibleWorkspaceFolders = allWorkspaceFolders.filter(wf => config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().has(wf.name))
+              await vscode.workspace.updateWorkspaceFolders(0, currentWorkspaceFolders.length, ...visibleWorkspaceFolders)
             }
           } catch (error) {
-            console.warn('Could not hide workspace folders', error)
+            console.warn('[ScopedPaths] Could not hide workspace folders', error)
           }
         }
       } else if (isScopedPathsEnabled) {
@@ -89,17 +95,18 @@ export function createScopedPathsFeature(input: {
         await workspaceConfig.update('exclude', undefined, vscode.ConfigurationTarget.Workspace)
 
         if (config.getHideWorkspaceFolders()) {
-          const workspaceFolders = vscode.workspace.workspaceFolders
-          const workspaceFoldersBackup = config.getWorkspaceFoldersBackup()
-          if (workspaceFolders && workspaceFoldersBackup.length > 0) {
-            await vscode.workspace.updateWorkspaceFolders(
-              0,
-              workspaceFolders.length,
-              ...workspaceFoldersBackup.sort((a, b) => a.index - b.index)
-            )
+          try {
+            const workspaceFolders = vscode.workspace.workspaceFolders
+            const workspaceFoldersBackup = config.getWorkspaceFoldersBackup()
 
-            config.setWorkspaceFoldersBackup([])
-            await config.saveInBackground()
+            if (workspaceFolders && workspaceFoldersBackup.length > 0) {
+              await vscode.workspace.updateWorkspaceFolders(0, workspaceFolders.length, ...workspaceFoldersBackup)
+
+              config.setWorkspaceFoldersBackup([])
+              await config.saveInBackground()
+            }
+          } catch (error) {
+            console.warn('[ScopedPaths] Could not reset workspace folders', error)
           }
         }
       }
