@@ -22,6 +22,7 @@ export class ScopedPathsConfig extends FeatureConfig {
   private _hideWorkspaceFolders: boolean = defaultHideWorkspaceFolders
   private _cachedCurrentlyScopedPaths: string[] = []
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
+  private _cachedCurrentlyScopedWorkspaceFolderNamesSet: Set<string> = new Set()
   private _cachedParentsOfCurrentlyScopedPathsSet: Set<string> = new Set()
 
   constructor() {
@@ -97,6 +98,7 @@ export class ScopedPathsConfig extends FeatureConfig {
   private _updateScopedPathsCache() {
     this._cachedCurrentlyScopedPaths = this._scopesObject[this._currentScope] ?? []
     this._cachedCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths)
+    this._cachedCurrentlyScopedWorkspaceFolderNamesSet = new Set(this._cachedCurrentlyScopedPaths.map(scopedPath => scopedPath.split('/')[0]))
     this._cachedParentsOfCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths.flatMap(path => getParents(path)))
   }
 
@@ -106,6 +108,10 @@ export class ScopedPathsConfig extends FeatureConfig {
 
   getCachedCurrentlyScopedPathsSet() {
     return this._cachedCurrentlyScopedPathsSet
+  }
+
+  getCachedCurrentlyScopedWorkspaceFolderNamesSet() {
+    return this._cachedCurrentlyScopedWorkspaceFolderNamesSet
   }
 
   getCachedParentsOfCurrentlyScopedPathsSet() {
