@@ -79,14 +79,16 @@ export function createScopedPathsFeature(input: {
                 // because VS Code sometimes assigns identical index for multiple workspace folders
                 .map((wf, index) => ({ ...wf, index }))
 
-              config.setWorkspaceFoldersBackup(allWorkspaceFolders)
-              await config.saveInBackground()
+              if (allWorkspaceFolders.length > 1) {
+                config.setWorkspaceFoldersBackup(allWorkspaceFolders)
+                await config.saveInBackground()
 
-              const visibleWorkspaceFolders = config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().size > 0
-                ? allWorkspaceFolders.filter(wf => config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().has(wf.name))
-                : allWorkspaceFolders
+                const visibleWorkspaceFolders = config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().size > 0
+                  ? allWorkspaceFolders.filter(wf => config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().has(wf.name))
+                  : allWorkspaceFolders
 
-              await vscode.workspace.updateWorkspaceFolders(0, currentWorkspaceFolders.length, ...visibleWorkspaceFolders)
+                await vscode.workspace.updateWorkspaceFolders(0, currentWorkspaceFolders.length, ...visibleWorkspaceFolders)
+              }
             }
           } catch (error) {
             console.warn('[ScopedPaths] Could not hide workspace folders', error)
