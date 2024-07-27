@@ -1,5 +1,5 @@
-const MAX_ATTEMPTS = 5
-const MIN_ATTEMPT_INTERVAL_MS = 1000
+const MAX_ATTEMPTS = 10
+const MIN_ATTEMPT_INTERVAL_MS = 100
 
 export abstract class FeatureConfig {
   private _saveInBackgroundQueue = Promise.resolve()
