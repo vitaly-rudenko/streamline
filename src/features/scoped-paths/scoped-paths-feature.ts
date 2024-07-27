@@ -82,7 +82,10 @@ export function createScopedPathsFeature(input: {
               config.setWorkspaceFoldersBackup(allWorkspaceFolders)
               await config.saveInBackground()
 
-              const visibleWorkspaceFolders = allWorkspaceFolders.filter(wf => config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().has(wf.name))
+              const visibleWorkspaceFolders = config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().size > 0
+                ? allWorkspaceFolders.filter(wf => config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().has(wf.name))
+                : allWorkspaceFolders
+
               await vscode.workspace.updateWorkspaceFolders(0, currentWorkspaceFolders.length, ...visibleWorkspaceFolders)
             }
           } catch (error) {
