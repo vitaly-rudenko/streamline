@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.17.903",
+  "version": "0.17.904",
   "engines": {
     "vscode": "^1.88.0"
   },
@@ -700,6 +700,16 @@
             "type": "string"
           },
           "description": "Hide these workspace folders in related files view when Global Search is enabled"
+        },
+        "streamline.relatedFiles.maxLabelLength": {
+          "type": "number",
+          "default": 120,
+          "description": "Smartly shorten related file labels when exceeding certain length"
+        },
+        "streamline.relatedFiles.collapsedIndicator": {
+          "type": "string",
+          "default": "⸱⸱⸱",
+          "description": "Indicator that will be placed wherever label is shortened"
         },
         "streamline.tabHistory.backup.enabled": {
           "type": "boolean",

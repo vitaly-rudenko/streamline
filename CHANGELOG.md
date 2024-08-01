@@ -6,6 +6,8 @@
 
 - **Added experimental "Hide Workspace Folders" setting** to completely hide workspace folders outside of the current scope
 - **Added configurable "Highlight status bar items when scope is enabled" setting** (enabled by default)
+- Related file labels are now smartly shortened when exceeding certain length
+  > Configurable with `streamline.relatedFiles.maxLabelLength` and `streamline.relatedFiles.collapsedIndicator`
 
 ## 0.17
 
