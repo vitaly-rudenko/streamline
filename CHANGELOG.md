@@ -9,6 +9,10 @@
 - Related file labels are now smartly shortened when exceeding certain length
   > Configurable with `streamline.relatedFiles.maxLabelLength` and `streamline.relatedFiles.collapsedIndicator`
 
+### Tab History
+
+- **Added "Quick Open from Tab History" command**
+
 ## 0.17
 
 - Significantly optimized extension startup time and overall performance
