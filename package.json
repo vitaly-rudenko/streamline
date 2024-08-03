@@ -192,6 +192,11 @@
         "icon": "$(pinned)"
       },
       {
+        "command": "streamline.tabHistory.quickOpen",
+        "title": "Quick Open from Tab History",
+        "icon": "$(history)"
+      },
+      {
         "command": "streamline.bookmarks.add",
         "title": "Add Bookmark",
         "icon": "$(star)"

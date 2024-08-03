@@ -3,6 +3,8 @@ import { TabHistoryTreeDataProvider, type TabTreeItem } from './tab-history-tree
 import { TabHistoryStorage } from './tab-history-storage'
 import { TabHistoryConfig } from './tab-history-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
+import { formatPaths } from '../../utils/format-paths'
+import { fastFormatRelativeDate } from '../../utils/fast-format-relative-date'
 
 export function createTabHistoryFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
@@ -106,6 +108,32 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
       tabHistoryTreeDataProvider.refresh()
 
       config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.tabHistory.quickOpen', async () => {
+      const uri = vscode.window.activeTextEditor?.document.uri
+      const tabPaths = tabHistoryStorage.list()
+        .sort((a, b) => b.openedAt - a.openedAt)
+        .filter((tab) => tab.path !== uri?.path)
+        .map((tab) => tab.path)
+
+      const now = Date.now()
+      const labelToPathMap = new Map<string, string>()
+      for (const [path, formattedPath] of formatPaths(tabPaths)) {
+        const tab = tabHistoryStorage.list().find(tab => tab.path === path)!
+        labelToPathMap.set(`${formattedPath} – ${fastFormatRelativeDate(tab.openedAt, now)}`, path)
+      }
+
+      const selectedLabel = await vscode.window.showQuickPick(
+        [...labelToPathMap.keys()],
+        { title: 'Select Recently Opened Tab' }
+      )
+      if (!selectedLabel) return
+
+      const selectedTabPath = labelToPathMap.get(selectedLabel)!
+      await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(selectedTabPath))
     })
   )
 
