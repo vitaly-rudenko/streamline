@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import type { TabHistoryStorage } from './tab-history-storage'
 import { formatPaths } from '../../utils/format-paths'
 import type { TabHistoryConfig } from './tab-history-config'
+import { fastFormatRelativeDate } from '../../utils/fast-format-relative-date'
 
 export class SectionTreeItem extends vscode.TreeItem {
   constructor(label: string, icon: vscode.ThemeIcon, contextValue?: string) {
@@ -106,23 +107,4 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
 
     return children
   }
-}
-
-const MINUTE_MS = 60_000
-const HOUR_MS = 60 * MINUTE_MS
-const DAY_MS = 24 * HOUR_MS
-
-const TWO_MINUTE_MS = 2 * MINUTE_MS
-const TWO_HOUR_MS = 2 * HOUR_MS
-const TWO_DAY_MS = 2 * DAY_MS
-
-function fastFormatRelativeDate(from: number, to: number) {
-  const ms = to - from
-  if (ms < MINUTE_MS) return 'just now'
-  if (ms < TWO_MINUTE_MS) return 'a minute ago'
-  if (ms < HOUR_MS) return `${Math.floor(ms / MINUTE_MS)} minutes ago`
-  if (ms < TWO_HOUR_MS) return 'an hour ago'
-  if (ms < DAY_MS) return `${Math.floor(ms / HOUR_MS)} hours ago`
-  if (ms < TWO_DAY_MS) return 'a day ago'
-  return `${Math.floor(ms / TWO_DAY_MS)} days ago`
 }
