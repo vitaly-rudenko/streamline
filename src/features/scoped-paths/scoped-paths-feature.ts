@@ -5,6 +5,7 @@ import { ScopedPathsConfig } from './scoped-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { generateExcludedPathsFromScopedPaths } from './generate-excluded-paths-from-scoped-paths'
+import { WORKSPACE_FOLDER_SCOPE_PREFIX } from './constants'
 
 const SCOPED_PATHS_KEY = '__set_by_scoped_paths__'
 
@@ -67,17 +68,8 @@ export function createScopedPathsFeature(input: {
         if (config.getHideWorkspaceFolders()) {
           try {
             const currentWorkspaceFolders = vscode.workspace.workspaceFolders
-            const workspaceFoldersBackup = config.getWorkspaceFoldersBackup()
-
             if (currentWorkspaceFolders) {
-              const allWorkspaceFolders = [...workspaceFoldersBackup, ...currentWorkspaceFolders]
-                // deduplicate workspace folders
-                .filter((workspaceFolder, index, workspaceFolders) => index === workspaceFolders.findIndex(wf => wf.uri.path === workspaceFolder.uri.path))
-                // re-sort workspace folders
-                .sort((a, b) => a.index - b.index)
-                // update indexes, for new workspace folders and for existing ones,
-                // because VS Code sometimes assigns identical index for multiple workspace folders
-                .map((wf, index) => ({ ...wf, index }))
+              const allWorkspaceFolders = getAllWorkspaceFolders()
 
               if (allWorkspaceFolders.length > 1) {
                 config.setWorkspaceFoldersBackup(allWorkspaceFolders)
@@ -118,6 +110,23 @@ export function createScopedPathsFeature(input: {
     } catch (error) {
       console.warn('[ScopedPaths] Could not update workspace configuration', error)
     }
+  }
+
+
+  function getAllWorkspaceFolders() {
+    const currentWorkspaceFolders = vscode.workspace.workspaceFolders
+    const workspaceFoldersBackup = config.getWorkspaceFoldersBackup()
+
+    const allWorkspaceFolders = [...workspaceFoldersBackup, ...currentWorkspaceFolders ?? []]
+      // deduplicate workspace folders
+      .filter((workspaceFolder, index, workspaceFolders) => index === workspaceFolders.findIndex(wf => wf.uri.path === workspaceFolder.uri.path))
+      // re-sort workspace folders
+      .sort((a, b) => a.index - b.index)
+      // update indexes, for new workspace folders and for existing ones,
+      // because VS Code sometimes assigns identical index for multiple workspace folders
+      .map((wf, index) => ({ ...wf, index }))
+
+    return allWorkspaceFolders
   }
 
   const enabledThemeColor = new vscode.ThemeColor('statusBarItem.warningBackground')
@@ -215,9 +224,14 @@ export function createScopedPathsFeature(input: {
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.changeCurrentScope', async () => {
       const scopes = Object.keys(config.getScopesObject())
-
       let selectedScope = await vscode.window.showQuickPick(
-        unique([...scopes, config.getCurrentScope(), 'default', '+ Add new scope']),
+        unique([
+          ...scopes,
+          config.getCurrentScope(),
+          ...scopes.length === 0 ? ['default'] : [],
+          ...getAllWorkspaceFolders().map(wf => `${WORKSPACE_FOLDER_SCOPE_PREFIX}${wf.name}`),
+          '+ Add new scope'
+        ]),
         { title: 'Select Scope' }
       )
 

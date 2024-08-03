@@ -1,8 +1,10 @@
-import { Uri, type WorkspaceFolder } from 'vscode'
+import vscode, { Uri, type WorkspaceFolder } from 'vscode'
 import { getConfig, initialConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getParents } from '../../utils/get-parents'
 import { FeatureConfig } from '../feature-config'
+import { uriToPath } from '../../utils/uri'
+import { WORKSPACE_FOLDER_SCOPE_PREFIX } from './constants'
 
 const defaultEnabled = false
 const defaultCurrentScope = 'default'
@@ -86,8 +88,10 @@ export class ScopedPathsConfig extends FeatureConfig {
 
     await config.update(
       'scopedPaths.scopes',
-      Object.entries(this._scopesObject).some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0)
-        ? this._scopesObject : undefined
+      Object.entries(this._scopesObject)
+        .filter(([scope]) => !scope.startsWith(WORKSPACE_FOLDER_SCOPE_PREFIX))
+        .some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0)
+          ? this._scopesObject : undefined
     )
 
     await config.update(
@@ -101,7 +105,16 @@ export class ScopedPathsConfig extends FeatureConfig {
   }
 
   private _updateScopedPathsCache() {
-    this._cachedCurrentlyScopedPaths = this._scopesObject[this._currentScope] ?? []
+    if (this._currentScope.startsWith(WORKSPACE_FOLDER_SCOPE_PREFIX)) {
+      const workspaceFolderName = this._currentScope.slice(WORKSPACE_FOLDER_SCOPE_PREFIX.length)
+      const workspaceFolder = vscode.workspace.workspaceFolders?.find(wf => wf.name === workspaceFolderName)
+      const workspaceFolderPath = uriToPath(workspaceFolder?.uri)
+
+      this._cachedCurrentlyScopedPaths = workspaceFolderPath ? [workspaceFolderPath] : []
+    } else {
+      this._cachedCurrentlyScopedPaths = this._scopesObject[this._currentScope] ?? []
+    }
+
     this._cachedCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths)
     this._cachedCurrentlyScopedWorkspaceFolderNamesSet = new Set(this._cachedCurrentlyScopedPaths.map(scopedPath => scopedPath.split('/')[0]))
     this._cachedParentsOfCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths.flatMap(path => getParents(path)))
