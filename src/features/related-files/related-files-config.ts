@@ -39,14 +39,14 @@ export class RelatedFilesConfig extends FeatureConfig {
     let hasChanged = false
 
     if (
-      !areObjectsShallowEqual(this._customExcludes, customExcludes)
-      || this._useExcludes !== useExcludes
+      this._useExcludes !== useExcludes
       || this._useStricterQuickOpenQuery !== useStricterQuickOpenQuery
       || this._useGlobalSearch !== useGlobalSearch
       || this._viewRenderMode !== viewRenderMode
-      || !areArraysShallowEqual(this._hiddenWorkspaceFoldersInGlobalSearch, hiddenWorkspaceFoldersInGlobalSearch)
       || this._maxLabelLength !== maxLabelLength
       || this._collapsedIndicator !== collapsedIndicator
+      || !areObjectsShallowEqual(this._customExcludes, customExcludes)
+      || !areArraysShallowEqual(this._hiddenWorkspaceFoldersInGlobalSearch, hiddenWorkspaceFoldersInGlobalSearch)
     ) {
       this._customExcludes = customExcludes
       this._useExcludes = useExcludes
