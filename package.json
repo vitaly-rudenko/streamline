@@ -4,7 +4,7 @@
   "description": "Streamline your workflow",
   "version": "0.17.907",
   "engines": {
-    "vscode": "^1.88.0"
+    "vscode": "^1.92.0"
   },
   "categories": [
     "Other"
@@ -29,8 +29,8 @@
   "devDependencies": {
     "@types/common-tags": "^1.8.4",
     "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@types/vscode": "^1.88.0",
+    "@types/node": "^18.19.43",
+    "@types/vscode": "^1.92.0",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vscode/test-cli": "^0.0.8",
@@ -38,7 +38,7 @@
     "eslint": "^8.57.0",
     "nodemon": "^3.1.0",
     "rimraf": "^5.0.5",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.4"
   },
   "publisher": "vitaly-rudenko",
   "icon": "./icon.png",
