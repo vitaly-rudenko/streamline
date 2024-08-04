@@ -5,7 +5,7 @@ import { ScopedPathsConfig } from './scoped-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { generateExcludedPathsFromScopedPaths } from './generate-excluded-paths-from-scoped-paths'
-import { WORKSPACE_FOLDER_SCOPE_PREFIX } from './constants'
+import { QUICK_SCOPE_PREFIX } from './constants'
 
 const SCOPED_PATHS_KEY = '__set_by_scoped_paths__'
 
@@ -48,6 +48,7 @@ export function createScopedPathsFeature(input: {
 
       if (config.getEnabled()) {
         const scopedPaths = config.getCachedCurrentlyScopedPaths() ?? []
+        // TODO: optimize by not reading workspace folders that are gonna be hidden with Hide Workspace Folders config
         const excludedPaths = await generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader)
 
         const excludes = {
@@ -185,14 +186,15 @@ export function createScopedPathsFeature(input: {
   }
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.scopedPaths.quickScopeIntoPath', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+    vscode.commands.registerCommand('streamline.scopedPaths.quickScopeIntoPath', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
       const paths = getTargetPathsForCommand(uri, selectedUris)
       if (paths.length === 0) return
       if (paths.length > 1) {
-        // TODO: warn that only one path can be used for quick scope
+        await vscode.window.showWarningMessage('Only one path can be used for Quick Scope')
+        return
       }
 
-      config.setCurrentScope(`${WORKSPACE_FOLDER_SCOPE_PREFIX}${paths[0]}`)
+      config.setCurrentScope(`${QUICK_SCOPE_PREFIX}${paths[0]}`)
       config.setEnabled(true)
       onChange()
 
@@ -204,8 +206,12 @@ export function createScopedPathsFeature(input: {
   )
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
-      // TODO: do not allow when quick scope is used
+		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      if (config.getCachedIsInQuickScope()) {
+        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        return
+      }
+
 			const paths = getTargetPathsForCommand(uri, selectedUris)
       if (paths.length === 0) return
 
@@ -225,8 +231,12 @@ export function createScopedPathsFeature(input: {
 	)
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
-      // TODO: do not allow when quick scope is used
+		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      if (config.getCachedIsInQuickScope()) {
+        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        return
+      }
+
       const paths = new Set(getTargetPathsForCommand(uri, selectedUris))
       if (paths.size === 0) return
 
@@ -250,7 +260,7 @@ export function createScopedPathsFeature(input: {
           ...scopes.length === 0 ? ['default'] : [],
           ...scopes,
           config.getCurrentScope(),
-          ...getAllWorkspaceFolders().map(wf => `${WORKSPACE_FOLDER_SCOPE_PREFIX}${wf.name}`),
+          ...getAllWorkspaceFolders().map(wf => `${QUICK_SCOPE_PREFIX}${wf.name}`),
           '+ Add new scope'
         ]),
         { title: 'Select Scope' }
@@ -273,8 +283,12 @@ export function createScopedPathsFeature(input: {
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', () => {
-      // TODO: do not allow when quick scope is used
+    vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', async () => {
+      if (config.getCachedIsInQuickScope()) {
+        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        return
+      }
+
       config.setScopesObject({ ...config.getScopesObject(), [config.getCurrentScope()]: [] })
       onChange()
 

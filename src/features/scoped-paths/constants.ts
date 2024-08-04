@@ -1,1 +1,1 @@
-export const WORKSPACE_FOLDER_SCOPE_PREFIX = '@'
+export const QUICK_SCOPE_PREFIX = '@'

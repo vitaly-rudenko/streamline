@@ -3,7 +3,7 @@ import { getConfig, initialConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getParents } from '../../utils/get-parents'
 import { FeatureConfig } from '../feature-config'
-import { WORKSPACE_FOLDER_SCOPE_PREFIX } from './constants'
+import { QUICK_SCOPE_PREFIX } from './constants'
 
 const defaultEnabled = false
 const defaultCurrentScope = 'default'
@@ -88,7 +88,7 @@ export class ScopedPathsConfig extends FeatureConfig {
     await config.update(
       'scopedPaths.scopes',
       Object.entries(this._scopesObject)
-        .filter(([scope]) => !scope.startsWith(WORKSPACE_FOLDER_SCOPE_PREFIX))
+        .filter(([scope]) => !scope.startsWith(QUICK_SCOPE_PREFIX))
         .some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0)
           ? this._scopesObject : undefined
     )
@@ -104,8 +104,8 @@ export class ScopedPathsConfig extends FeatureConfig {
   }
 
   private _updateScopedPathsCache() {
-    if (this._currentScope.startsWith(WORKSPACE_FOLDER_SCOPE_PREFIX)) {
-      this._cachedCurrentlyScopedPaths = [this._currentScope.slice(WORKSPACE_FOLDER_SCOPE_PREFIX.length)]
+    if (this._currentScope.startsWith(QUICK_SCOPE_PREFIX)) {
+      this._cachedCurrentlyScopedPaths = [this._currentScope.slice(QUICK_SCOPE_PREFIX.length)]
     } else {
       this._cachedCurrentlyScopedPaths = this._scopesObject[this._currentScope] ?? []
     }
@@ -113,6 +113,10 @@ export class ScopedPathsConfig extends FeatureConfig {
     this._cachedCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths)
     this._cachedCurrentlyScopedWorkspaceFolderNamesSet = new Set(this._cachedCurrentlyScopedPaths.map(scopedPath => scopedPath.split('/')[0]))
     this._cachedParentsOfCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths.flatMap(path => getParents(path)))
+  }
+
+  getCachedIsInQuickScope() {
+    return this._currentScope.startsWith(QUICK_SCOPE_PREFIX)
   }
 
   getCachedCurrentlyScopedPaths() {
