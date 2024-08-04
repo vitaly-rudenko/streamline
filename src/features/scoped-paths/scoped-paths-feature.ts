@@ -193,9 +193,11 @@ export function createScopedPathsFeature(input: {
       }
 
       config.setCurrentScope(`${WORKSPACE_FOLDER_SCOPE_PREFIX}${paths[0]}`)
+      config.setEnabled(true)
       onChange()
 
       updateStatusBarItems()
+      updateContextInBackground()
       updateExcludesInBackground()
       config.saveInBackground()
     })
