@@ -46,10 +46,15 @@ export function createScopedPathsFeature(input: {
       const currentExcludes = workspaceConfig.get('exclude', undefined)
       const isScopedPathsEnabled = currentExcludes?.[SCOPED_PATHS_KEY] === false
 
+      const currentWorkspaceFolders = vscode.workspace.workspaceFolders
+      const allWorkspaceFolders = getAllWorkspaceFolders()
+      const visibleWorkspaceFolders = config.getHideWorkspaceFolders() && config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().size > 0
+        ? allWorkspaceFolders.filter(wf => config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().has(wf.name))
+        : allWorkspaceFolders
+
       if (config.getEnabled()) {
         const scopedPaths = config.getCachedCurrentlyScopedPaths() ?? []
-        // TODO: optimize by not reading workspace folders that are gonna be hidden with Hide Workspace Folders config
-        const excludedPaths = await generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader)
+        const excludedPaths = await generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader, visibleWorkspaceFolders.map(wf => wf.name))
 
         const excludes = {
           [SCOPED_PATHS_KEY]: false,
@@ -68,20 +73,11 @@ export function createScopedPathsFeature(input: {
 
         if (config.getHideWorkspaceFolders()) {
           try {
-            const currentWorkspaceFolders = vscode.workspace.workspaceFolders
-            if (currentWorkspaceFolders) {
-              const allWorkspaceFolders = getAllWorkspaceFolders()
+            if (currentWorkspaceFolders && allWorkspaceFolders.length > 1) {
+              config.setWorkspaceFoldersBackup(allWorkspaceFolders)
+              await config.saveInBackground()
 
-              if (allWorkspaceFolders.length > 1) {
-                config.setWorkspaceFoldersBackup(allWorkspaceFolders)
-                await config.saveInBackground()
-
-                const visibleWorkspaceFolders = config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().size > 0
-                  ? allWorkspaceFolders.filter(wf => config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().has(wf.name))
-                  : allWorkspaceFolders
-
-                await vscode.workspace.updateWorkspaceFolders(0, currentWorkspaceFolders.length, ...visibleWorkspaceFolders)
-              }
+              await vscode.workspace.updateWorkspaceFolders(0, currentWorkspaceFolders.length, ...visibleWorkspaceFolders)
             }
           } catch (error) {
             console.warn('[ScopedPaths] Could not hide workspace folders', error)
@@ -94,11 +90,8 @@ export function createScopedPathsFeature(input: {
 
         if (config.getHideWorkspaceFolders()) {
           try {
-            const workspaceFolders = vscode.workspace.workspaceFolders
-            const workspaceFoldersBackup = config.getWorkspaceFoldersBackup()
-
-            if (workspaceFolders && workspaceFoldersBackup.length > 0) {
-              await vscode.workspace.updateWorkspaceFolders(0, workspaceFolders.length, ...workspaceFoldersBackup)
+            if (currentWorkspaceFolders) {
+              await vscode.workspace.updateWorkspaceFolders(0, currentWorkspaceFolders.length, ...allWorkspaceFolders)
 
               config.setWorkspaceFoldersBackup([])
               await config.saveInBackground()
