@@ -5,7 +5,8 @@
 ### Scoped Paths
 
 - **Added experimental "Hide Workspace Folders" setting** to completely hide workspace folders outside of the current scope
-- **Added dynamic scopes for Workspace Folders to quickly switch between them**
+- **Added "Quick Scope" functionality** to temporarily scope into a workspace folder or any other path
+  > Available as a "Quick Scope into Selected" command and as dynamic scopes in "Change Current Scope..." command
 - **Added configurable "Highlight status bar items when scope is enabled" setting** (enabled by default)
 - Related file labels are now smartly shortened when exceeding certain length
   > Configurable with `streamline.relatedFiles.maxLabelLength` and `streamline.relatedFiles.collapsedIndicator`
