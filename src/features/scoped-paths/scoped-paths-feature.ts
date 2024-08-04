@@ -185,7 +185,25 @@ export function createScopedPathsFeature(input: {
   }
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.scopedPaths.quickScopeIntoPath', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      const paths = getTargetPathsForCommand(uri, selectedUris)
+      if (paths.length === 0) return
+      if (paths.length > 1) {
+        // TODO: warn that only one path can be used for quick scope
+      }
+
+      config.setCurrentScope(`${WORKSPACE_FOLDER_SCOPE_PREFIX}${paths[0]}`)
+      onChange()
+
+      updateStatusBarItems()
+      updateExcludesInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      // TODO: do not allow when quick scope is used
 			const paths = getTargetPathsForCommand(uri, selectedUris)
       if (paths.length === 0) return
 
@@ -206,6 +224,7 @@ export function createScopedPathsFeature(input: {
 
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      // TODO: do not allow when quick scope is used
       const paths = new Set(getTargetPathsForCommand(uri, selectedUris))
       if (paths.size === 0) return
 
@@ -253,6 +272,7 @@ export function createScopedPathsFeature(input: {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', () => {
+      // TODO: do not allow when quick scope is used
       config.setScopesObject({ ...config.getScopesObject(), [config.getCurrentScope()]: [] })
       onChange()
 

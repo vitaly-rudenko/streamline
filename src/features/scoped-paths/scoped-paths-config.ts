@@ -1,9 +1,8 @@
-import vscode, { Uri, type WorkspaceFolder } from 'vscode'
+import { Uri, type WorkspaceFolder } from 'vscode'
 import { getConfig, initialConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getParents } from '../../utils/get-parents'
 import { FeatureConfig } from '../feature-config'
-import { uriToPath } from '../../utils/uri'
 import { WORKSPACE_FOLDER_SCOPE_PREFIX } from './constants'
 
 const defaultEnabled = false
@@ -106,11 +105,7 @@ export class ScopedPathsConfig extends FeatureConfig {
 
   private _updateScopedPathsCache() {
     if (this._currentScope.startsWith(WORKSPACE_FOLDER_SCOPE_PREFIX)) {
-      const workspaceFolderName = this._currentScope.slice(WORKSPACE_FOLDER_SCOPE_PREFIX.length)
-      const workspaceFolder = vscode.workspace.workspaceFolders?.find(wf => wf.name === workspaceFolderName)
-      const workspaceFolderPath = uriToPath(workspaceFolder?.uri)
-
-      this._cachedCurrentlyScopedPaths = workspaceFolderPath ? [workspaceFolderPath] : []
+      this._cachedCurrentlyScopedPaths = [this._currentScope.slice(WORKSPACE_FOLDER_SCOPE_PREFIX.length)]
     } else {
       this._cachedCurrentlyScopedPaths = this._scopesObject[this._currentScope] ?? []
     }

@@ -97,6 +97,11 @@
         "icon": "$(circle-slash)"
       },
       {
+        "command": "streamline.scopedPaths.quickScopeIntoPath",
+        "title": "Quick Scope into Selected",
+        "icon": "$(search)"
+      },
+      {
         "command": "streamline.scopedPaths.addPathToCurrentScope",
         "title": "Add to Scope",
         "icon": "$(add)"
@@ -284,6 +289,10 @@
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "streamline.scopedPaths.quickScopeIntoPath",
+          "when": "false"
+        },
         {
           "command": "streamline.scopedPaths.addPathToCurrentScope",
           "when": "false"
@@ -550,13 +559,18 @@
       ],
       "explorer/context": [
         {
-          "command": "streamline.scopedPaths.addPathToCurrentScope",
+          "command": "streamline.scopedPaths.quickScopeIntoPath",
           "group": "1_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
         },
         {
-          "command": "streamline.scopedPaths.deletePathFromCurrentScope",
+          "command": "streamline.scopedPaths.addPathToCurrentScope",
           "group": "1_workspace@2",
+          "when": "activeViewlet == 'workbench.view.explorer'"
+        },
+        {
+          "command": "streamline.scopedPaths.deletePathFromCurrentScope",
+          "group": "1_workspace@3",
           "when": "activeViewlet == 'workbench.view.explorer'"
         },
         {
