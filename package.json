@@ -98,7 +98,7 @@
       },
       {
         "command": "streamline.scopedPaths.quickScopeIntoPath",
-        "title": "Quick Scope into Selected",
+        "title": "Quick Scope",
         "icon": "$(search)"
       },
       {
