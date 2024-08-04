@@ -247,9 +247,9 @@ export function createScopedPathsFeature(input: {
       const scopes = Object.keys(config.getScopesObject())
       let selectedScope = await vscode.window.showQuickPick(
         unique([
+          ...scopes.length === 0 ? ['default'] : [],
           ...scopes,
           config.getCurrentScope(),
-          ...scopes.length === 0 ? ['default'] : [],
           ...getAllWorkspaceFolders().map(wf => `${WORKSPACE_FOLDER_SCOPE_PREFIX}${wf.name}`),
           '+ Add new scope'
         ]),
