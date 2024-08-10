@@ -656,18 +656,7 @@
           "type": "array",
           "default": [],
           "items": {
-            "type": "object",
-            "properties": {
-              "index": {
-                "type": "number"
-              },
-              "name": {
-                "type": "string"
-              },
-              "uri": {
-                "type": "string"
-              }
-            }
+            "type": "string"
           },
           "description": "Workspace folders backup before they were hidden"
         },

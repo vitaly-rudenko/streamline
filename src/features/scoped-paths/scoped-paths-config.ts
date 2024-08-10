@@ -1,20 +1,15 @@
-import { Uri, type WorkspaceFolder } from 'vscode'
+import { Uri, workspace, type WorkspaceFolder } from 'vscode'
 import { getConfig, initialConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getParents } from '../../utils/get-parents'
 import { FeatureConfig } from '../feature-config'
 import { QUICK_SCOPE_PREFIX } from './constants'
+import { join, relative } from 'path'
 
 const defaultEnabled = false
 const defaultCurrentScope = 'default'
 const defaultHideWorkspaceFolders = false
 const defaultHighlightStatusBarWhenEnabled = true
-
-type SerializedWorkspaceFolder = {
-  name: string;
-  uri: string;
-  index: number;
-}
 
 export class ScopedPathsConfig extends FeatureConfig {
   private _enabled: boolean = defaultEnabled
@@ -38,8 +33,7 @@ export class ScopedPathsConfig extends FeatureConfig {
     const enabled = config.get<boolean>('scopedPaths.enabled', defaultEnabled)
     const currentScope = config.get<string>('scopedPaths.currentScope', defaultCurrentScope)
     const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
-    const workspaceFoldersBackup = config.get<SerializedWorkspaceFolder[]>('scopedPaths.workspaceFoldersBackup', [])
-      .map(wf => ({ ...wf, uri: Uri.parse(wf.uri) }))
+    const workspaceFoldersBackup = config.get<string[]>('scopedPaths.workspaceFoldersBackup', []).map((wf, index) => this._deserializeWorkspaceFolder(wf, index))
     const hideWorkspaceFolders = config.get<boolean>('scopedPaths.hideWorkspaceFolders', defaultHideWorkspaceFolders)
     const highlightStatusBarWhenEnabled = config.get<boolean>('scopedPaths.highlightStatusBarWhenEnabled', defaultHighlightStatusBarWhenEnabled)
 
@@ -95,12 +89,21 @@ export class ScopedPathsConfig extends FeatureConfig {
 
     await config.update(
       'scopedPaths.workspaceFoldersBackup',
-      this._workspaceFoldersBackup.length > 0
-        ? this._workspaceFoldersBackup.map(wf => ({ ...wf, uri: wf.uri.toString() }))
-        : undefined
+      this._workspaceFoldersBackup.length > 0 ? this._workspaceFoldersBackup.map(wf => this._serializeWorkspaceFolder(wf)) : undefined
     )
 
     console.debug('[ScopedPaths] Config has been saved')
+  }
+
+  private _serializeWorkspaceFolder(workspaceFolder: WorkspaceFolder) {
+    const workspaceFile = workspace.workspaceFile
+    return `${workspaceFolder.name}::${workspaceFile ? relative(join(workspaceFile.path, '../'), workspaceFolder.uri.path) : workspaceFolder.uri.toString()}`
+  }
+
+  private _deserializeWorkspaceFolder(serialized: string, index: number): WorkspaceFolder {
+    const name = serialized.slice(0, serialized.lastIndexOf('::'))
+    const uri = Uri.parse(serialized.slice(serialized.lastIndexOf('::') + '::'.length))
+    return { name, uri, index }
   }
 
   private _updateScopedPathsCache() {
