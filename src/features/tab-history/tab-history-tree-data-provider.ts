@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import type { TabHistoryStorage } from './tab-history-storage'
 import { formatPaths } from '../../utils/format-paths'
 import type { TabHistoryConfig } from './tab-history-config'
-import { fastFormatRelativeDate } from '../../utils/fast-format-relative-date'
+import { fastFormatRelativeDate } from '../../utils/fast-format-relative.date'
 
 export class SectionTreeItem extends vscode.TreeItem {
   constructor(label: string, icon: vscode.ThemeIcon, contextValue?: string) {

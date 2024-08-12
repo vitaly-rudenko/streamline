@@ -4,7 +4,7 @@ import { TabHistoryStorage } from './tab-history-storage'
 import { TabHistoryConfig } from './tab-history-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { formatPaths } from '../../utils/format-paths'
-import { fastFormatRelativeDate } from '../../utils/fast-format-relative-date'
+import { fastFormatRelativeDate } from '../../utils/fast-format-relative.date'
 
 export function createTabHistoryFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
