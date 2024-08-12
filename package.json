@@ -4,7 +4,7 @@
   "description": "Streamline your workflow",
   "version": "0.17.910",
   "engines": {
-    "vscode": "^1.192.0"
+    "vscode": "^1.92.0"
   },
   "categories": [
     "Other"
