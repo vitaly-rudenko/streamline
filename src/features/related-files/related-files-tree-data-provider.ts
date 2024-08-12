@@ -6,6 +6,7 @@ import { getBasename } from '../../utils/get-basename'
 import { getRelatedFilesQueries } from './get-related-files-queries'
 import type { RelatedFilesConfig } from './related-files-config'
 import { formatPaths } from '../../utils/format-paths'
+import { collapseString } from '../../utils/collapse-string'
 
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem | WorkspaceFolderTreeItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -141,13 +142,15 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     for (const uri of bestMatchedUris) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-      children.push(new RelatedFileTreeItem(pathLabels.get(uri.path)!, uri, getBasename(uri.path) === currentBasename))
+      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, this.config.getMaxLabelLength(), this.config.getCollapsedIndicator())
+      children.push(new RelatedFileTreeItem(label, uri, getBasename(uri.path) === currentBasename))
     }
 
     for (const uri of worstMatchedUris) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-      children.push(new RelatedFileTreeItem(pathLabels.get(uri.path)!, uri, false))
+      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, this.config.getMaxLabelLength(), this.config.getCollapsedIndicator())
+      children.push(new RelatedFileTreeItem(label, uri, false))
     }
 
     return children

@@ -8,6 +8,8 @@ const defaultUseExcludes = true
 const defaultUseStricterQuickOpenQuery = false
 const defaultUseGlobalSearch = false
 const defaultViewRenderMode = 'compact'
+const defaultMaxLabelLength = 120
+const defaultCollapsedIndicator = '⸱⸱⸱'
 
 export class RelatedFilesConfig extends FeatureConfig {
   private _customExcludes: Record<string, unknown> = {}
@@ -16,6 +18,8 @@ export class RelatedFilesConfig extends FeatureConfig {
   private _useGlobalSearch: boolean = defaultUseGlobalSearch
   private _viewRenderMode: ViewRenderMode = defaultViewRenderMode
   private _hiddenWorkspaceFoldersInGlobalSearch: string[] = []
+  private _maxLabelLength: number = defaultMaxLabelLength
+  private _collapsedIndicator: string = defaultCollapsedIndicator
 
   constructor() {
     super('RelatedFiles')
@@ -29,15 +33,19 @@ export class RelatedFilesConfig extends FeatureConfig {
     const useGlobalSearch = config.get<boolean>('relatedFiles.useGlobalSearch', defaultUseGlobalSearch)
     const viewRenderMode = config.get<ViewRenderMode>('relatedFiles.viewRenderMode', defaultViewRenderMode)
     const hiddenWorkspaceFoldersInGlobalSearch = config.get<string[]>('relatedFiles.hiddenWorkspaceFoldersInGlobalSearch', [])
+    const maxLabelLength = config.get<number>('relatedFiles.maxLabelLength', defaultMaxLabelLength)
+    const collapsedIndicator = config.get<string>('relatedFiles.collapsedIndicator', defaultCollapsedIndicator)
 
     let hasChanged = false
 
     if (
-      !areObjectsShallowEqual(this._customExcludes, customExcludes)
-      || this._useExcludes !== useExcludes
+      this._useExcludes !== useExcludes
       || this._useStricterQuickOpenQuery !== useStricterQuickOpenQuery
       || this._useGlobalSearch !== useGlobalSearch
       || this._viewRenderMode !== viewRenderMode
+      || this._maxLabelLength !== maxLabelLength
+      || this._collapsedIndicator !== collapsedIndicator
+      || !areObjectsShallowEqual(this._customExcludes, customExcludes)
       || !areArraysShallowEqual(this._hiddenWorkspaceFoldersInGlobalSearch, hiddenWorkspaceFoldersInGlobalSearch)
     ) {
       this._customExcludes = customExcludes
@@ -50,7 +58,7 @@ export class RelatedFilesConfig extends FeatureConfig {
       hasChanged = true
     }
 
-    console.debug('[RelatedFiles] Config has been loaded', { hasChanged, customExcludes, useExcludes, useStricterQuickOpenQuery, useGlobalSearch, viewRenderMode })
+    console.debug('[RelatedFiles] Config has been loaded', { hasChanged, customExcludes, useExcludes, useStricterQuickOpenQuery, useGlobalSearch, viewRenderMode, maxLabelLength, collapsedIndicator })
 
     return hasChanged
   }
@@ -87,6 +95,14 @@ export class RelatedFilesConfig extends FeatureConfig {
 
   getUseStricterQuickOpenQuery() {
     return this._useStricterQuickOpenQuery
+  }
+
+  getMaxLabelLength() {
+    return this._maxLabelLength
+  }
+
+  getCollapsedIndicator() {
+    return this._collapsedIndicator
   }
 
   setHiddenWorkspaceFoldersInGlobalSearch(value: string[]) {

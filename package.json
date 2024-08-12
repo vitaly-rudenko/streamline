@@ -2,9 +2,9 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.17.6",
+  "version": "0.17.910",
   "engines": {
-    "vscode": "^1.88.0"
+    "vscode": "^1.192.0"
   },
   "categories": [
     "Other"
@@ -29,8 +29,8 @@
   "devDependencies": {
     "@types/common-tags": "^1.8.4",
     "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@types/vscode": "^1.88.0",
+    "@types/node": "^18.19.43",
+    "@types/vscode": "^1.92.0",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vscode/test-cli": "^0.0.8",
@@ -38,7 +38,7 @@
     "eslint": "^8.57.0",
     "nodemon": "^3.1.0",
     "rimraf": "^5.0.5",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.4"
   },
   "publisher": "vitaly-rudenko",
   "icon": "./icon.png",
@@ -95,6 +95,11 @@
         "command": "streamline.scopedPaths.clearCurrentScope",
         "title": "Clear Current Scope",
         "icon": "$(circle-slash)"
+      },
+      {
+        "command": "streamline.scopedPaths.quickScopeIntoPath",
+        "title": "Quick Scope",
+        "icon": "$(search)"
       },
       {
         "command": "streamline.scopedPaths.addPathToCurrentScope",
@@ -192,6 +197,11 @@
         "icon": "$(pinned)"
       },
       {
+        "command": "streamline.tabHistory.quickOpen",
+        "title": "Quick Open from Tab History",
+        "icon": "$(history)"
+      },
+      {
         "command": "streamline.bookmarks.add",
         "title": "Add Bookmark",
         "icon": "$(star)"
@@ -279,6 +289,10 @@
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "streamline.scopedPaths.quickScopeIntoPath",
+          "when": "false"
+        },
         {
           "command": "streamline.scopedPaths.addPathToCurrentScope",
           "when": "false"
@@ -545,13 +559,18 @@
       ],
       "explorer/context": [
         {
-          "command": "streamline.scopedPaths.addPathToCurrentScope",
+          "command": "streamline.scopedPaths.quickScopeIntoPath",
           "group": "1_workspace@1",
           "when": "activeViewlet == 'workbench.view.explorer'"
         },
         {
-          "command": "streamline.scopedPaths.deletePathFromCurrentScope",
+          "command": "streamline.scopedPaths.addPathToCurrentScope",
           "group": "1_workspace@2",
+          "when": "activeViewlet == 'workbench.view.explorer'"
+        },
+        {
+          "command": "streamline.scopedPaths.deletePathFromCurrentScope",
+          "group": "1_workspace@3",
           "when": "activeViewlet == 'workbench.view.explorer'"
         },
         {
@@ -623,6 +642,11 @@
           },
           "description": "Scopes"
         },
+        "streamline.scopedPaths.highlightStatusBarWhenEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight status bar items when scope is enabled"
+        },
         "streamline.highlightedPaths.patterns": {
           "type": "array",
           "default": [],
@@ -671,6 +695,16 @@
             "type": "string"
           },
           "description": "Hide these workspace folders in related files view when Global Search is enabled"
+        },
+        "streamline.relatedFiles.maxLabelLength": {
+          "type": "number",
+          "default": 120,
+          "description": "Smartly shorten related file labels when exceeding certain length"
+        },
+        "streamline.relatedFiles.collapsedIndicator": {
+          "type": "string",
+          "default": "⸱⸱⸱",
+          "description": "Indicator that will be placed wherever label is shortened"
         },
         "streamline.tabHistory.backup.enabled": {
           "type": "boolean",
