@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.17.911",
+  "version": "0.17.912",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -285,6 +285,11 @@
         "command": "streamline.bookmarks.undo",
         "title": "Restore Deleted Bookmarks",
         "icon": "$(discard)"
+      },
+      {
+        "command": "streamline.currentPath.toggleVisibility",
+        "title": "Toggle Current Path Visibility",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
