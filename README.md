@@ -45,3 +45,9 @@ Highlight files and folder using regular expressions by adding them into `stream
 Useful for highlighting tests or build files.
 
 > Files are highlighted in all Explorer views, including Related Files, Bookmarks and Tab History.
+
+## Current Path
+
+Show currently opened file path in the status bar.
+
+> Click to toggle visibility.
