@@ -5,6 +5,7 @@ import { ScopedPathsConfig } from './scoped-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { generateExcludedPathsFromScopedPaths } from './generate-excluded-paths-from-scoped-paths'
+import { QUICK_SCOPE_PREFIX } from './constants'
 
 const SCOPED_PATHS_KEY = '__set_by_scoped_paths__'
 
@@ -74,11 +75,11 @@ export function createScopedPathsFeature(input: {
   const enabledThemeColor = new vscode.ThemeColor('statusBarItem.warningBackground')
   function updateStatusBarItems() {
     textStatusBarItem.text = `Scope: ${config.getCurrentScope()}`
-    textStatusBarItem.backgroundColor = config.getEnabled() ? enabledThemeColor : undefined
+    textStatusBarItem.backgroundColor = config.getEnabled() && config.getHighlightStatusBarWhenEnabled() ? enabledThemeColor : undefined
 
     buttonStatusBarItem.command = config.getEnabled() ? 'streamline.scopedPaths.disableScope' : 'streamline.scopedPaths.enableScope'
     buttonStatusBarItem.text = config.getEnabled() ? '$(pass-filled)' : '$(circle-large-outline)'
-    buttonStatusBarItem.backgroundColor = config.getEnabled() ? enabledThemeColor : undefined
+    buttonStatusBarItem.backgroundColor = config.getEnabled() && config.getHighlightStatusBarWhenEnabled() ? enabledThemeColor : undefined
   }
 
   async function updateContextInBackground() {
@@ -127,7 +128,32 @@ export function createScopedPathsFeature(input: {
   }
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+    vscode.commands.registerCommand('streamline.scopedPaths.quickScopeIntoPath', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      const paths = getTargetPathsForCommand(uri, selectedUris)
+      if (paths.length === 0) return
+      if (paths.length > 1) {
+        await vscode.window.showWarningMessage('Only one path can be used for Quick Scope')
+        return
+      }
+
+      config.setCurrentScope(`${QUICK_SCOPE_PREFIX}${paths[0]}`)
+      config.setEnabled(true)
+      onChange()
+
+      updateStatusBarItems()
+      updateContextInBackground()
+      updateExcludesInBackground()
+      config.saveInBackground()
+    })
+  )
+
+  context.subscriptions.push(
+		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      if (config.getCachedIsInQuickScope()) {
+        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        return
+      }
+
 			const paths = getTargetPathsForCommand(uri, selectedUris)
       if (paths.length === 0) return
 
@@ -138,16 +164,19 @@ export function createScopedPathsFeature(input: {
           ...paths.filter(path => !config.getCachedCurrentlyScopedPathsSet().has(path)),
         ]
       })
-
       onChange()
-
       updateExcludesInBackground()
       config.saveInBackground()
 		})
 	)
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      if (config.getCachedIsInQuickScope()) {
+        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        return
+      }
+
       const paths = new Set(getTargetPathsForCommand(uri, selectedUris))
       if (paths.size === 0) return
 
@@ -155,9 +184,7 @@ export function createScopedPathsFeature(input: {
         ...config.getScopesObject(),
         [config.getCurrentScope()]: config.getCachedCurrentlyScopedPaths().filter(path => !paths.has(path)),
       })
-
       onChange()
-
       updateExcludesInBackground()
       config.saveInBackground()
 		})
@@ -166,22 +193,24 @@ export function createScopedPathsFeature(input: {
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.changeCurrentScope', async () => {
       const scopes = Object.keys(config.getScopesObject())
-
       let selectedScope = await vscode.window.showQuickPick(
-        unique([...scopes, config.getCurrentScope(), 'default', '+ Add new scope']),
+        unique([
+          ...scopes.length === 0 ? ['default'] : [],
+          ...scopes,
+          config.getCurrentScope(),
+          ...(vscode.workspace.workspaceFolders ?? []).map(wf => `${QUICK_SCOPE_PREFIX}${wf.name}`),
+          '+ Add new scope'
+        ]),
         { title: 'Select Scope' }
       )
 
       if (!selectedScope) return
-
       if (selectedScope === '+ Add new scope') {
         selectedScope = await vscode.window.showInputBox({ prompt: 'Enter the name of new scope' })
         if (!selectedScope) return
       }
-
       config.setCurrentScope(selectedScope)
       onChange()
-
       updateStatusBarItems()
       updateExcludesInBackground()
       config.saveInBackground()
@@ -189,7 +218,12 @@ export function createScopedPathsFeature(input: {
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', () => {
+    vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', async () => {
+      if (config.getCachedIsInQuickScope()) {
+        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        return
+      }
+
       config.setScopesObject({ ...config.getScopesObject(), [config.getCurrentScope()]: [] })
       onChange()
 
