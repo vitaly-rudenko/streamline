@@ -1,16 +1,22 @@
+import { Uri, workspace, type WorkspaceFolder } from 'vscode'
 import { getConfig, initialConfig } from '../../config'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getParents } from '../../utils/get-parents'
 import { FeatureConfig } from '../feature-config'
 import { QUICK_SCOPE_PREFIX } from './constants'
+import { join, relative } from 'path'
 
 const defaultEnabled = false
 const defaultCurrentScope = 'default'
+const defaultHideWorkspaceFolders = false
 const defaultHighlightStatusBarWhenEnabled = true
 
 export class ScopedPathsConfig extends FeatureConfig {
   private _enabled: boolean = defaultEnabled
   private _currentScope: string = defaultCurrentScope
   private _scopesObject: Record<string, string[]> = {}
+  private _workspaceFoldersBackup: WorkspaceFolder[] = []
+  private _hideWorkspaceFolders: boolean = defaultHideWorkspaceFolders
   private _highlightStatusBarWhenEnabled: boolean = defaultHighlightStatusBarWhenEnabled
   private _cachedCurrentlyScopedPaths: string[] = []
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
@@ -27,6 +33,8 @@ export class ScopedPathsConfig extends FeatureConfig {
     const enabled = config.get<boolean>('scopedPaths.enabled', defaultEnabled)
     const currentScope = config.get<string>('scopedPaths.currentScope', defaultCurrentScope)
     const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
+    const workspaceFoldersBackup = config.get<string[]>('scopedPaths.workspaceFoldersBackup', []).map((wf, index) => this._deserializeWorkspaceFolder(wf, index))
+    const hideWorkspaceFolders = config.get<boolean>('scopedPaths.hideWorkspaceFolders', defaultHideWorkspaceFolders)
     const highlightStatusBarWhenEnabled = config.get<boolean>('scopedPaths.highlightStatusBarWhenEnabled', defaultHighlightStatusBarWhenEnabled)
 
     let hasChanged = false
@@ -36,10 +44,15 @@ export class ScopedPathsConfig extends FeatureConfig {
       || this._currentScope !== currentScope
       || this._highlightStatusBarWhenEnabled !== highlightStatusBarWhenEnabled
       || JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)
+      || !areArraysShallowEqual(this._workspaceFoldersBackup, workspaceFoldersBackup)
+      || this._hideWorkspaceFolders !== hideWorkspaceFolders
+      || this._highlightStatusBarWhenEnabled !== highlightStatusBarWhenEnabled
     ) {
       this._enabled = enabled
       this._currentScope = currentScope
       this._scopesObject = scopesObject
+      this._workspaceFoldersBackup = workspaceFoldersBackup
+      this._hideWorkspaceFolders = hideWorkspaceFolders
       this._highlightStatusBarWhenEnabled = highlightStatusBarWhenEnabled
 
       hasChanged = true
@@ -49,7 +62,7 @@ export class ScopedPathsConfig extends FeatureConfig {
       this._updateScopedPathsCache()
     }
 
-    console.debug('[ScopedPaths] Config has been loaded', { hasChanged, enabled, currentScope, scopesObject, highlightStatusBarWhenEnabled })
+    console.debug('[ScopedPaths] Config has been loaded', { hasChanged, enabled, currentScope, scopesObject, workspaceFoldersBackup, hideWorkspaceFolders, highlightStatusBarWhenEnabled })
 
     return hasChanged
   }
@@ -75,7 +88,23 @@ export class ScopedPathsConfig extends FeatureConfig {
           ? this._scopesObject : undefined
     )
 
+    await config.update(
+      'scopedPaths.workspaceFoldersBackup',
+      this._workspaceFoldersBackup.length > 0 ? this._workspaceFoldersBackup.map(wf => this._serializeWorkspaceFolder(wf)) : undefined
+    )
+
     console.debug('[ScopedPaths] Config has been saved')
+  }
+
+  private _serializeWorkspaceFolder(workspaceFolder: WorkspaceFolder) {
+    const workspaceFile = workspace.workspaceFile
+    return `${workspaceFolder.name}::${workspaceFile ? relative(join(workspaceFile.path, '../'), workspaceFolder.uri.path) : workspaceFolder.uri.toString()}`
+  }
+
+  private _deserializeWorkspaceFolder(serialized: string, index: number): WorkspaceFolder {
+    const name = serialized.slice(0, serialized.lastIndexOf('::'))
+    const uri = Uri.parse(serialized.slice(serialized.lastIndexOf('::') + '::'.length))
+    return { name, uri, index }
   }
 
   private _updateScopedPathsCache() {
@@ -118,8 +147,20 @@ export class ScopedPathsConfig extends FeatureConfig {
     return this._enabled
   }
 
+  getHideWorkspaceFolders() {
+    return this._hideWorkspaceFolders
+  }
+
   getHighlightStatusBarWhenEnabled() {
     return this._highlightStatusBarWhenEnabled
+  }
+
+  setWorkspaceFoldersBackup(value: WorkspaceFolder[]) {
+    this._workspaceFoldersBackup = value
+  }
+
+  getWorkspaceFoldersBackup() {
+    return this._workspaceFoldersBackup
   }
 
   setCurrentScope(value: string) {

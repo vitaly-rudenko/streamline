@@ -2,10 +2,9 @@ import { getParents } from '../../utils/get-parents'
 import type { DirectoryReader } from '../../utils/types'
 import { unique } from '../../utils/unique'
 
-export async function generateExcludedPathsFromScopedPaths(scopedPaths: string[], directoryReader: DirectoryReader): Promise<string[]> {
+export async function generateExcludedPathsFromScopedPaths(scopedPaths: string[], directoryReader: DirectoryReader, workspaceFolders: string[]): Promise<string[]> {
   if (scopedPaths.length === 0) return []
 
-  const workspaceFolders = await directoryReader.read('')
   const recursiveScopedOrphanPaths = new Set(
     removeWorkspaceFolders([
       ...scopedPaths,

@@ -10,6 +10,8 @@ Useful in large projects and monorepos to focus on modules that you're currently
 > This feature is achieved by analyzing your project files and modifying `files.exclude` accordingly.  
 > Due to VS Code limitations in multi-folder workspaces, not all files are guaranteed to be hidden.
 
+> (Experimental) Enable "Hide unscoped workspace folders" setting to hide workspace folders outside of the current scope
+
 ![Demo](docs/scoped_paths.gif)
 
 ## Bookmarks

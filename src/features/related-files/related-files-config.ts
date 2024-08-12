@@ -54,6 +54,8 @@ export class RelatedFilesConfig extends FeatureConfig {
       this._useGlobalSearch = useGlobalSearch
       this._viewRenderMode = viewRenderMode
       this._hiddenWorkspaceFoldersInGlobalSearch = hiddenWorkspaceFoldersInGlobalSearch
+      this._maxLabelLength = maxLabelLength
+      this._collapsedIndicator = collapsedIndicator
 
       hasChanged = true
     }

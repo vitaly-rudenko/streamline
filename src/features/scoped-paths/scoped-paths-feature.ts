@@ -46,9 +46,15 @@ export function createScopedPathsFeature(input: {
       const currentExcludes = workspaceConfig.get('exclude', undefined)
       const isScopedPathsEnabled = currentExcludes?.[SCOPED_PATHS_KEY] === false
 
+      const currentWorkspaceFolders = vscode.workspace.workspaceFolders
+      const allWorkspaceFolders = getAllWorkspaceFolders()
+      const visibleWorkspaceFolders = config.getHideWorkspaceFolders() && config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().size > 0
+        ? allWorkspaceFolders.filter(wf => config.getCachedCurrentlyScopedWorkspaceFolderNamesSet().has(wf.name))
+        : allWorkspaceFolders
+
       if (config.getEnabled()) {
         const scopedPaths = config.getCachedCurrentlyScopedPaths() ?? []
-        const excludedPaths = await generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader)
+        const excludedPaths = await generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader, visibleWorkspaceFolders.map(wf => wf.name))
 
         const excludes = {
           [SCOPED_PATHS_KEY]: false,
@@ -62,14 +68,59 @@ export function createScopedPathsFeature(input: {
         }
 
         await workspaceConfig.update('exclude', excludes, vscode.ConfigurationTarget.Workspace)
+
+        // TODO: test that workspace folder sorting is stable after using this feature
+
+        if (config.getHideWorkspaceFolders()) {
+          try {
+            if (currentWorkspaceFolders && allWorkspaceFolders.length > 1) {
+              config.setWorkspaceFoldersBackup(allWorkspaceFolders)
+              await config.saveInBackground()
+
+              await vscode.workspace.updateWorkspaceFolders(0, currentWorkspaceFolders.length, ...visibleWorkspaceFolders)
+            }
+          } catch (error) {
+            console.warn('[ScopedPaths] Could not hide workspace folders', error)
+          }
+        }
       } else if (isScopedPathsEnabled) {
         // only remove current excludes when they're explicitly set by ScopedPaths feature
         // this prevents VS Code from creating .vscode/settings.json when it's not necessary
         await workspaceConfig.update('exclude', undefined, vscode.ConfigurationTarget.Workspace)
+
+        if (config.getHideWorkspaceFolders()) {
+          try {
+            if (currentWorkspaceFolders) {
+              await vscode.workspace.updateWorkspaceFolders(0, currentWorkspaceFolders.length, ...allWorkspaceFolders)
+
+              config.setWorkspaceFoldersBackup([])
+              await config.saveInBackground()
+            }
+          } catch (error) {
+            console.warn('[ScopedPaths] Could not reset workspace folders', error)
+          }
+        }
       }
     } catch (error) {
       console.warn('[ScopedPaths] Could not update workspace configuration', error)
     }
+  }
+
+
+  function getAllWorkspaceFolders() {
+    const currentWorkspaceFolders = vscode.workspace.workspaceFolders
+    const workspaceFoldersBackup = config.getWorkspaceFoldersBackup()
+
+    const allWorkspaceFolders = [...workspaceFoldersBackup, ...currentWorkspaceFolders ?? []]
+      // deduplicate workspace folders
+      .filter((workspaceFolder, index, workspaceFolders) => index === workspaceFolders.findIndex(wf => wf.uri.path === workspaceFolder.uri.path))
+      // re-sort workspace folders
+      .sort((a, b) => a.index - b.index)
+      // update indexes, for new workspace folders and for existing ones,
+      // because VS Code sometimes assigns identical index for multiple workspace folders
+      .map((wf, index) => ({ ...wf, index }))
+
+    return allWorkspaceFolders
   }
 
   const enabledThemeColor = new vscode.ThemeColor('statusBarItem.warningBackground')
@@ -198,7 +249,7 @@ export function createScopedPathsFeature(input: {
           ...scopes.length === 0 ? ['default'] : [],
           ...scopes,
           config.getCurrentScope(),
-          ...(vscode.workspace.workspaceFolders ?? []).map(wf => `${QUICK_SCOPE_PREFIX}${wf.name}`),
+          ...getAllWorkspaceFolders().map(wf => `${QUICK_SCOPE_PREFIX}${wf.name}`),
           '+ Add new scope'
         ]),
         { title: 'Select Scope' }

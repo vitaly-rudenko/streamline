@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.17.910",
+  "version": "0.17.907",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -642,10 +642,23 @@
           },
           "description": "Scopes"
         },
+        "streamline.scopedPaths.hideWorkspaceFolders": {
+          "type": "boolean",
+          "default": false,
+          "description": "(Experimental) Hide unscoped workspace folders"
+        },
         "streamline.scopedPaths.highlightStatusBarWhenEnabled": {
           "type": "boolean",
           "default": true,
           "description": "Highlight status bar items when scope is enabled"
+        },
+        "streamline.scopedPaths.workspaceFoldersBackup": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Workspace folders backup before they were hidden"
         },
         "streamline.highlightedPaths.patterns": {
           "type": "array",
