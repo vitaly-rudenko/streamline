@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.19
+
+### Current Path
+
+- **Added status bar item that shows current file path**
+  > Can be temporarily hidden by clicking.
+
 ## 0.18
 
 ### Scoped Paths

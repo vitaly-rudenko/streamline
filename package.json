@@ -285,6 +285,11 @@
         "command": "streamline.bookmarks.undo",
         "title": "Restore Deleted Bookmarks",
         "icon": "$(discard)"
+      },
+      {
+        "command": "streamline.currentPath.toggleVisibility",
+        "title": "Toggle Current Path Visibility",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
