@@ -42,6 +42,7 @@ export class ScopedPathsConfig extends FeatureConfig {
     if (
       this._enabled !== enabled
       || this._currentScope !== currentScope
+      || this._highlightStatusBarWhenEnabled !== highlightStatusBarWhenEnabled
       || JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)
       || !areArraysShallowEqual(this._workspaceFoldersBackup, workspaceFoldersBackup)
       || this._hideWorkspaceFolders !== hideWorkspaceFolders

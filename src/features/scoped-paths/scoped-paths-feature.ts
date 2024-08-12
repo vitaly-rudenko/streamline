@@ -215,9 +215,7 @@ export function createScopedPathsFeature(input: {
           ...paths.filter(path => !config.getCachedCurrentlyScopedPathsSet().has(path)),
         ]
       })
-
       onChange()
-
       updateExcludesInBackground()
       config.saveInBackground()
 		})
@@ -237,9 +235,7 @@ export function createScopedPathsFeature(input: {
         ...config.getScopesObject(),
         [config.getCurrentScope()]: config.getCachedCurrentlyScopedPaths().filter(path => !paths.has(path)),
       })
-
       onChange()
-
       updateExcludesInBackground()
       config.saveInBackground()
 		})
@@ -260,15 +256,12 @@ export function createScopedPathsFeature(input: {
       )
 
       if (!selectedScope) return
-
       if (selectedScope === '+ Add new scope') {
         selectedScope = await vscode.window.showInputBox({ prompt: 'Enter the name of new scope' })
         if (!selectedScope) return
       }
-
       config.setCurrentScope(selectedScope)
       onChange()
-
       updateStatusBarItems()
       updateExcludesInBackground()
       config.saveInBackground()
