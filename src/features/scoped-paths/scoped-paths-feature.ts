@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { uriToPath } from '../../utils/uri'
+import { pathToUri, uriToPath } from '../../utils/uri'
 import { unique } from '../../utils/unique'
 import { ScopedPathsConfig } from './scoped-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
@@ -37,6 +37,7 @@ export function createScopedPathsFeature(input: {
 
   const scheduleClearCacheAndUpdateExcludes = createDebouncedFunction(() => {
     directoryReader.clearCache()
+    updateContextInBackground()
     updateExcludesInBackground()
   }, 250)
 
@@ -85,6 +86,9 @@ export function createScopedPathsFeature(input: {
   async function updateContextInBackground() {
     try {
       await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', config.getEnabled())
+
+      const scopedPaths = config.getCachedCurrentlyScopedPaths().map(scopedPath => pathToUri(scopedPath)?.path).filter(Boolean)
+      await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.scopedPaths', scopedPaths)
     } catch (error) {
       console.warn('[ScopedPaths] Could not update context', error)
     }
@@ -165,6 +169,7 @@ export function createScopedPathsFeature(input: {
         ]
       })
       onChange()
+      updateContextInBackground()
       updateExcludesInBackground()
       config.saveInBackground()
 		})
@@ -185,6 +190,7 @@ export function createScopedPathsFeature(input: {
         [config.getCurrentScope()]: config.getCachedCurrentlyScopedPaths().filter(path => !paths.has(path)),
       })
       onChange()
+      updateContextInBackground()
       updateExcludesInBackground()
       config.saveInBackground()
 		})
@@ -211,6 +217,7 @@ export function createScopedPathsFeature(input: {
       }
       config.setCurrentScope(selectedScope)
       onChange()
+
       updateStatusBarItems()
       updateExcludesInBackground()
       config.saveInBackground()
@@ -227,6 +234,7 @@ export function createScopedPathsFeature(input: {
       config.setScopesObject({ ...config.getScopesObject(), [config.getCurrentScope()]: [] })
       onChange()
 
+      updateContextInBackground()
       updateExcludesInBackground()
       config.saveInBackground()
     })

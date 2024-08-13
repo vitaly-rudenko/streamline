@@ -103,12 +103,12 @@
       },
       {
         "command": "streamline.scopedPaths.addPathToCurrentScope",
-        "title": "Add to Scope",
+        "title": "Add to Current Scope",
         "icon": "$(add)"
       },
       {
         "command": "streamline.scopedPaths.deletePathFromCurrentScope",
-        "title": "Delete from Scope",
+        "title": "Delete from Current Scope",
         "icon": "$(remove)"
       },
       {
@@ -571,12 +571,12 @@
         {
           "command": "streamline.scopedPaths.addPathToCurrentScope",
           "group": "1_workspace@2",
-          "when": "activeViewlet == 'workbench.view.explorer'"
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.scopedPaths"
         },
         {
           "command": "streamline.scopedPaths.deletePathFromCurrentScope",
           "group": "1_workspace@3",
-          "when": "activeViewlet == 'workbench.view.explorer'"
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath in streamline.scopedPaths.scopedPaths"
         },
         {
           "command": "streamline.bookmarks.add",
