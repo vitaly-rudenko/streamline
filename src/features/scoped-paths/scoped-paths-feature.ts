@@ -7,7 +7,7 @@ import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { generateExcludedPathsFromScopedPaths } from './generate-excluded-paths-from-scoped-paths'
 import { QUICK_SCOPE_PREFIX } from './constants'
 
-const SCOPED_PATHS_KEY = '__set_by_scoped_paths__'
+const SCOPED_PATHS_KEY = '__set_by_streamline__'
 
 export function createScopedPathsFeature(input: {
   context: vscode.ExtensionContext
