@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.19.901",
+  "version": "0.19.902",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -654,6 +654,15 @@
     "configuration": {
       "title": "Streamline",
       "properties": {
+        "streamline.disabledFeatures": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["bookmarks", "currentPath", "highlightedPaths", "relatedFiles", "scopedPaths", "tabHistory"]
+          },
+          "default": [],
+          "description": "Completely disable Streamline features"
+        },
         "streamline.scopedPaths.enabled": {
           "type": "boolean",
           "default": false,

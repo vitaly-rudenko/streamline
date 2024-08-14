@@ -6,56 +6,74 @@ import { uriToPath } from './utils/uri'
 import { createTabHistoryFeature } from './features/tab-history/tab-history-feature'
 import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 import { createCurrentPathFeature } from './features/current-path/current-path-feature'
+import { initialConfig } from './config'
+
+type Feature =
+	| 'bookmarks'
+	| 'currentPath'
+	| 'highlightedPaths'
+	| 'relatedFiles'
+	| 'scopedPaths'
+	| 'tabHistory'
 
 export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
 
-	const highlightedPathsFeature = createHighlightedPathsFeature({
-		context,
-		onChange: () => onDidChangeFileDecorationsEmitter.fire(undefined),
-	})
+	const disabledFeatures = initialConfig.get<Feature[]>('disabledFeatures', [])
+	const isFeatureEnabled = (feature: Feature) => !disabledFeatures.includes(feature)
 
-	const scopedPathsFeature = createScopedPathsFeature({
-		context,
-		onChange: async () => onDidChangeFileDecorationsEmitter.fire(undefined),
-	})
+	const highlightedPathsFeature = isFeatureEnabled('highlightedPaths')
+		? createHighlightedPathsFeature({
+			context,
+			onChange: () => onDidChangeFileDecorationsEmitter.fire(undefined),
+		})
+		: undefined
 
-	createRelatedFilesFeature({ context })
-	createBookmarksFeature({ context })
-	createTabHistoryFeature({ context })
-	createCurrentPathFeature({ context })
+	const scopedPathsFeature = isFeatureEnabled('scopedPaths')
+		? createScopedPathsFeature({
+			context,
+			onChange: async () => onDidChangeFileDecorationsEmitter.fire(undefined),
+		})
+		: undefined
 
-	const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
-	const fileDecorationProvider: vscode.FileDecorationProvider = {
-		onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,
-		provideFileDecoration: (uri: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> => {
-			const path = uriToPath(uri)
-			if (!path) return undefined
+	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
+	if (isFeatureEnabled('bookmarks')) createBookmarksFeature({ context })
+	if (isFeatureEnabled('tabHistory')) createTabHistoryFeature({ context })
+	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
 
-			const isScoped = scopedPathsFeature.isPathCurrentlyScoped(path)
-			const isExcluded = scopedPathsFeature.isPathCurrentlyExcluded(path)
-			const isParentOfScopedAndExcluded = scopedPathsFeature.isParentOfCurrentlyScopedAndExcludedPaths(path)
-			const isHighlighted = highlightedPathsFeature.isPathHighlighted(path)
+  if (scopedPathsFeature || highlightedPathsFeature) {
+    const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
+    const fileDecorationProvider: vscode.FileDecorationProvider = {
+      onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,
+      provideFileDecoration: (uri: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> => {
+        const path = uriToPath(uri)
+        if (!path) return undefined
 
-			if (isHighlighted || isParentOfScopedAndExcluded || isScoped || isExcluded) {
-				return new vscode.FileDecoration(
-					isScoped ? '•' :
-					isExcluded ? '⨯' :
-					isParentOfScopedAndExcluded ? '›'
-					: undefined,
-					undefined,
-					isHighlighted ? highlightThemeColor : undefined
-				)
-			}
+        const isScoped = scopedPathsFeature ? scopedPathsFeature.isPathCurrentlyScoped(path) : false
+        const isExcluded = scopedPathsFeature ? scopedPathsFeature.isPathCurrentlyExcluded(path) : false
+        const isParentOfScopedAndExcluded = scopedPathsFeature ? scopedPathsFeature.isParentOfCurrentlyScopedAndExcludedPaths(path) : false
+        const isHighlighted = highlightedPathsFeature ? highlightedPathsFeature.isPathHighlighted(path) : false
 
-			return undefined
-		}
-	}
+        if (isHighlighted || isParentOfScopedAndExcluded || isScoped || isExcluded) {
+          return new vscode.FileDecoration(
+            isScoped ? '•' :
+            isExcluded ? '⨯' :
+            isParentOfScopedAndExcluded ? '›'
+            : undefined,
+            undefined,
+            isHighlighted ? highlightThemeColor : undefined
+          )
+        }
 
-	context.subscriptions.push(
-		vscode.window.registerFileDecorationProvider(fileDecorationProvider),
-		onDidChangeFileDecorationsEmitter,
-	)
+        return undefined
+      }
+    }
+
+    context.subscriptions.push(
+      vscode.window.registerFileDecorationProvider(fileDecorationProvider),
+      onDidChangeFileDecorationsEmitter,
+    )
+  }
 }
 
 export function deactivate() {}

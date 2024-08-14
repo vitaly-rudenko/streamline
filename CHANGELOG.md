@@ -2,9 +2,14 @@
 
 ## 0.20
 
+### General
+
+- **Added ability to toggle certain features off completely**
+
 ### Scoped Paths
 
-- **Added ability to exclude paths from scopes** to hide certain files or folders when scoping in
+- **Added ability to exclude paths from scopes** to hide certain files or folders when scoping
+  > Note that buttons and views are not hidden even when features are disabled
 
 ## 0.19
 
