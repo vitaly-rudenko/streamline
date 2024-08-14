@@ -2,9 +2,9 @@ import { getParents } from '../../utils/get-parents'
 import type { DirectoryReader } from '../../utils/types'
 import { unique } from '../../utils/unique'
 
-export async function generateExcludedPathsFromScopedAndExcludedPaths(scopedOrExcludedPaths: string[], directoryReader: DirectoryReader): Promise<string[]> {
-  const scopedPaths = scopedOrExcludedPaths.filter(path => !path.startsWith('!'))
-  const excludedPaths = scopedOrExcludedPaths.filter(path => path.startsWith('!')).map(path => path.slice(1))
+export async function generateExcludedPathsFromScopedAndExcludedPaths(scopedAndExcludedPaths: string[], directoryReader: DirectoryReader): Promise<string[]> {
+  const scopedPaths = scopedAndExcludedPaths.filter(path => !path.startsWith('!'))
+  const excludedPaths = scopedAndExcludedPaths.filter(path => path.startsWith('!')).map(path => path.slice(1))
 
   const [excludedPathsFromScopedPath, excludedPathsForExcludedPaths] = await Promise.all([
     generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader),
