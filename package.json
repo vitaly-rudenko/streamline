@@ -112,6 +112,16 @@
         "icon": "$(remove)"
       },
       {
+        "command": "streamline.scopedPaths.excludePathFromCurrentScope",
+        "title": "Exclude from Current Scope",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "streamline.scopedPaths.includePathIntoCurrentScope",
+        "title": "Include into Current Scope",
+        "icon": "$(eye)"
+      },
+      {
         "command": "streamline.relatedFiles.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
@@ -304,6 +314,14 @@
         },
         {
           "command": "streamline.scopedPaths.deletePathFromCurrentScope",
+          "when": "false"
+        },
+        {
+          "command": "streamline.scopedPaths.excludePathFromCurrentScope",
+          "when": "false"
+        },
+        {
+          "command": "streamline.scopedPaths.includePathIntoCurrentScope",
           "when": "false"
         },
         {
@@ -571,12 +589,22 @@
         {
           "command": "streamline.scopedPaths.addPathToCurrentScope",
           "group": "1_workspace@2",
-          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.scopedPaths"
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.excludedPaths && resourcePath not in streamline.scopedPaths.scopedPaths"
         },
         {
           "command": "streamline.scopedPaths.deletePathFromCurrentScope",
           "group": "1_workspace@3",
-          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath in streamline.scopedPaths.scopedPaths"
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.excludedPaths && resourcePath in streamline.scopedPaths.scopedPaths"
+        },
+        {
+          "command": "streamline.scopedPaths.includePathIntoCurrentScope",
+          "group": "1_workspace@4",
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.scopedPaths && resourcePath not in streamline.scopedPaths.excludedPaths"
+        },
+        {
+          "command": "streamline.scopedPaths.excludePathFromCurrentScope",
+          "group": "1_workspace@5",
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.scopedPaths && resourcePath in streamline.scopedPaths.excludedPaths"
         },
         {
           "command": "streamline.bookmarks.add",
