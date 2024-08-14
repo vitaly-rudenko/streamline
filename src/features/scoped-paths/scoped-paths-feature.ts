@@ -198,6 +198,54 @@ export function createScopedPathsFeature(input: {
 		})
 	)
 
+  // TODO: these two commands are identical to commands above except for '!' prefix
+  context.subscriptions.push(
+		vscode.commands.registerCommand('streamline.scopedPaths.excludePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      if (config.getDynamicIsInQuickScope()) {
+        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        return
+      }
+
+			const excludedPathsToAdd = getTargetPathsForCommand(uri, selectedUris).map(path => `!${path}`)
+      if (excludedPathsToAdd.length === 0) return
+
+      config.setScopesObject({
+        ...config.getScopesObject(),
+        [config.getCurrentScope()]: unique([
+          ...config.getScopesObject()[config.getCurrentScope()] ?? [],
+          ...excludedPathsToAdd,
+        ])
+      })
+      onChange()
+
+      updateContextInBackground()
+      updateExcludesInBackground()
+      config.saveInBackground()
+		})
+	)
+
+  context.subscriptions.push(
+		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+      if (config.getDynamicIsInQuickScope()) {
+        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        return
+      }
+
+      const excludedPathsToDelete = new Set(getTargetPathsForCommand(uri, selectedUris).map(path => `!${path}`))
+      if (excludedPathsToDelete.size === 0) return
+
+      config.setScopesObject({
+        ...config.getScopesObject(),
+        [config.getCurrentScope()]: config.getScopesObject()[config.getCurrentScope()].filter(path => !excludedPathsToDelete.has(path)),
+      })
+      onChange()
+
+      updateContextInBackground()
+      updateExcludesInBackground()
+      config.saveInBackground()
+		})
+	)
+
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.changeCurrentScope', async () => {
       const scopes = Object.keys(config.getScopesObject())
