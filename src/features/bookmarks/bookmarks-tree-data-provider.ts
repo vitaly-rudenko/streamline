@@ -7,7 +7,7 @@ import { stripIndent, stripIndents } from 'common-tags'
 
 type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
-export class ArchivedListsTreeItem extends vscode.TreeItem {
+class ArchivedListsTreeItem extends vscode.TreeItem {
   constructor(expanded: boolean) {
     super('Archive', expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 

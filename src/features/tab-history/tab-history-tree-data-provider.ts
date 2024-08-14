@@ -4,7 +4,7 @@ import { formatPaths } from '../../utils/format-paths'
 import type { TabHistoryConfig } from './tab-history-config'
 import { fastFormatRelativeDate } from '../../utils/fast-format-relative-date'
 
-export class SectionTreeItem extends vscode.TreeItem {
+class SectionTreeItem extends vscode.TreeItem {
   constructor(label: string, icon: vscode.ThemeIcon, contextValue?: string) {
     super(label, vscode.TreeItemCollapsibleState.None)
     this.iconPath = icon
