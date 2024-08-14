@@ -89,6 +89,9 @@ export function createScopedPathsFeature(input: {
 
       const scopedPaths = config.getCachedCurrentlyScopedPaths().map(scopedPath => pathToUri(scopedPath)?.path).filter(Boolean)
       await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.scopedPaths', scopedPaths)
+
+      const excludedPaths = config.getCachedCurrentlyExcludedPaths().map(excludedPath => pathToUri(excludedPath)?.path).filter(Boolean)
+      await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.excludedPaths', excludedPaths)
     } catch (error) {
       console.warn('[ScopedPaths] Could not update context', error)
     }
