@@ -90,7 +90,7 @@ export class ScopedPathsConfig extends FeatureConfig {
     this._cachedParentsOfCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths.flatMap(path => getParents(path)))
   }
 
-  getCachedIsInQuickScope() {
+  getDynamicIsInQuickScope() {
     return this._currentScope.startsWith(QUICK_SCOPE_PREFIX)
   }
 

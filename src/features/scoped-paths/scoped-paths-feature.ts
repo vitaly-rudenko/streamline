@@ -4,7 +4,7 @@ import { unique } from '../../utils/unique'
 import { ScopedPathsConfig } from './scoped-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
-import { generateExcludedPathsFromScopedPaths } from './generate-excluded-paths-from-scoped-paths'
+import { generateExcludedPathsFromScopedAndExcludedPaths } from './generate-excluded-paths-from-scoped-and-excluded-paths'
 import { QUICK_SCOPE_PREFIX } from './constants'
 
 const SCOPED_PATHS_KEY = '__set_by_streamline__'
@@ -48,8 +48,8 @@ export function createScopedPathsFeature(input: {
       const isScopedPathsEnabled = currentExcludes?.[SCOPED_PATHS_KEY] === false
 
       if (config.getEnabled()) {
-        const scopedPaths = config.getCachedCurrentlyScopedPaths() ?? []
-        const excludedPaths = await generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader)
+        const scopedAndExcludedPaths = config.getCachedCurrentlyScopedAndExcludedPaths()
+        const excludedPaths = await generateExcludedPathsFromScopedAndExcludedPaths(scopedAndExcludedPaths, directoryReader)
 
         const excludes = {
           [SCOPED_PATHS_KEY]: false,
@@ -153,22 +153,23 @@ export function createScopedPathsFeature(input: {
 
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
-      if (config.getCachedIsInQuickScope()) {
+      if (config.getDynamicIsInQuickScope()) {
         await vscode.window.showWarningMessage('Cannot modify Quick Scope')
         return
       }
 
-			const paths = getTargetPathsForCommand(uri, selectedUris)
-      if (paths.length === 0) return
+			const scopedPathsToAdd = getTargetPathsForCommand(uri, selectedUris)
+      if (scopedPathsToAdd.length === 0) return
 
       config.setScopesObject({
         ...config.getScopesObject(),
-        [config.getCurrentScope()]: [
-          ...config.getCachedCurrentlyScopedPaths(),
-          ...paths.filter(path => !config.getCachedCurrentlyScopedPathsSet().has(path)),
-        ]
+        [config.getCurrentScope()]: unique([
+          ...config.getScopesObject()[config.getCurrentScope()] ?? [],
+          ...scopedPathsToAdd,
+        ])
       })
       onChange()
+
       updateContextInBackground()
       updateExcludesInBackground()
       config.saveInBackground()
@@ -177,19 +178,20 @@ export function createScopedPathsFeature(input: {
 
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
-      if (config.getCachedIsInQuickScope()) {
+      if (config.getDynamicIsInQuickScope()) {
         await vscode.window.showWarningMessage('Cannot modify Quick Scope')
         return
       }
 
-      const paths = new Set(getTargetPathsForCommand(uri, selectedUris))
-      if (paths.size === 0) return
+      const scopedPathsToDelete = new Set(getTargetPathsForCommand(uri, selectedUris))
+      if (scopedPathsToDelete.size === 0) return
 
       config.setScopesObject({
         ...config.getScopesObject(),
-        [config.getCurrentScope()]: config.getCachedCurrentlyScopedPaths().filter(path => !paths.has(path)),
+        [config.getCurrentScope()]: config.getScopesObject()[config.getCurrentScope()].filter(path => !scopedPathsToDelete.has(path)),
       })
       onChange()
+
       updateContextInBackground()
       updateExcludesInBackground()
       config.saveInBackground()
@@ -226,7 +228,7 @@ export function createScopedPathsFeature(input: {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', async () => {
-      if (config.getCachedIsInQuickScope()) {
+      if (config.getDynamicIsInQuickScope()) {
         await vscode.window.showWarningMessage('Cannot modify Quick Scope')
         return
       }
