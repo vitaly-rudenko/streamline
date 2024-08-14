@@ -33,12 +33,16 @@ export function activate(context: vscode.ExtensionContext) {
 			if (!path) return undefined
 
 			const isScoped = scopedPathsFeature.isPathCurrentlyScoped(path)
-			const isParentOfScoped = scopedPathsFeature.isParentOfCurrentlyScopedPaths(path)
+			const isExcluded = scopedPathsFeature.isPathCurrentlyExcluded(path)
+			const isParentOfScopedAndExcluded = scopedPathsFeature.isParentOfCurrentlyScopedAndExcludedPaths(path)
 			const isHighlighted = highlightedPathsFeature.isPathHighlighted(path)
 
-			if (isHighlighted || isParentOfScoped || isScoped) {
+			if (isHighlighted || isParentOfScopedAndExcluded || isScoped || isExcluded) {
 				return new vscode.FileDecoration(
-					isScoped ? '•' : isParentOfScoped ? '›' : undefined,
+					isScoped ? '•' :
+					isExcluded ? '⨯' :
+					isParentOfScopedAndExcluded ? '›'
+					: undefined,
 					undefined,
 					isHighlighted ? highlightThemeColor : undefined
 				)

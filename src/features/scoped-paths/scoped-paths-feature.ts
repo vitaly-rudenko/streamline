@@ -261,8 +261,11 @@ export function createScopedPathsFeature(input: {
     isPathCurrentlyScoped(path: string) {
       return config.getCachedCurrentlyScopedPathsSet().has(path)
     },
-    isParentOfCurrentlyScopedPaths(path: string) {
-      return config.getCachedParentsOfCurrentlyScopedPathsSet().has(path)
+    isPathCurrentlyExcluded(path: string) {
+      return config.getCachedCurrentlyExcludedPathsSet().has(path)
+    },
+    isParentOfCurrentlyScopedAndExcludedPaths(path: string) {
+      return config.getCachedParentsOfCurrentlyScopedAndExcludedPathsSet().has(path)
     }
   }
 }
