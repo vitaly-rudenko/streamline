@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.20
+
+### Scoped Paths
+
+- **Added ability to exclude paths from scopes** to hide certain files or folders when scoping in
+
 ## 0.19
 
 ### Current Path
