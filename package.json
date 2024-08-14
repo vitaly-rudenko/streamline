@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.19.902",
+  "version": "0.19.910",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -187,16 +187,6 @@
         "icon": "$(close)"
       },
       {
-        "command": "streamline.tabHistory.enableBackup",
-        "title": "Enable Backup",
-        "icon": "$(eye-closed)"
-      },
-      {
-        "command": "streamline.tabHistory.disableBackup",
-        "title": "Disable Backup",
-        "icon": "$(eye)"
-      },
-      {
         "command": "streamline.tabHistory.pinTab",
         "title": "Pin Tab",
         "icon": "$(pin)"
@@ -373,14 +363,6 @@
           "when": "false"
         },
         {
-          "command": "streamline.tabHistory.enableBackup",
-          "when": "false"
-        },
-        {
-          "command": "streamline.tabHistory.disableBackup",
-          "when": "false"
-        },
-        {
           "command": "streamline.tabHistory.pinTab",
           "when": "false"
         },
@@ -481,16 +463,6 @@
           "command": "streamline.relatedFiles.setViewRenderModeToAbsolute",
           "group": "info@3",
           "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'absolute'"
-        },
-        {
-          "command": "streamline.tabHistory.enableBackup",
-          "group": "navigation@1",
-          "when": "view == tabHistory && !streamline.tabHistory.backup.enabled"
-        },
-        {
-          "command": "streamline.tabHistory.disableBackup",
-          "group": "navigation@1",
-          "when": "view == tabHistory && streamline.tabHistory.backup.enabled"
         },
         {
           "command": "streamline.tabHistory.refresh",
@@ -747,32 +719,6 @@
           "type": "string",
           "default": "⸱⸱⸱",
           "description": "Indicator that will be placed wherever label is shortened"
-        },
-        "streamline.tabHistory.backup.enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable tab history backup"
-        },
-        "streamline.tabHistory.backup.size": {
-          "type": "number",
-          "default": 100,
-          "description": "Tab history backup size"
-        },
-        "streamline.tabHistory.backup.records": {
-          "type": "object",
-          "default": {},
-          "additionalProperties": {
-            "type": "number"
-          },
-          "description": "Tab history backup records"
-        },
-        "streamline.tabHistory.pinnedPaths": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "description": "Pinned tabs in tab history"
         },
         "streamline.bookmarks.currentList": {
           "type": "string",

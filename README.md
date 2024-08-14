@@ -35,8 +35,6 @@ Available as an Explorer view and as a command in the Command Palette (`Quick Op
 Go through your tab history to quickly find a recently opened file.  
 Tabs can be pinned for easier access.
 
-> For tab history to be persisted between sessions, you can opt-in to saving it into your workspace file by using "Enable Backup" button.
-
 ![Demo](docs/tab_history.gif)
 
 ## Highlighted Paths
