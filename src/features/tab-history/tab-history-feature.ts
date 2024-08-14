@@ -1,33 +1,27 @@
 import * as vscode from 'vscode'
 import { TabHistoryTreeDataProvider, type TabTreeItem } from './tab-history-tree-data-provider'
 import { TabHistoryStorage } from './tab-history-storage'
-import { TabHistoryConfig } from './tab-history-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { formatPaths } from '../../utils/format-paths'
 import { fastFormatRelativeDate } from '../../utils/fast-format-relative-date'
+import { TabHistoryWorkspaceState } from './tab-history-workspace-state'
+
+const BACKUP_SIZE = 100
 
 export function createTabHistoryFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
-  const config = new TabHistoryConfig()
+  const workspaceState = new TabHistoryWorkspaceState(context.workspaceState)
   const tabHistoryStorage = new TabHistoryStorage(100)
-  tabHistoryStorage.import(config.getBackupRecords())
+  tabHistoryStorage.import(workspaceState.getBackupRecords())
 
-  const tabHistoryTreeDataProvider = new TabHistoryTreeDataProvider(tabHistoryStorage, config)
+  const tabHistoryTreeDataProvider = new TabHistoryTreeDataProvider(tabHistoryStorage, workspaceState)
   const tabHistoryTreeView = vscode.window.createTreeView('tabHistory', { treeDataProvider: tabHistoryTreeDataProvider })
 
-  const scheduleBackup = createDebouncedFunction(() => {
-    if (!config.getBackupEnabled()) return
-    config.setBackupRecords(tabHistoryStorage.export(config.getBackupSize()))
-    config.saveInBackground()
+  const scheduleBackup = createDebouncedFunction(async () => {
+    workspaceState.setBackupRecords(tabHistoryStorage.export(BACKUP_SIZE))
+    await workspaceState.save()
   }, 5_000)
-
-  const scheduleConfigLoad = createDebouncedFunction(() => {
-    if (!config.load()) return
-    tabHistoryStorage.import(config.getBackupRecords())
-    tabHistoryTreeDataProvider.refresh()
-    updateContextInBackground()
-  }, 500)
 
   const scheduleNewTab = createDebouncedFunction((path: string, openedAt: number) => {
     // Do not refresh tree view unless it's a new item to keep item focused after clicked
@@ -36,14 +30,6 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
 
     scheduleBackup()
   }, 100)
-
-  async function updateContextInBackground() {
-    try {
-      await vscode.commands.executeCommand('setContext', 'streamline.tabHistory.backup.enabled', config.getBackupEnabled())
-    } catch (error) {
-      console.warn('[TabHistory] Could not update context', error)
-    }
-  }
 
   context.subscriptions.push(
     tabHistoryTreeView,
@@ -62,52 +48,31 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.enableBackup', () => {
-      config.setBackupEnabled(true)
-      config.setBackupRecords(tabHistoryStorage.export(config.getBackupSize()))
-
-      scheduleBackup()
-      updateContextInBackground()
-      config.saveInBackground()
-    })
-  )
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.disableBackup', () => {
-      config.setBackupEnabled(false)
-      config.setBackupRecords({})
-
-      updateContextInBackground()
-      config.saveInBackground()
-    })
-  )
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.clear', () => {
-      config.setBackupRecords({})
+    vscode.commands.registerCommand('streamline.tabHistory.clear', async () => {
+      workspaceState.setBackupRecords({})
 
       tabHistoryStorage.clear()
       tabHistoryTreeDataProvider.refresh()
 
-      config.saveInBackground()
+      await workspaceState.save()
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.pinTab', (item: TabTreeItem) => {
-      config.setPinnedPaths([...config.getPinnedPaths(), item.uri.path])
+    vscode.commands.registerCommand('streamline.tabHistory.pinTab', async (item: TabTreeItem) => {
+      workspaceState.setPinnedPaths([...workspaceState.getPinnedPaths(), item.uri.path])
       tabHistoryTreeDataProvider.refresh()
 
-      config.saveInBackground()
+      await workspaceState.save()
     })
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.tabHistory.unpinTab', (item: TabTreeItem) => {
-      config.setPinnedPaths(config.getPinnedPaths().filter(path => path !== item.uri.path))
+    vscode.commands.registerCommand('streamline.tabHistory.unpinTab', async (item: TabTreeItem) => {
+      workspaceState.setPinnedPaths(workspaceState.getPinnedPaths().filter(path => path !== item.uri.path))
       tabHistoryTreeDataProvider.refresh()
 
-      config.saveInBackground()
+      await workspaceState.save()
     })
   )
 
@@ -138,13 +103,6 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
   )
 
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration('streamline.tabHistory')) {
-        if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
-        }
-      }
-    }),
     vscode.window.onDidChangeActiveTextEditor((event) => {
       const path = event?.document.uri.path
       if (!path) return
@@ -156,5 +114,4 @@ export function createTabHistoryFeature(input: { context: vscode.ExtensionContex
 
   // Update timestamps once a minute
   setInterval(() => tabHistoryTreeDataProvider.refresh(), 60_000)
-  updateContextInBackground()
 }

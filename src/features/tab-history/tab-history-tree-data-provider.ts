@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
 import type { TabHistoryStorage } from './tab-history-storage'
 import { formatPaths } from '../../utils/format-paths'
-import type { TabHistoryConfig } from './tab-history-config'
 import { fastFormatRelativeDate } from '../../utils/fast-format-relative-date'
+import { TabHistoryWorkspaceState } from './tab-history-workspace-state'
 
 export class SectionTreeItem extends vscode.TreeItem {
   constructor(label: string, icon: vscode.ThemeIcon, contextValue?: string) {
@@ -41,7 +41,7 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
 
   constructor(
     private readonly tabHistoryStorage: TabHistoryStorage,
-    private readonly config: TabHistoryConfig,
+    private readonly workspaceState: TabHistoryWorkspaceState,
   ) {}
 
   refresh(): void {
@@ -61,15 +61,15 @@ export class TabHistoryTreeDataProvider implements vscode.TreeDataProvider<TabTr
     const tabs = this.tabHistoryStorage.list()
     const remainingTabsMap = new Map(tabs.map(tab => [tab.path, tab]))
 
-    const formattedPaths = formatPaths([...this.config.getPinnedPaths(), ...tabs.map(tab => tab.path)])
+    const formattedPaths = formatPaths([...this.workspaceState.getPinnedPaths(), ...tabs.map(tab => tab.path)])
 
     // Pinned tabs
 
-    if (this.config.getPinnedPaths().length > 0) {
+    if (this.workspaceState.getPinnedPaths().length > 0) {
       children.push(pinnedTreeItem)
     }
 
-    for (const path of this.config.getPinnedPaths().sort()) {
+    for (const path of this.workspaceState.getPinnedPaths().sort()) {
       const formattedPath = formattedPaths.get(path)!
       const tab = remainingTabsMap.get(path)
 
