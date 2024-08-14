@@ -228,7 +228,7 @@ export function createScopedPathsFeature(input: {
 	)
 
   context.subscriptions.push(
-		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
+		vscode.commands.registerCommand('streamline.scopedPaths.includePathIntoCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
       if (config.getDynamicIsInQuickScope()) {
         await vscode.window.showWarningMessage('Cannot modify Quick Scope')
         return

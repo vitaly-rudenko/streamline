@@ -599,12 +599,12 @@
         {
           "command": "streamline.scopedPaths.includePathIntoCurrentScope",
           "group": "1_workspace@4",
-          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.scopedPaths && resourcePath not in streamline.scopedPaths.excludedPaths"
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.scopedPaths && resourcePath in streamline.scopedPaths.excludedPaths"
         },
         {
           "command": "streamline.scopedPaths.excludePathFromCurrentScope",
           "group": "1_workspace@5",
-          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.scopedPaths && resourcePath in streamline.scopedPaths.excludedPaths"
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.scopedPaths.scopedPaths && resourcePath not in streamline.scopedPaths.excludedPaths"
         },
         {
           "command": "streamline.bookmarks.add",

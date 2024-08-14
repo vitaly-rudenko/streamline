@@ -12,10 +12,12 @@ export class ScopedPathsConfig extends FeatureConfig {
   private _currentScope: string = defaultCurrentScope
   private _scopesObject: Record<string, string[]> = {}
   private _highlightStatusBarWhenEnabled: boolean = defaultHighlightStatusBarWhenEnabled
+  private _cachedCurrentlyScopedAndExcludedPaths: string[] = []
   private _cachedCurrentlyScopedPaths: string[] = []
+  private _cachedCurrentlyExcludedPaths: string[] = []
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
-  private _cachedCurrentlyScopedWorkspaceFolderNamesSet: Set<string> = new Set()
-  private _cachedParentsOfCurrentlyScopedPathsSet: Set<string> = new Set()
+  private _cachedCurrentlyExcludedPathsSet: Set<string> = new Set()
+  private _cachedParentsOfCurrentlyScopedAndExcludedPathsSet: Set<string> = new Set()
 
   constructor() {
     super('ScopedPaths')
@@ -79,35 +81,47 @@ export class ScopedPathsConfig extends FeatureConfig {
   }
 
   private _updateScopedPathsCache() {
-    if (this._currentScope.startsWith(QUICK_SCOPE_PREFIX)) {
-      this._cachedCurrentlyScopedPaths = [this._currentScope.slice(QUICK_SCOPE_PREFIX.length)]
-    } else {
-      this._cachedCurrentlyScopedPaths = this._scopesObject[this._currentScope] ?? []
-    }
+    this._cachedCurrentlyScopedAndExcludedPaths = this._currentScope.startsWith(QUICK_SCOPE_PREFIX)
+      ? [this._currentScope.slice(QUICK_SCOPE_PREFIX.length)]
+      : (this._scopesObject[this._currentScope] ?? [])
+
+    this._cachedCurrentlyScopedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => !path.startsWith('!'))
+    this._cachedCurrentlyExcludedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => path.startsWith('!')).map(path => path.slice(1))
 
     this._cachedCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths)
-    this._cachedCurrentlyScopedWorkspaceFolderNamesSet = new Set(this._cachedCurrentlyScopedPaths.map(scopedPath => scopedPath.split('/')[0]))
-    this._cachedParentsOfCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths.flatMap(path => getParents(path)))
+    this._cachedCurrentlyExcludedPathsSet = new Set(this._cachedCurrentlyExcludedPaths)
+    this._cachedParentsOfCurrentlyScopedAndExcludedPathsSet = new Set(
+      [...this._cachedCurrentlyScopedPaths, ...this._cachedCurrentlyExcludedPaths]
+        .flatMap(path => getParents(path))
+    )
   }
 
   getDynamicIsInQuickScope() {
     return this._currentScope.startsWith(QUICK_SCOPE_PREFIX)
   }
 
+  getCachedCurrentlyScopedAndExcludedPaths() {
+    return this._cachedCurrentlyScopedAndExcludedPaths
+  }
+
   getCachedCurrentlyScopedPaths() {
     return this._cachedCurrentlyScopedPaths
+  }
+
+  getCachedCurrentlyExcludedPaths() {
+    return this._cachedCurrentlyExcludedPaths
   }
 
   getCachedCurrentlyScopedPathsSet() {
     return this._cachedCurrentlyScopedPathsSet
   }
 
-  getCachedCurrentlyScopedWorkspaceFolderNamesSet() {
-    return this._cachedCurrentlyScopedWorkspaceFolderNamesSet
+  getCachedCurrentlyExcludedPathsSet() {
+    return this._cachedCurrentlyExcludedPathsSet
   }
 
-  getCachedParentsOfCurrentlyScopedPathsSet() {
-    return this._cachedParentsOfCurrentlyScopedPathsSet
+  getCachedParentsOfCurrentlyScopedAndExcludedPathsSet() {
+    return this._cachedParentsOfCurrentlyScopedAndExcludedPathsSet
   }
 
   setEnabled(value: boolean) {
