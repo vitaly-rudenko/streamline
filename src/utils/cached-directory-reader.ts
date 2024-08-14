@@ -5,6 +5,22 @@ import type { DirectoryReader } from './types'
 export class CachedDirectoryReader implements DirectoryReader {
 	private _cache = new Map<string, string[]>()
 
+	async exists(path: string): Promise<boolean> {
+		const uri = pathToUri(path)
+		if (!uri) return false
+
+		try {
+			await vscode.workspace.fs.stat(uri)
+			return true
+		} catch (error: any) {
+			if (!(error instanceof vscode.FileSystemError && error.code === 'FileNotFound')) {
+				throw error
+			}
+		}
+
+		return false
+	}
+
 	async read(path: string): Promise<string[]> {
 		const cached = this._cache.get(path)
 		if (cached) return cached
