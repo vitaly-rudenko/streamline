@@ -359,6 +359,8 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       )
     })
 
+    test.skip('handles folder existing in multiple workspace folders (nested files must be hidden properly)')
+
     test('handles excluded workspace folders', async () => {
       const paths = [
         'workspace-folder-1',
