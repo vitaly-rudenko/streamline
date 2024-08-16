@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.19.910",
+  "version": "0.19.920",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -635,16 +635,6 @@
           "default": [],
           "description": "Completely disable Streamline features"
         },
-        "streamline.scopedPaths.enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "Scope enabled"
-        },
-        "streamline.scopedPaths.currentScope": {
-          "type": "string",
-          "default": "default",
-          "description": "Current scope"
-        },
         "streamline.scopedPaths.scopes": {
           "type": "object",
           "default": {},
@@ -719,11 +709,6 @@
           "type": "string",
           "default": "⸱⸱⸱",
           "description": "Indicator that will be placed wherever label is shortened"
-        },
-        "streamline.bookmarks.currentList": {
-          "type": "string",
-          "default": "default",
-          "description": "Current bookmarks list"
         },
         "streamline.bookmarks.archivedLists": {
           "type": "array",

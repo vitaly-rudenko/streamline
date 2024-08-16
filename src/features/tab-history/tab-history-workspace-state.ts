@@ -10,7 +10,7 @@ export class TabHistoryWorkspaceState {
     this._updatePinnedPathsCache()
   }
 
-  load() {
+  private load() {
     const backupRecords = this.workspaceState.get<Record<string, number>>('streamline.tabHistory.backup.records', {})
     const pinnedPaths = this.workspaceState.get<string[]>('streamline.tabHistory.pinnedPaths', [])
 

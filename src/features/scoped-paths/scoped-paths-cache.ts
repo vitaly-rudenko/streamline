@@ -1,0 +1,59 @@
+import { getParents } from '../../utils/get-parents'
+import { ScopedPathsConfig } from './scoped-paths-config'
+import { ScopedPathsWorkspaceState } from './scoped-paths-workspace-state'
+
+export class ScopedPathsCache {
+  private _cachedCurrentlyScopedAndExcludedPaths: string[] = []
+  private _cachedCurrentlyScopedPaths: string[] = []
+  private _cachedCurrentlyExcludedPaths: string[] = []
+  private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
+  private _cachedCurrentlyExcludedPathsSet: Set<string> = new Set()
+  private _cachedParentsOfCurrentlyScopedAndExcludedPathsSet: Set<string> = new Set()
+
+  constructor(
+    private readonly config: ScopedPathsConfig,
+    private readonly workspaceState: ScopedPathsWorkspaceState,
+  ) {
+    this.update()
+  }
+
+  update() {
+    this._cachedCurrentlyScopedAndExcludedPaths = this.workspaceState.getDynamicIsInQuickScope()
+      ? [this.workspaceState.getDynamicQuickScopePath()]
+      : (this.config.getScopesObject()[this.workspaceState.getCurrentScope()] ?? [])
+
+    this._cachedCurrentlyScopedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => !path.startsWith('!'))
+    this._cachedCurrentlyExcludedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => path.startsWith('!')).map(path => path.slice(1))
+
+    this._cachedCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths)
+    this._cachedCurrentlyExcludedPathsSet = new Set(this._cachedCurrentlyExcludedPaths)
+    this._cachedParentsOfCurrentlyScopedAndExcludedPathsSet = new Set(
+      [...this._cachedCurrentlyScopedPaths, ...this._cachedCurrentlyExcludedPaths]
+        .flatMap(path => getParents(path))
+    )
+  }
+
+  getCachedCurrentlyScopedAndExcludedPaths() {
+    return this._cachedCurrentlyScopedAndExcludedPaths
+  }
+
+  getCachedCurrentlyScopedPaths() {
+    return this._cachedCurrentlyScopedPaths
+  }
+
+  getCachedCurrentlyExcludedPaths() {
+    return this._cachedCurrentlyExcludedPaths
+  }
+
+  getCachedCurrentlyScopedPathsSet() {
+    return this._cachedCurrentlyScopedPathsSet
+  }
+
+  getCachedCurrentlyExcludedPathsSet() {
+    return this._cachedCurrentlyExcludedPathsSet
+  }
+
+  getCachedParentsOfCurrentlyScopedAndExcludedPathsSet() {
+    return this._cachedParentsOfCurrentlyScopedAndExcludedPathsSet
+  }
+}

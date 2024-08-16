@@ -4,6 +4,8 @@ import { getFilename } from '../../utils/get-filename'
 import type { BookmarksConfig } from './bookmarks-config'
 import type { Bookmark } from './types'
 import { stripIndent, stripIndents } from 'common-tags'
+import { BookmarksCache } from './bookmarks-cache'
+import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
 
 type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
@@ -23,7 +25,11 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
-  constructor(private readonly config: BookmarksConfig) {}
+  constructor(
+    private readonly cache: BookmarksCache,
+    private readonly config: BookmarksConfig,
+    private readonly workspaceState: BookmarksWorkspaceState,
+  ) {}
 
   refresh(): void {
 		this._onDidChangeTreeData.fire()
@@ -35,12 +41,12 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (element === undefined) {
-      const children: TreeItem[] = this.config.getCachedSortedUnarchivedLists()
-        .map(list => new ListTreeItem(list, this.config.getCurrentList() === list, false))
+      const children: TreeItem[] = this.cache.getCachedSortedUnarchivedLists()
+        .map(list => new ListTreeItem(list, this.workspaceState.getCurrentList() === list, false))
 
       if (this.config.getArchivedLists().length > 0) {
         children.push(
-          this.config.getArchivedLists().includes(this.config.getCurrentList())
+          this.config.getArchivedLists().includes(this.workspaceState.getCurrentList())
             ? expandedArchivedListsTreeItem
             : collapsedArchivedListsTreeItem
         )
@@ -50,8 +56,8 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
     }
 
     if (element instanceof ArchivedListsTreeItem) {
-      return this.config.getCachedSortedArchivedLists()
-        .map(list => new ListTreeItem(list, this.config.getCurrentList() === list, true))
+      return this.cache.getCachedSortedArchivedLists()
+        .map(list => new ListTreeItem(list, this.workspaceState.getCurrentList() === list, true))
     }
 
     const listBookmarks = this.config.getBookmarks().filter(bookmark => bookmark.list === element.list)

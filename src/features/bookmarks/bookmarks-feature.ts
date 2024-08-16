@@ -1,9 +1,12 @@
 import * as vscode from 'vscode'
 import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
-import { BookmarksConfig, defaultCurrentList } from './bookmarks-config'
+import { BookmarksConfig } from './bookmarks-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import type { Bookmark } from './types'
 import { filter } from '../../utils/filter'
+import { BookmarksCache } from './bookmarks-cache'
+import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
+import { defaultCurrentList } from './constants'
 
 const UNDO_HISTORY_SIZE = 10
 
@@ -13,7 +16,12 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   let undoHistory: Bookmark[][] = []
 
   const config = new BookmarksConfig()
-  const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(config)
+  const workspaceState = new BookmarksWorkspaceState(context.workspaceState)
+  const cache = new BookmarksCache(config, workspaceState)
+  config.onChange = () => cache.update()
+  workspaceState.onChange = () => cache.update()
+
+  const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(cache, config, workspaceState)
   const bookmarksTreeView = vscode.window.createTreeView('bookmarks', {
     treeDataProvider: bookmarksTreeDataProvider,
     showCollapseAll: true,
@@ -28,7 +36,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     try {
       const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
       const isActiveTextEditorBookmarked = activeTextEditorUri
-        ? config.getCachedBookmarkedFilePathsSet().has(activeTextEditorUri.path)
+        ? cache.getCachedBookmarkedFilePathsSet().has(activeTextEditorUri.path)
         : false
 
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.activeTextEditorBookmarked', isActiveTextEditorBookmarked)
@@ -43,9 +51,9 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
     let selectedList = await vscode.window.showQuickPick(
       [
-        ...config.getCachedSortedUnarchivedLists(),
+        ...cache.getCachedSortedUnarchivedLists(),
         '+ Add new list',
-        ...config.getCachedSortedArchivedLists().length > 0 ? [archiveItem, ...config.getCachedSortedArchivedLists()] : [],
+        ...cache.getCachedSortedArchivedLists().length > 0 ? [archiveItem, ...cache.getCachedSortedArchivedLists()] : [],
       ],
       { title: 'Select Bookmarks List' }
     )
@@ -66,7 +74,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.add', async (_: never, selectedUris: vscode.Uri[] | undefined, list?: string | undefined, note?: string | undefined) => {
-      list ||= config.getCurrentList()
+      list ||= workspaceState.getCurrentList()
 
       if (selectedUris && selectedUris.length > 0) {
         const urisWithFileTypes = await Promise.all(
@@ -186,9 +194,9 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       const selectedList = await promptListSelection()
       if (!selectedList) return
 
-      config.setCurrentList(selectedList)
+      workspaceState.setCurrentList(selectedList)
       bookmarksTreeDataProvider.refresh()
-      config.saveInBackground()
+      await workspaceState.save()
     })
   )
 
@@ -196,9 +204,9 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     vscode.commands.registerCommand('streamline.bookmarks.setListAsCurrent', async (item?: ListTreeItem) => {
       if (!item?.list) return
 
-      config.setCurrentList(item?.list)
+      workspaceState.setCurrentList(item?.list)
       bookmarksTreeDataProvider.refresh()
-      config.saveInBackground()
+      await workspaceState.save()
     })
   )
 
@@ -207,9 +215,9 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       const list = await vscode.window.showInputBox({ prompt: 'Enter the name of new list' })
       if (!list) return
 
-      config.setCurrentList(list)
+      workspaceState.setCurrentList(list)
       bookmarksTreeDataProvider.refresh()
-      config.saveInBackground()
+      await workspaceState.save()
     })
   )
 
@@ -221,14 +229,14 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       const newName = await vscode.window.showInputBox({ prompt: 'Enter new name of the list', value: oldName })
       if (!newName || newName === item.list) return
 
-      let isNewList = !config.getCachedUnsortedLists().includes(newName)
+      let isNewList = !cache.getCachedUnsortedLists().includes(newName)
       if (!isNewList) {
         const result = await vscode.window.showInformationMessage(`List ${newName} already exists. Do you want to merge bookmarks?`, 'Yes, merge', 'Cancel')
         if (result !== 'Yes, merge') return
       }
 
-      if (config.getCurrentList() === oldName) {
-        config.setCurrentList(newName)
+      if (workspaceState.getCurrentList() === oldName) {
+        workspaceState.setCurrentList(newName)
       }
 
       if (config.getArchivedLists().includes(oldName)) {
@@ -245,6 +253,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
       bookmarksTreeDataProvider.refresh()
       config.saveInBackground()
+      await workspaceState.save()
     })
   )
 
@@ -297,8 +306,8 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       if (itemOrUri instanceof ListTreeItem) {
         config.setArchivedLists(config.getArchivedLists().filter(list => list !== itemOrUri.list))
 
-        if (config.getCurrentList() === itemOrUri.list) {
-          config.setCurrentList(defaultCurrentList)
+        if (workspaceState.getCurrentList() === itemOrUri.list) {
+          workspaceState.setCurrentList(defaultCurrentList)
         }
       }
 
@@ -327,6 +336,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       bookmarksTreeDataProvider.refresh()
       updateContextInBackground()
       config.saveInBackground()
+      await workspaceState.save()
     })
   )
 
