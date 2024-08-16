@@ -1,4 +1,4 @@
-import { getConfig, initialConfig } from '../../config'
+import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 import { defaultCurrentScope, QUICK_SCOPE_PREFIX } from './constants'
 
@@ -43,7 +43,8 @@ export class ScopedPathsConfig extends FeatureConfig {
   async save() {
     const config = getConfig()
 
-    await config.update(
+    await updateEffectiveConfig(
+      config,
       'scopedPaths.scopes',
       Object.entries(this._scopesObject)
         .filter(([scope]) => !scope.startsWith(QUICK_SCOPE_PREFIX))

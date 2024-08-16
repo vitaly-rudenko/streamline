@@ -1,4 +1,4 @@
-import { getConfig, initialConfig } from '../../config'
+import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { FeatureConfig } from '../feature-config'
@@ -77,22 +77,26 @@ export class RelatedFilesConfig extends FeatureConfig {
   async save() {
     const config = getConfig()
 
-    await config.update(
+    await updateEffectiveConfig(
+      config,
       'relatedFiles.viewRenderMode',
       this._viewRenderMode !== defaultViewRenderMode ? this._viewRenderMode : undefined
     )
 
-    await config.update(
+    await updateEffectiveConfig(
+      config,
       'relatedFiles.useExcludes',
       this._useExcludes !== defaultUseExcludes ? this._useExcludes : undefined
     )
 
-    await config.update(
+    await updateEffectiveConfig(
+      config,
       'relatedFiles.useGlobalSearch',
       this._useGlobalSearch !== defaultUseGlobalSearch ? this._useGlobalSearch : undefined
     )
 
-    await config.update(
+    await updateEffectiveConfig(
+      config,
       'relatedFiles.hiddenWorkspaceFoldersInGlobalSearch',
       this._hiddenWorkspaceFoldersInGlobalSearch.length > 0 ? this._hiddenWorkspaceFoldersInGlobalSearch : undefined
     )

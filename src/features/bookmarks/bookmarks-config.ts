@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { getConfig, initialConfig } from '../../config'
+import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import type { Bookmark, SerializedBookmark } from './types'
 import { FeatureConfig } from '../feature-config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
@@ -49,12 +49,14 @@ export class BookmarksConfig extends FeatureConfig {
   async save() {
     const config = getConfig()
 
-    await config.update(
+    await updateEffectiveConfig(
+      config,
       'bookmarks.archivedLists',
       this._archivedLists.length > 0 ? this._archivedLists : undefined
     )
 
-    await config.update(
+    await updateEffectiveConfig(
+      config,
       'bookmarks.serializedBookmarks',
       this._serializedBookmarks.length > 0 ? this._serializedBookmarks : undefined
     )
