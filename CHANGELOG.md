@@ -5,11 +5,17 @@
 ### General
 
 - **Added ability to toggle certain features off completely**
+- Configuration keys now preserve the place where they're currently set
 
 ### Scoped Paths
 
 - **Added ability to exclude paths from scopes** to hide certain files or folders when scoping
   > Note that buttons and views are not hidden even when features are disabled
+- `scopedPaths.currentScope` and `scopedPaths.enabled` configuration keys have been removed – they are now stored in `workspaceState`
+
+### Bookmarks
+
+- `bookmarks.currentList` configuration key have been removed – it is now stored in `workspaceState`
 
 ## 0.19
 
