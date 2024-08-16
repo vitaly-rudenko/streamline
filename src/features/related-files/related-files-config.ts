@@ -1,3 +1,4 @@
+import { ConfigurationTarget } from 'vscode'
 import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
@@ -80,25 +81,33 @@ export class RelatedFilesConfig extends FeatureConfig {
     await updateEffectiveConfig(
       config,
       'relatedFiles.viewRenderMode',
-      this._viewRenderMode !== defaultViewRenderMode ? this._viewRenderMode : undefined
+      (config.has('relatedFiles.viewRenderMode') || this._viewRenderMode !== defaultViewRenderMode)
+        ? this._viewRenderMode : undefined,
+      ConfigurationTarget.Global,
     )
 
     await updateEffectiveConfig(
       config,
       'relatedFiles.useExcludes',
-      this._useExcludes !== defaultUseExcludes ? this._useExcludes : undefined
+      (config.has('relatedFiles.useExcludes') || this._useExcludes !== defaultUseExcludes)
+        ? this._useExcludes : undefined,
+      ConfigurationTarget.Global,
     )
 
     await updateEffectiveConfig(
       config,
       'relatedFiles.useGlobalSearch',
-      this._useGlobalSearch !== defaultUseGlobalSearch ? this._useGlobalSearch : undefined
+      (config.has('relatedFiles.useGlobalSearch') || this._useGlobalSearch !== defaultUseGlobalSearch)
+        ? this._useGlobalSearch : undefined,
+      ConfigurationTarget.Global,
     )
 
     await updateEffectiveConfig(
       config,
       'relatedFiles.hiddenWorkspaceFoldersInGlobalSearch',
-      this._hiddenWorkspaceFoldersInGlobalSearch.length > 0 ? this._hiddenWorkspaceFoldersInGlobalSearch : undefined
+      (config.has('relatedFiles.hiddenWorkspaceFoldersInGlobalSearch') || this._hiddenWorkspaceFoldersInGlobalSearch.length > 0)
+        ? this._hiddenWorkspaceFoldersInGlobalSearch : undefined,
+      ConfigurationTarget.Workspace,
     )
 
     console.debug('[RelatedFiles] Config has been saved')

@@ -52,13 +52,17 @@ export class BookmarksConfig extends FeatureConfig {
     await updateEffectiveConfig(
       config,
       'bookmarks.archivedLists',
-      this._archivedLists.length > 0 ? this._archivedLists : undefined
+      (config.has('bookmarks.archivedLists') || this._archivedLists.length > 0)
+        ? this._archivedLists : undefined,
+      vscode.ConfigurationTarget.Workspace,
     )
 
     await updateEffectiveConfig(
       config,
       'bookmarks.serializedBookmarks',
-      this._serializedBookmarks.length > 0 ? this._serializedBookmarks : undefined
+      (config.has('bookmarks.serializedBookmarks') || this._serializedBookmarks.length > 0)
+        ? this._serializedBookmarks : undefined,
+      vscode.ConfigurationTarget.Workspace,
     )
 
     console.debug('[Bookmarks] Config has been saved')

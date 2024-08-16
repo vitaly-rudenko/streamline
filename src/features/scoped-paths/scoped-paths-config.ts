@@ -1,3 +1,4 @@
+import { ConfigurationTarget } from 'vscode'
 import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 import { defaultCurrentScope, QUICK_SCOPE_PREFIX } from './constants'
@@ -46,10 +47,11 @@ export class ScopedPathsConfig extends FeatureConfig {
     await updateEffectiveConfig(
       config,
       'scopedPaths.scopes',
-      Object.entries(this._scopesObject)
+      (config.has('scopedPaths.scopes') || Object.entries(this._scopesObject)
         .filter(([scope]) => !scope.startsWith(QUICK_SCOPE_PREFIX))
-        .some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0)
-          ? this._scopesObject : undefined
+        .some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0))
+          ? this._scopesObject : undefined,
+      ConfigurationTarget.Workspace,
     )
 
     console.debug('[ScopedPaths] Config has been saved')
