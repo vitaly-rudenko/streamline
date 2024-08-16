@@ -3,55 +3,45 @@ import { getConfig, initialConfig } from '../../config'
 import type { Bookmark, SerializedBookmark } from './types'
 import { FeatureConfig } from '../feature-config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
-import { unique } from '../../utils/unique'
-
-export const defaultCurrentList = 'default'
 
 export class BookmarksConfig extends FeatureConfig {
-  private _currentList = defaultCurrentList
+  public onChange?: Function
+
   private _archivedLists: string[] = []
+  private _serializedBookmarks: SerializedBookmark[] = []
   private _bookmarks: Bookmark[] = []
-  private _cachedSerializedBookmarks: SerializedBookmark[] = []
-  private _cachedUnsortedLists: string[] = []
-  private _cachedSortedUnarchivedLists: string[] = []
-  private _cachedSortedArchivedLists: string[] = []
-  private _cachedBookmarkedFilePathsSet: Set<string> = new Set()
 
   constructor() {
     super('Bookmarks')
     this.load(initialConfig)
-    this._updateCache()
   }
 
   load(config = getConfig()) {
-    const currentList = config.get<string>('bookmarks.currentList', defaultCurrentList)
     const archivedLists = config.get<string[]>('bookmarks.archivedLists', [])
     const serializedBookmarks = config.get<SerializedBookmark[]>('bookmarks.serializedBookmarks', [])
 
     let hasChanged = false
 
     if (
-      this._currentList !== currentList
-      || !areArraysShallowEqual(this._archivedLists, archivedLists)
+      !areArraysShallowEqual(this._archivedLists, archivedLists)
     ) {
-      this._currentList = currentList
       this._archivedLists = archivedLists
 
       hasChanged = true
     }
 
-    if (JSON.stringify(this._cachedSerializedBookmarks) !== JSON.stringify(serializedBookmarks)) {
-      this._cachedSerializedBookmarks = serializedBookmarks
+    if (JSON.stringify(this._serializedBookmarks) !== JSON.stringify(serializedBookmarks)) {
+      this._serializedBookmarks = serializedBookmarks
       this._bookmarks = serializedBookmarks.map((serializedBookmark) => deserializeBookmark(serializedBookmark))
 
       hasChanged = true
     }
 
     if (hasChanged) {
-      this._updateCache()
+      this.onChange?.()
     }
 
-    console.debug('[Bookmarks] Config has been loaded', { hasChanged, currentList, archivedLists, serializedBookmarks })
+    console.debug('[Bookmarks] Config has been loaded', { hasChanged, archivedLists, serializedBookmarks })
 
     return hasChanged
   }
@@ -60,53 +50,16 @@ export class BookmarksConfig extends FeatureConfig {
     const config = getConfig()
 
     await config.update(
-      'bookmarks.currentList',
-      this._currentList !== defaultCurrentList ? this._currentList : undefined
-    )
-
-    await config.update(
       'bookmarks.archivedLists',
       this._archivedLists.length > 0 ? this._archivedLists : undefined
     )
 
     await config.update(
       'bookmarks.serializedBookmarks',
-      this._cachedSerializedBookmarks.length > 0 ? this._cachedSerializedBookmarks : undefined
+      this._serializedBookmarks.length > 0 ? this._serializedBookmarks : undefined
     )
 
     console.debug('[Bookmarks] Config has been saved')
-  }
-
-  private _updateCache() {
-    this._cachedUnsortedLists = unique([...this._bookmarks.map((bookmark) => bookmark.list), this.getCurrentList()])
-    this._cachedSortedUnarchivedLists = this._cachedUnsortedLists.filter((list) => !this.getArchivedLists().includes(list)).sort()
-    this._cachedSortedArchivedLists = [...this.getArchivedLists()].sort()
-    this._cachedBookmarkedFilePathsSet = new Set(this._bookmarks.filter(b => b.type === 'file').map(b => b.uri.path))
-  }
-
-  getCachedSortedArchivedLists() {
-    return this._cachedSortedArchivedLists
-  }
-
-  getCachedSortedUnarchivedLists() {
-    return this._cachedSortedUnarchivedLists
-  }
-
-  getCachedUnsortedLists() {
-    return this._cachedUnsortedLists
-  }
-
-  getCachedBookmarkedFilePathsSet() {
-    return this._cachedBookmarkedFilePathsSet
-  }
-
-  getCurrentList() {
-    return this._currentList
-  }
-
-  setCurrentList(value: string) {
-    this._currentList = value
-    this._updateCache()
   }
 
   getArchivedLists() {
@@ -115,7 +68,7 @@ export class BookmarksConfig extends FeatureConfig {
 
   setArchivedLists(value: string[]) {
     this._archivedLists = value
-    this._updateCache()
+    this.onChange?.()
   }
 
   getBookmarks() {
@@ -124,8 +77,8 @@ export class BookmarksConfig extends FeatureConfig {
 
   setBookmarks(value: Bookmark[]) {
     this._bookmarks = value
-    this._cachedSerializedBookmarks = this._bookmarks.map((bookmark) => serializeBookmark(bookmark))
-    this._updateCache()
+    this._serializedBookmarks = this._bookmarks.map((bookmark) => serializeBookmark(bookmark))
+    this.onChange?.()
   }
 }
 

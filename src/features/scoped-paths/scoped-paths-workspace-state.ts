@@ -16,8 +16,8 @@ export class ScopedPathsWorkspaceState {
   }
 
   private load() {
-    const enabled = this.workspaceState.get<boolean>('scopedPaths.enabled', defaultEnabled)
-    const currentScope = this.workspaceState.get<string>('scopedPaths.currentScope', defaultCurrentScope)
+    const enabled = this.workspaceState.get<boolean>('streamline.scopedPaths.enabled', defaultEnabled)
+    const currentScope = this.workspaceState.get<string>('streamline.scopedPaths.currentScope', defaultCurrentScope)
 
     this._enabled = enabled
     this._currentScope = currentScope
