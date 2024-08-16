@@ -22,9 +22,7 @@ export class BookmarksConfig extends FeatureConfig {
 
     let hasChanged = false
 
-    if (
-      !areArraysShallowEqual(this._archivedLists, archivedLists)
-    ) {
+    if (!areArraysShallowEqual(this._archivedLists, archivedLists)) {
       this._archivedLists = archivedLists
 
       hasChanged = true
