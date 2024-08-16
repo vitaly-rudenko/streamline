@@ -20,6 +20,10 @@ export function getEffectiveConfigurationTarget(config: vscode.WorkspaceConfigur
   return undefined
 }
 
+export function configExists(config: vscode.WorkspaceConfiguration, section: string): boolean {
+  return getEffectiveConfigurationTarget(config, section) !== undefined
+}
+
 export async function updateEffectiveConfig(config: vscode.WorkspaceConfiguration, section: string, value: any, defaultTarget: vscode.ConfigurationTarget) {
   const target = getEffectiveConfigurationTarget(config, section) ?? defaultTarget
   await config.update(section, value, target)
