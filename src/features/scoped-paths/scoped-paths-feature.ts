@@ -259,20 +259,25 @@ export function createScopedPathsFeature(input: {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.changeCurrentScope', async () => {
+      const quickScopesItem = '------------ Quick Scopes ------------'
+      const addNewScopeItem = '+ Add new scope'
+
       const scopes = Object.keys(config.getScopesObject())
       let selectedScope = await vscode.window.showQuickPick(
         unique([
           ...scopes.length === 0 ? ['default'] : [],
           ...scopes,
           workspaceState.getCurrentScope(),
+          addNewScopeItem,
+          quickScopesItem,
           ...(vscode.workspace.workspaceFolders ?? []).map(wf => `${QUICK_SCOPE_PREFIX}${wf.name}`),
-          '+ Add new scope'
         ]),
         { title: 'Select Scope' }
       )
 
       if (!selectedScope) return
-      if (selectedScope === '+ Add new scope') {
+      if (selectedScope === quickScopesItem) return vscode.commands.executeCommand('streamline.scopedPaths.changeCurrentScope')
+      if (selectedScope === addNewScopeItem) {
         selectedScope = await vscode.window.showInputBox({ prompt: 'Enter the name of new scope' })
         if (!selectedScope) return
       }
