@@ -1,5 +1,5 @@
 import { ConfigurationTarget } from 'vscode'
-import { configExists, getConfig, initialConfig, updateEffectiveConfig } from '../../config'
+import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 import { defaultCurrentScope, QUICK_SCOPE_PREFIX } from './constants'
 
@@ -46,12 +46,9 @@ export class ScopedPathsConfig extends FeatureConfig {
 
     await updateEffectiveConfig(
       config,
-      'scopedPaths.scopes',
-      (configExists(config, 'scopedPaths.scopes') || Object.entries(this._scopesObject)
-        .filter(([scope]) => !scope.startsWith(QUICK_SCOPE_PREFIX))
-        .some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0))
-          ? this._scopesObject : undefined,
       ConfigurationTarget.Workspace,
+      'scopedPaths.scopes',
+      exists => (exists || isScopesObjectSerializable(this._scopesObject)) ? this._scopesObject : undefined,
     )
 
     console.debug('[ScopedPaths] Config has been saved')
@@ -69,4 +66,10 @@ export class ScopedPathsConfig extends FeatureConfig {
   getScopesObject() {
     return this._scopesObject
   }
+}
+
+function isScopesObjectSerializable(scopesObject: Record<string, string[]>): boolean {
+  return Object.entries(scopesObject)
+    .filter(([scope]) => !scope.startsWith(QUICK_SCOPE_PREFIX))
+    .some(([scope, scopedPaths]) => scope !== defaultCurrentScope || scopedPaths.length > 0)
 }

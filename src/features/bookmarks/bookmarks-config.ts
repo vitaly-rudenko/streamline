@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { configExists, getConfig, initialConfig, updateEffectiveConfig } from '../../config'
+import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import type { Bookmark, SerializedBookmark } from './types'
 import { FeatureConfig } from '../feature-config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
@@ -49,18 +49,16 @@ export class BookmarksConfig extends FeatureConfig {
 
     await updateEffectiveConfig(
       config,
-      'bookmarks.archivedLists',
-      (configExists(config, 'bookmarks.archivedLists') || this._archivedLists.length > 0)
-        ? this._archivedLists : undefined,
       vscode.ConfigurationTarget.Workspace,
+      'bookmarks.archivedLists',
+      exists => (exists || this._archivedLists.length > 0) ? this._archivedLists : undefined,
     )
 
     await updateEffectiveConfig(
       config,
-      'bookmarks.serializedBookmarks',
-      (configExists(config, 'bookmarks.serializedBookmarks') || this._serializedBookmarks.length > 0)
-        ? this._serializedBookmarks : undefined,
       vscode.ConfigurationTarget.Workspace,
+      'bookmarks.serializedBookmarks',
+      exists => (exists || this._serializedBookmarks.length > 0) ? this._serializedBookmarks : undefined,
     )
 
     console.debug('[Bookmarks] Config has been saved')

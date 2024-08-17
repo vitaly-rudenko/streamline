@@ -1,5 +1,5 @@
 import { ConfigurationTarget } from 'vscode'
-import { configExists, getConfig, initialConfig, updateEffectiveConfig } from '../../config'
+import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { FeatureConfig } from '../feature-config'
@@ -80,34 +80,30 @@ export class RelatedFilesConfig extends FeatureConfig {
 
     await updateEffectiveConfig(
       config,
+      ConfigurationTarget.Global,
       'relatedFiles.viewRenderMode',
-      (configExists(config, 'relatedFiles.viewRenderMode') || this._viewRenderMode !== defaultViewRenderMode)
-        ? this._viewRenderMode : undefined,
-      ConfigurationTarget.Global,
+      exists => (exists || this._viewRenderMode !== defaultViewRenderMode) ? this._viewRenderMode : undefined,
     )
 
     await updateEffectiveConfig(
       config,
+      ConfigurationTarget.Global,
       'relatedFiles.useExcludes',
-      (configExists(config, 'relatedFiles.useExcludes') || this._useExcludes !== defaultUseExcludes)
-        ? this._useExcludes : undefined,
-      ConfigurationTarget.Global,
+      exists => (exists || this._useExcludes !== defaultUseExcludes) ? this._useExcludes : undefined,
     )
 
     await updateEffectiveConfig(
       config,
+      ConfigurationTarget.Global,
       'relatedFiles.useGlobalSearch',
-      (configExists(config, 'relatedFiles.useGlobalSearch') || this._useGlobalSearch !== defaultUseGlobalSearch)
-        ? this._useGlobalSearch : undefined,
-      ConfigurationTarget.Global,
+      exists => (exists || this._useGlobalSearch !== defaultUseGlobalSearch) ? this._useGlobalSearch : undefined,
     )
 
     await updateEffectiveConfig(
       config,
-      'relatedFiles.hiddenWorkspaceFoldersInGlobalSearch',
-      (configExists(config, 'relatedFiles.hiddenWorkspaceFoldersInGlobalSearch') || this._hiddenWorkspaceFoldersInGlobalSearch.length > 0)
-        ? this._hiddenWorkspaceFoldersInGlobalSearch : undefined,
       ConfigurationTarget.Workspace,
+      'relatedFiles.hiddenWorkspaceFoldersInGlobalSearch',
+      exists => (exists || this._hiddenWorkspaceFoldersInGlobalSearch.length > 0) ? this._hiddenWorkspaceFoldersInGlobalSearch : undefined,
     )
 
     console.debug('[RelatedFiles] Config has been saved')

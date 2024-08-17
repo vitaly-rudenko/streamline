@@ -1,5 +1,5 @@
 import { ConfigurationTarget } from 'vscode'
-import { configExists, getConfig, initialConfig, updateEffectiveConfig } from '../../config'
+import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { FeatureConfig } from '../feature-config'
 
@@ -38,10 +38,9 @@ export class HighlightedPathsConfig extends FeatureConfig {
 
     await updateEffectiveConfig(
       config,
-      'highlightedPaths.patterns',
-      (configExists(config, 'highlightedPaths.patterns') || this._patterns.length > 0)
-        ? this._patterns : undefined,
       ConfigurationTarget.Global,
+      'highlightedPaths.patterns',
+      exists => (exists || this._patterns.length > 0) ? this._patterns : undefined,
     )
 
     console.debug('[HighlightedPaths] Config has been saved')
