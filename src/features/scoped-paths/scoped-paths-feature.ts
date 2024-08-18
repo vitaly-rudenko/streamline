@@ -276,7 +276,10 @@ export function createScopedPathsFeature(input: {
       )
 
       if (!selectedScope) return
-      if (selectedScope === quickScopesItem) return vscode.commands.executeCommand('streamline.scopedPaths.changeCurrentScope')
+      if (selectedScope === quickScopesItem) {
+        await vscode.commands.executeCommand('streamline.scopedPaths.changeCurrentScope')
+        return
+      }
       if (selectedScope === addNewScopeItem) {
         selectedScope = await vscode.window.showInputBox({ prompt: 'Enter the name of new scope' })
         if (!selectedScope) return
