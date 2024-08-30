@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import { getConfig } from '../../config'
 
 // TODO: global + workspace + workspace folder config merge support
+// TODO: optimize by not applying if there's nothing to apply or if user didn't set any overrides
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
