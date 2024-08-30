@@ -41,7 +41,7 @@
     "typescript": "^5.5.4"
   },
   "publisher": "vitaly-rudenko",
-  "icon": "./icon.png",
+  "icon": "icon.png",
   "repository": {
     "url": "https://github.com/vitaly-rudenko/streamline"
   },
