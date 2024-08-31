@@ -28,16 +28,22 @@ export function createSmartConfigFeature(input: {
 
     if (!patternsObject) return
 
+    const promises: Promise<void>[] = []
+
     if (patternsObject.globalValue) {
-      await applyConfig(config, path, patternsObject.globalValue[defaultPattern], generatePatterns(patternsObject.globalValue), vscode.ConfigurationTarget.Global)
+      promises.push(applyConfig(config, path, patternsObject.globalValue[defaultPattern], generatePatterns(patternsObject.globalValue), vscode.ConfigurationTarget.Global))
     }
 
     if (patternsObject.workspaceValue) {
-      await applyConfig(config, path, patternsObject.workspaceValue[defaultPattern], generatePatterns(patternsObject.workspaceValue), vscode.ConfigurationTarget.Workspace)
+      promises.push(applyConfig(config, path, patternsObject.workspaceValue[defaultPattern], generatePatterns(patternsObject.workspaceValue), vscode.ConfigurationTarget.Workspace))
     }
 
     if (patternsObject.workspaceFolderValue) {
-      await applyConfig(config, path, patternsObject.workspaceFolderValue[defaultPattern], generatePatterns(patternsObject.workspaceFolderValue), vscode.ConfigurationTarget.WorkspaceFolder)
+      promises.push(applyConfig(config, path, patternsObject.workspaceFolderValue[defaultPattern], generatePatterns(patternsObject.workspaceFolderValue), vscode.ConfigurationTarget.WorkspaceFolder))
+    }
+
+    if (promises.length > 0) {
+      await Promise.allSettled(promises)
     }
   }
 
@@ -84,6 +90,11 @@ export function createSmartConfigFeature(input: {
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => {
       debouncedUpdateRelevantConfigs()
+    }),
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('streamline.smartConfig')) {
+        debouncedUpdateRelevantConfigs()
+      }
     })
   )
 
