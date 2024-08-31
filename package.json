@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.20.1001",
+  "version": "0.20.1002",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -729,7 +729,7 @@
             "type": "object",
             "additionalProperties": true
           },
-          "description": "Patterns for file paths to apply configuration settings overrides"
+          "description": "Map of file path patterns and corresponding configuration overrides.\nKey is a regular expression (for example, \"\\\\.test\\\\.(js|ts)$\") and value is a map of custom settings to apply.\nUse \"default\" key for default settings.\nUse \"__unset_by_streamline__\" value to remove the setting."
         }
       }
     }

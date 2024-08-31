@@ -1,33 +1,69 @@
 import * as vscode from 'vscode'
-import { getConfig } from '../../config'
+import { createDebouncedFunction } from '../../utils/create-debounced-function'
 
-// TODO: global + workspace + workspace folder config merge support
-// TODO: optimize by not applying if there's nothing to apply or if user didn't set any overrides
+type PatternsObject = Record<string, Config>
+type Patterns = [RegExp, Config][]
+type Config = Record<string, unknown>
+
+const defaultPattern = 'default'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
 }) {
   const { context } = input
 
-  const patternsObject = getConfig().get<Record<string, any>>('smartConfig.patterns', {})
-  const patterns = Object.entries(patternsObject).map(([pattern, config]) => [new RegExp(pattern), config] as const)
-  const allSectionsSet = new Set(Object.values(patternsObject).flatMap(config => Object.keys(config)))
+  const debouncedUpdateRelevantConfigs = createDebouncedFunction(updateRelevantConfigs, 250)
 
   async function updateRelevantConfigs(textEditor?: vscode.TextEditor) {
     const path = (textEditor ?? vscode.window.activeTextEditor)?.document.uri.path
-    const configs = path
-      ? patterns.filter(([pattern]) => pattern.test(path)).map(([_, config]) => config)
-      : []
 
-    const config = {
-      ...patternsObject.default,
-      ...configs.reduce((acc, config) => ({ ...acc, ...config }), {}),
+    const config = vscode.workspace.getConfiguration()
+    const patternsObject = config.inspect<PatternsObject>('streamline.smartConfig.patterns')
+
+    console.debug('streamline.smartConfig.patterns', patternsObject ? {
+      globalValue: patternsObject.globalValue,
+      workspaceValue: patternsObject.workspaceValue,
+      workspaceFolderValue: patternsObject.workspaceFolderValue,
+    } : 'undefined')
+
+    if (!patternsObject) return
+
+    if (patternsObject.globalValue) {
+      await applyConfig(config, path, patternsObject.globalValue[defaultPattern], generatePatterns(patternsObject.globalValue), vscode.ConfigurationTarget.Global)
     }
 
-    const remainingSectionsSet = new Set(allSectionsSet)
-    for (const [section, value] of Object.entries(config)) {
+    if (patternsObject.workspaceValue) {
+      await applyConfig(config, path, patternsObject.workspaceValue[defaultPattern], generatePatterns(patternsObject.workspaceValue), vscode.ConfigurationTarget.Workspace)
+    }
+
+    if (patternsObject.workspaceFolderValue) {
+      await applyConfig(config, path, patternsObject.workspaceFolderValue[defaultPattern], generatePatterns(patternsObject.workspaceFolderValue), vscode.ConfigurationTarget.WorkspaceFolder)
+    }
+  }
+
+  function generatePatterns(patternsObject: PatternsObject): Patterns {
+    return Object.entries(patternsObject)
+      .filter(([pattern]) => pattern !== defaultPattern)
+      .map(([pattern, config]) => [new RegExp(pattern), config] as const)
+  }
+
+  async function applyConfig(
+    config: vscode.WorkspaceConfiguration,
+    path: string | undefined,
+    defaultConfig: Config | undefined,
+    patterns: Patterns,
+    target: vscode.ConfigurationTarget
+  ) {
+    const configsToApply = path ? patterns.filter(([pattern]) => pattern.test(path)).map(([_, config]) => config) : []
+    if (defaultConfig) configsToApply.unshift(defaultConfig)
+
+    const mergedConfigToApply = Object.assign({}, ...configsToApply) as Config
+    const remainingSectionsSet = new Set(patterns.flatMap(([_pattern, config]) => Object.keys(config)))
+
+    for (const [section, value] of Object.entries(mergedConfigToApply)) {
       try {
-        await vscode.workspace.getConfiguration().update(section, value === '__unset_by_streamline__' ? undefined : value, vscode.ConfigurationTarget.Workspace)
+        console.debug('+ Setting section', section, 'to value', value, 'in target', target, 'for path', path)
+        await config.update(section, value === '__unset_by_streamline__' ? undefined : value, target)
       } catch (error: any) {
         console.warn(error.message)
       }
@@ -37,7 +73,8 @@ export function createSmartConfigFeature(input: {
 
     for (const section of remainingSectionsSet) {
       try {
-        await vscode.workspace.getConfiguration().update(section, undefined, vscode.ConfigurationTarget.Workspace)
+        console.debug('- Removing section', section, 'in target', target, 'for path', path)
+        await config.update(section, undefined, target)
       } catch (error: any) {
         console.warn(error.message)
       }
@@ -45,8 +82,8 @@ export function createSmartConfigFeature(input: {
   }
 
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor((textEditor) => {
-      updateRelevantConfigs(textEditor)
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      debouncedUpdateRelevantConfigs()
     })
   )
 
