@@ -37,6 +37,13 @@ Tabs can be pinned for easier access.
 
 ![Demo](docs/tab_history.gif)
 
+## Smart Config
+
+Automatically apply settings depending on current file path pattern.  
+For example, it can be used to only enable Github Copilot in test files.
+
+![Demo](docs/smart_config.gif)
+
 ## Highlighted Paths
 
 Highlight files and folder using regular expressions by adding them into `streamline.highlightedPaths.patterns` in the workspace configuration.  
@@ -48,4 +55,4 @@ Useful for highlighting tests or build files.
 
 Show currently opened file path in the status bar.
 
-> Click to toggle visibility.
+> Click to temporarily toggle the visibility.

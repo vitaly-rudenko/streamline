@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.21
+
+### Smart Config
+
+- **Automatically update settings depending on the current file path pattern**
+  > You can now enable or disable certain configuration settings by using `streamline.smartConfig.patterns` object.  
+  > Each key is a regular expression pattern and each value is an object that contains settings overrides.  
+  > `"default"` is a special key for settings that are always applied before applying overrides.  
+  > `"__unset_by_streamline__"` is a special value to remove settings, including default and overridden ones.
+
 ## 0.20
 
 ### General
@@ -11,11 +21,11 @@
 
 - **Added ability to exclude paths from scopes** to hide certain files or folders when scoping
   > Note that buttons and views are not hidden even when features are disabled
-- `scopedPaths.currentScope` and `scopedPaths.enabled` configuration keys have been removed – they are now stored in `workspaceState`
+- `streamline.scopedPaths.currentScope` and `streamline.scopedPaths.enabled` configuration keys have been removed – they are now stored in `workspaceState`
 
 ### Bookmarks
 
-- `bookmarks.currentList` configuration key have been removed – it is now stored in `workspaceState`
+- `streamline.bookmarks.currentList` configuration key have been removed – it is now stored in `workspaceState`
 
 ## 0.19
 

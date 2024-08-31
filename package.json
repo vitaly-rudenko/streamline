@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.20.0",
+  "version": "0.20.1005",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -630,7 +630,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["bookmarks", "currentPath", "highlightedPaths", "relatedFiles", "scopedPaths", "tabHistory"]
+            "enum": ["bookmarks", "currentPath", "highlightedPaths", "relatedFiles", "scopedPaths", "tabHistory", "smartConfig"]
           },
           "default": [],
           "description": "Completely disable Streamline features"
@@ -722,6 +722,14 @@
           "type": "array",
           "default": [],
           "description": "Serialized bookmarks"
+        },
+        "streamline.smartConfig.patterns": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "description": "Map of file path patterns and corresponding configuration overrides.\nKey is a regular expression (for example, \"\\\\.test\\\\.(js|ts)$\") and value is a map of custom settings to apply.\nUse \"default\" key for default settings.\nUse \"__unset_by_streamline__\" value to remove the setting."
         }
       }
     }

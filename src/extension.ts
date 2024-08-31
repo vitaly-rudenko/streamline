@@ -7,6 +7,7 @@ import { createTabHistoryFeature } from './features/tab-history/tab-history-feat
 import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 import { createCurrentPathFeature } from './features/current-path/current-path-feature'
 import { initialConfig } from './config'
+import { createSmartConfigFeature } from './features/smart-config/smart-config-feature'
 
 type Feature =
 	| 'bookmarks'
@@ -15,6 +16,7 @@ type Feature =
 	| 'relatedFiles'
 	| 'scopedPaths'
 	| 'tabHistory'
+  | 'smartConfig'
 
 export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
@@ -40,6 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (isFeatureEnabled('bookmarks')) createBookmarksFeature({ context })
 	if (isFeatureEnabled('tabHistory')) createTabHistoryFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
+  if (isFeatureEnabled('smartConfig')) createSmartConfigFeature({ context })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
