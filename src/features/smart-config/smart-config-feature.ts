@@ -1,47 +1,36 @@
 import * as vscode from 'vscode'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
+import { ConfigurationTargetPatterns, SmartConfigConfig } from './smart-config-config'
 
-type PatternsObject = Record<string, Config>
-type Patterns = [RegExp, Config][]
-type Config = Record<string, unknown>
-
-const defaultPattern = 'default'
-
-// TODO: Implement FeatureConfig and caching
-
-export function createSmartConfigFeature(input: {
-  context: vscode.ExtensionContext
-}) {
+export function createSmartConfigFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
+
+  const config = new SmartConfigConfig()
 
   const debouncedUpdateRelevantConfigs = createDebouncedFunction(updateRelevantConfigs, 250)
 
+  const scheduleConfigLoad = createDebouncedFunction(() => {
+    if (!config.load()) return
+    debouncedUpdateRelevantConfigs()
+  }, 500)
+
   async function updateRelevantConfigs(textEditor?: vscode.TextEditor) {
     const path = (textEditor ?? vscode.window.activeTextEditor)?.document.uri.path
-
-    const config = vscode.workspace.getConfiguration()
-    const patternsObject = config.inspect<PatternsObject>('streamline.smartConfig.patterns')
-
-    console.debug('streamline.smartConfig.patterns', patternsObject ? {
-      globalValue: patternsObject.globalValue,
-      workspaceValue: patternsObject.workspaceValue,
-      workspaceFolderValue: patternsObject.workspaceFolderValue,
-    } : 'undefined')
-
-    if (!patternsObject) return
-
     const promises: Promise<void>[] = []
 
-    if (patternsObject.globalValue) {
-      promises.push(applyConfig(config, path, patternsObject.globalValue[defaultPattern], generatePatterns(patternsObject.globalValue), vscode.ConfigurationTarget.Global))
+    const globalPatterns = config.getCachedGlobalPatterns()
+    if (globalPatterns) {
+      promises.push(applyConfig(path, globalPatterns, vscode.ConfigurationTarget.Global))
     }
 
-    if (patternsObject.workspaceValue) {
-      promises.push(applyConfig(config, path, patternsObject.workspaceValue[defaultPattern], generatePatterns(patternsObject.workspaceValue), vscode.ConfigurationTarget.Workspace))
+    const workspacePatterns = config.getCachedWorkspacePatterns()
+    if (workspacePatterns) {
+      promises.push(applyConfig(path, workspacePatterns, vscode.ConfigurationTarget.Workspace))
     }
 
-    if (patternsObject.workspaceFolderValue) {
-      promises.push(applyConfig(config, path, patternsObject.workspaceFolderValue[defaultPattern], generatePatterns(patternsObject.workspaceFolderValue), vscode.ConfigurationTarget.WorkspaceFolder))
+    const workspaceFolderPatterns = config.getCachedWorkspaceFolderPatterns()
+    if (workspaceFolderPatterns) {
+      promises.push(applyConfig(path, workspaceFolderPatterns, vscode.ConfigurationTarget.WorkspaceFolder))
     }
 
     if (promises.length > 0) {
@@ -49,29 +38,22 @@ export function createSmartConfigFeature(input: {
     }
   }
 
-  function generatePatterns(patternsObject: PatternsObject): Patterns {
-    return Object.entries(patternsObject)
-      .filter(([pattern]) => pattern !== defaultPattern)
-      .map(([pattern, config]) => [new RegExp(pattern), config] as const)
-  }
-
   async function applyConfig(
-    config: vscode.WorkspaceConfiguration,
     path: string | undefined,
-    defaultConfig: Config | undefined,
-    patterns: Patterns,
+    { patterns, defaultConfig }: ConfigurationTargetPatterns,
     target: vscode.ConfigurationTarget
   ) {
+    const vscodeConfig = vscode.workspace.getConfiguration()
+
     const configsToApply = path ? patterns.filter(([pattern]) => pattern.test(path)).map(([_, config]) => config) : []
     if (defaultConfig) configsToApply.unshift(defaultConfig)
 
-    const mergedConfigToApply = Object.assign({}, ...configsToApply) as Config
+    const mergedConfigToApply = Object.assign({}, ...configsToApply)
     const remainingSectionsSet = new Set(patterns.flatMap(([_pattern, config]) => Object.keys(config)))
 
     for (const [section, value] of Object.entries(mergedConfigToApply)) {
       try {
-        console.debug('+ Setting section', section, 'to value', value, 'in target', target, 'for path', path)
-        await config.update(section, value === '__unset_by_streamline__' ? undefined : value, target)
+        await updateConfigIfNecessary(vscodeConfig, section, value === '__unset_by_streamline__' ? undefined : value, target)
       } catch (error: any) {
         console.warn(error.message)
       }
@@ -81,12 +63,28 @@ export function createSmartConfigFeature(input: {
 
     for (const section of remainingSectionsSet) {
       try {
-        console.debug('- Removing section', section, 'in target', target, 'for path', path)
-        await config.update(section, undefined, target)
+        await updateConfigIfNecessary(vscodeConfig, section, undefined, target)
       } catch (error: any) {
         console.warn(error.message)
       }
     }
+  }
+
+  async function updateConfigIfNecessary(vscodeConfig: vscode.WorkspaceConfiguration, section: string, newValue: any, target: vscode.ConfigurationTarget) {
+    const inspected = vscodeConfig.inspect(section)
+    const oldValue = target === vscode.ConfigurationTarget.Global
+      ? inspected?.globalValue
+      : target === vscode.ConfigurationTarget.Workspace
+      ? inspected?.workspaceValue
+      : inspected?.workspaceFolderValue
+
+    if (oldValue === newValue) {
+      console.debug('[SmartConfig] Skipping section', section, 'with value', newValue, 'in target', target)
+      return
+    }
+
+    console.debug('[SmartConfig] Setting section', section, 'to value', newValue, 'in target', target)
+    await vscodeConfig.update(section, newValue, target)
   }
 
   context.subscriptions.push(
@@ -95,7 +93,9 @@ export function createSmartConfigFeature(input: {
     }),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.smartConfig')) {
-        debouncedUpdateRelevantConfigs()
+        if (!config.isSavingInBackground) {
+          scheduleConfigLoad()
+        }
       }
     })
   )
