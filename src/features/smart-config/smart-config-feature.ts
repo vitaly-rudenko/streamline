@@ -7,6 +7,8 @@ type Config = Record<string, unknown>
 
 const defaultPattern = 'default'
 
+// TODO: Implement FeatureConfig and caching
+
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
 }) {
