@@ -7,6 +7,7 @@ import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 import { createCurrentPathFeature } from './features/current-path/current-path-feature'
 import { initialConfig } from './config'
 import { createSmartConfigFeature } from './features/smart-config/smart-config-feature'
+import { createSuperSearchFeature } from './features/super-search/super-search-feature'
 
 type Feature =
 	| 'bookmarks'
@@ -52,6 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
 	if (isFeatureEnabled('bookmarks')) createBookmarksFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
+  createSuperSearchFeature({ context })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
