@@ -290,6 +290,11 @@
         "command": "streamline.currentPath.toggleVisibility",
         "title": "Toggle Current Path Visibility",
         "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.superSearch.quickOpen",
+        "title": "Quick Open Super Search",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
