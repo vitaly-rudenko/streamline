@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.22
+
+### Super Search
+
+- Quickly generate search queries for the provided input, such as:
+  - **Search by different naming conventions**
+  - **Find lines containing all words in provided order**
+  - **Find lines containing all words in any order**
+  - **Find files containing all words in provided order**
+  - **Find files containing all words in any order**
+
 ## 0.21
 
 ### Smart Config

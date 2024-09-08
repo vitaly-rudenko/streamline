@@ -44,6 +44,14 @@ For example, it can be used to only enable Github Copilot in test files.
 
 ![Demo](docs/smart_config.gif)
 
+## Super Search
+
+Quickly generate search queries from your input:
+- Find files or lines containing all provided words
+- Search in different naming conventions (camelCase, snake_case, etc.)
+
+![Demo](docs/super_search.png)
+
 ## Highlighted Paths
 
 Highlight files and folder using regular expressions by adding them into `streamline.highlightedPaths.patterns` in the workspace configuration.  
