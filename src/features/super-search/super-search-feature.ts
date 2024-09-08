@@ -4,7 +4,6 @@ import { patterns } from './patterns'
 
 // TODO: feature: search presets
 // TODO: feature: find current file name (e.g. imports, usage, definition, etc)
-// TODO: feature: find file/line that contains multiple words
 
 export function createSuperSearchFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
