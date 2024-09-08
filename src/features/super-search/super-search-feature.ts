@@ -16,7 +16,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
       quickPick.onDidChangeValue((input) => {
         const words = extractWords(input)
 
-        if (words.length <= 1) {
+        if (words.length === 0) {
           quickPick.items = []
           return
         }
@@ -49,14 +49,14 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
             detail: words.join('.*'),
             label: 'Find files containing all words in provided order',
             alwaysShow: true,
-            iconPath: new vscode.ThemeIcon('file'),
+            iconPath: new vscode.ThemeIcon('files'),
           },
           {
             // TODO: escape word in regex, improve regex
             detail: `^${words.map(word => `(?=[\\s\\S\\n]*(${word}))`).join('')}[\\s\\S\\n]*$`,
             label: 'Find files containing all words in any order',
             alwaysShow: true,
-            iconPath: new vscode.ThemeIcon('file'),
+            iconPath: new vscode.ThemeIcon('files'),
           }
         ]
       })
@@ -66,7 +66,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
         if (!item) return
 
         await vscode.commands.executeCommand('workbench.action.findInFiles', {
-            query: item.label,
+            query: item.detail,
             isRegex: true,
             triggerSearch: true,
             matchWholeWord: false,
