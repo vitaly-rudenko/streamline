@@ -47,8 +47,8 @@ For example, it can be used to only enable Github Copilot in test files.
 ## Super Search
 
 Quickly generate search queries from your input:
-- Find files or lines containing all provided words
-- Search in different naming conventions (camelCase, snake_case, etc.)
+- Find files or lines containing all provided words in any order
+- Search across different naming conventions (camelCase, snake_case, etc.)
 
 ![Demo](docs/super_search.png)
 
