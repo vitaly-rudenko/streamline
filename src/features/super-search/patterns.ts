@@ -7,22 +7,22 @@ export const patterns = {
   findLinesWithAllWordsInProvidedOrder: (words: string[]): string => {
     return words
       .map(word => escapeRegExp(word))
-      .join('.*')
+      .join('.*?')
   },
   findLinesWithAllWordsInAnyOrder: (words: string[]): string => {
-    return words
+    return '^' + words
       .map(word => escapeRegExp(word))
-      .map(word => `(?=(?:.|\\n)*${word})`).join('')
+      .map(escapedWord => `(?=.*?${escapedWord})`).join('') + '.*$'
   },
   findFilesWithAllWordsInProvidedOrder: (words: string[]): string => {
     return words
       .map(word => escapeRegExp(word))
-      .join('(?:.|\\n)*')
+      .join('(?:.|\\n)*?')
   },
   findFilesWithAllWordsInAnyOrder: (words: string[]): string => {
-    return words
+    return '^' + words
       .map(word => escapeRegExp(word))
-      .map(word => `(?=(?:.|\\n)*${word})`).join('')
+      .map(escapedWord => `(?=(?:.|\\n)*?${escapedWord})`).join('') + '(?:.|\\n)*$'
   },
 }
 
