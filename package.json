@@ -635,7 +635,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["bookmarks", "currentPath", "highlightedPaths", "relatedFiles", "scopedPaths", "tabHistory", "smartConfig"]
+            "enum": ["bookmarks", "currentPath", "highlightedPaths", "relatedFiles", "scopedPaths", "tabHistory", "smartConfig", "superSearch"]
           },
           "default": [],
           "description": "Completely disable Streamline features"

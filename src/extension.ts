@@ -18,6 +18,7 @@ type Feature =
 	| 'scopedPaths'
 	| 'tabHistory'
   | 'smartConfig'
+  | 'superSearch'
 
 export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
@@ -44,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (isFeatureEnabled('tabHistory')) createTabHistoryFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
   if (isFeatureEnabled('smartConfig')) createSmartConfigFeature({ context })
-  createSuperSearchFeature({ context })
+  if (isFeatureEnabled('superSearch')) createSuperSearchFeature({ context })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
