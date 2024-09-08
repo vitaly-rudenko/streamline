@@ -570,7 +570,8 @@
               "highlightedPaths",
               "relatedFiles",
               "scopedPaths",
-              "smartConfig"
+              "smartConfig",
+              "superSearch"
             ]
           },
           "default": [],
