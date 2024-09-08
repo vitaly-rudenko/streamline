@@ -29,7 +29,7 @@ function testPattern(pattern: string, input: string) {
   return new RegExp(pattern, 'ig').test(input)
 }
 
-suite.only('patterns', () => {
+suite('patterns', () => {
   test('findInAllNamingConventions()', () => {
     const pattern = patterns.findInAllNamingConventions(words)
 
