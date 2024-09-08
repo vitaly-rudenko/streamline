@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { splitIntoWords } from './split-into-words'
+import { extractWords } from './extract-words'
 
 // TODO: feature: search presets
 // TODO: feature: find current file name (e.g. imports, usage, definition, etc)
@@ -14,7 +14,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
       quickPick.matchOnDescription = true
 
       quickPick.onDidChangeValue((input) => {
-        const words = splitIntoWords(input)
+        const words = extractWords(input)
 
         if (words.length <= 1) {
           quickPick.items = []
