@@ -1,18 +1,31 @@
 export const patterns = {
   findInAllNamingConventions: (words: string[]): string => {
-    return words.join('[-_]?')
+    return words
+      .map(word => escapeRegExp(word))
+      .join('[-_]?')
   },
   findLinesWithAllWordsInProvidedOrder: (words: string[]): string => {
-    return words.join('.*')
+    return words
+      .map(word => escapeRegExp(word))
+      .join('.*')
   },
   findLinesWithAllWordsInAnyOrder: (words: string[]): string => {
-    return `^${words.map(word => `(?=[\\s\\S]*(${word}))`).join('')}[\\s\\S]*$`
+    return words
+      .map(word => escapeRegExp(word))
+      .map(word => `(?=(?:.|\n)*${word})`).join('')
   },
   findFilesWithAllWordsInProvidedOrder: (words: string[]): string => {
-    return words.join('.*')
+    return words
+      .map(word => escapeRegExp(word))
+      .join('(?:.|\n)*')
   },
   findFilesWithAllWordsInAnyOrder: (words: string[]): string => {
-    return `^${words.map(word => `(?=[\\s\\S\\n]*(${word}))`).join('')}[\\s\\S\\n]*$`
+    return words
+      .map(word => escapeRegExp(word))
+      .map(word => `(?=(?:.|\n)*${word})`).join('')
   },
 }
 
+function escapeRegExp(input: string) {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}

@@ -1,62 +1,139 @@
 import assert from 'assert'
 import { patterns } from '../../../features/super-search/patterns'
 
-suite('patterns', () => {
-  test('findInAllNamingConventions()', () => {
-    const pattern = patterns.findInAllNamingConventions(['foo', 'bar', 'baz'])
-    assert.strictEqual(pattern, 'foo[-_]?bar[-_]?baz')
+const words = ['foo', 'bar', 'baz']
+const escapableWords = ['function', 'foo.bar()']
+const input = `\
+1. foo bar baz
+2. foobar qux baz
+3. foo bar\nbaz
+4. foo, bar and baz
+5. foo\n bar baz
+6. Hello Foo! Hi bar. Bye BAZ...
+7. F oo B ar B az
+8. Bar-foo-Baz!
+9. Hi bar, baz and foo
+10. bar\nfoo\nbaz
+11. foo\nbar\nbaz
+12. foo-bar-baz
+13. foo_bar_baz
+14. FooBarBaz
+15. fooBarBaz
+16. FOO_BAR_BAZ
+17. foo-bar
+18. foo-bar-qux
+19. foo bar baz
+20. foo.bar.baz`
 
-    const regex = new RegExp(pattern, 'i')
-    assert.ok(regex.test('foo-bar-baz'))
-    assert.ok(regex.test('foo_bar_baz'))
-    assert.ok(regex.test('FooBarBaz'))
-    assert.ok(regex.test('fooBarBaz'))
-    assert.ok(regex.test('FOO_BAR_BAZ'))
+function testPattern(pattern: string, input: string) {
+  return new RegExp(pattern, 'ig').test(input)
+}
+
+suite.only('patterns', () => {
+  test('findInAllNamingConventions()', () => {
+    const pattern = patterns.findInAllNamingConventions(words)
+
+    assert.deepEqual(input.match(new RegExp(pattern, 'ig')), [
+      'foo-bar-baz',
+      'foo_bar_baz',
+      'FooBarBaz',
+      'fooBarBaz',
+      'FOO_BAR_BAZ',
+    ])
+
+    const escapedPattern = patterns.findInAllNamingConventions(escapableWords)
+    assert.ok(testPattern(escapedPattern, 'function-foo.bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function-foo_bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function-foo.bar[]'))
   })
 
   test('findLinesWithAllWordsInProvidedOrder()', () => {
-    const pattern = patterns.findLinesWithAllWordsInProvidedOrder(['foo', 'bar', 'baz'])
-    assert.strictEqual(pattern, 'foo.*bar.*baz')
+    const pattern = patterns.findLinesWithAllWordsInProvidedOrder(words)
 
-    const regex = new RegExp(pattern, 'i')
-    assert.ok(regex.test('foo bar baz'))
-    assert.ok(regex.test('foo bar baz qux'))
-    assert.ok(regex.test('foo qux bar baz'))
+    assert.deepEqual(input.match(new RegExp(pattern, 'ig')), [
+      'foo bar baz',
+      'foobar qux baz',
+      'foo, bar and baz',
+      'Foo! Hi bar. Bye BAZ',
+      'foo-bar-baz',
+      'foo_bar_baz',
+      'FooBarBaz',
+      'fooBarBaz',
+      'FOO_BAR_BAZ',
+      'foo bar baz',
+      'foo.bar.baz',
+    ])
+
+    const escapedPattern = patterns.findLinesWithAllWordsInProvidedOrder(escapableWords)
+    assert.ok(testPattern(escapedPattern, 'function foo.bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function foo_bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function foo.bar[]'))
   })
 
   test('findLinesWithAllWordsInAnyOrder()', () => {
-    const pattern = patterns.findLinesWithAllWordsInAnyOrder(['foo', 'bar', 'baz'])
-    assert.strictEqual(pattern, '^(?=[\\s\\S]*(foo))(?=[\\s\\S]*(bar))(?=[\\s\\S]*(baz))[\\s\\S]*$')
+    const pattern = patterns.findLinesWithAllWordsInProvidedOrder(words)
 
-    const regex = new RegExp(pattern, 'i')
-    assert.ok(regex.test('foo bar baz'))
-    assert.ok(regex.test('foo baz bar'))
-    assert.ok(regex.test('bar foo baz'))
-    assert.ok(regex.test('bar baz foo'))
-    assert.ok(regex.test('baz foo bar'))
-    assert.ok(regex.test('baz bar foo'))
+    assert.deepEqual(input.match(new RegExp(pattern, 'ig')), [
+      'foo bar baz',
+      'foobar qux baz',
+      'foo, bar and baz',
+      'Foo! Hi bar. Bye BAZ',
+      'foo-bar-baz',
+      'foo_bar_baz',
+      'FooBarBaz',
+      'fooBarBaz',
+      'FOO_BAR_BAZ',
+      'foo bar baz',
+      'foo.bar.baz',
+    ])
+
+    const escapedPattern = patterns.findLinesWithAllWordsInProvidedOrder(escapableWords)
+    assert.ok(testPattern(escapedPattern, 'function foo.bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function foo_bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function foo.bar[]'))
   })
 
   test('findFilesWithAllWordsInProvidedOrder()', () => {
-    const pattern = patterns.findFilesWithAllWordsInProvidedOrder(['foo', 'bar', 'baz'])
-    assert.strictEqual(pattern, 'foo.*bar.*baz')
+    const pattern = patterns.findFilesWithAllWordsInProvidedOrder(words)
 
-    const regex = new RegExp(pattern, 'i')
-    assert.ok(regex.test('foo bar baz'))
-    assert.ok(regex.test('foo bar baz qux'))
-    assert.ok(regex.test('foo qux bar baz'))
+    assert.ok(testPattern(pattern, input))
+
+    assert.ok(testPattern(pattern, 'foo-barbaz'))
+    assert.ok(testPattern(pattern, 'foo\nbar_baz'))
+    assert.ok(testPattern(pattern, 'Hello foo!\nHi bar. Bye baz...'))
+
+    assert.ok(!testPattern(pattern, 'foo-bar'))
+    assert.ok(!testPattern(pattern, 'bar baz'))
+    assert.ok(!testPattern(pattern, 'barbaz-foo'))
+    assert.ok(!testPattern(pattern, 'bar \n bazfoo'))
+    assert.ok(!testPattern(pattern, 'Hello bar!\n Hi foo. Bye baz...'))
+    assert.ok(!testPattern(pattern, 'f oo bar baz'))
+
+    const escapedPattern = patterns.findFilesWithAllWordsInProvidedOrder(escapableWords)
+    assert.ok(testPattern(escapedPattern, 'function foo.bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function foo_bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function foo.bar[]'))
   })
 
   test('findFilesWithAllWordsInAnyOrder()', () => {
-    const pattern = patterns.findFilesWithAllWordsInAnyOrder(['foo', 'bar', 'baz'])
-    assert.strictEqual(pattern, '^(?=[\\s\\S\\n]*(foo))(?=[\\s\\S\\n]*(bar))(?=[\\s\\S\\n]*(baz))[\\s\\S\\n]*$')
+    const pattern = patterns.findFilesWithAllWordsInAnyOrder(words)
 
-    const regex = new RegExp(pattern, 'i')
-    assert.ok(regex.test('foo bar baz'))
-    assert.ok(regex.test('foo baz bar'))
-    assert.ok(regex.test('bar foo baz'))
-    assert.ok(regex.test('bar baz foo'))
-    assert.ok(regex.test('baz foo bar'))
-    assert.ok(regex.test('baz bar foo'))
+    assert.ok(testPattern(pattern, input))
+
+    assert.ok(testPattern(pattern, 'foo-barbaz'))
+    assert.ok(testPattern(pattern, 'foo \nbar_baz'))
+    assert.ok(testPattern(pattern, 'Hello foo!\nHi bar. Bye baz...'))
+    assert.ok(testPattern(pattern, 'bazbar-fooqux'))
+    assert.ok(testPattern(pattern, 'bar \nbazfoo'))
+    assert.ok(testPattern(pattern, 'Hello bar!\nHi foo. Bye baz...'))
+
+    assert.ok(!testPattern(pattern, 'foo-bar'))
+    assert.ok(!testPattern(pattern, 'bar baz'))
+    assert.ok(!testPattern(pattern, 'f oo bar baz'))
+
+    const escapedPattern = patterns.findFilesWithAllWordsInAnyOrder(escapableWords)
+    assert.ok(testPattern(escapedPattern, 'function foo.bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function foo_bar()'))
+    assert.ok(!testPattern(escapedPattern, 'function foo.bar[]'))
   })
 })
