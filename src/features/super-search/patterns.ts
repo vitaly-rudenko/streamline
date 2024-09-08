@@ -12,17 +12,17 @@ export const patterns = {
   findLinesWithAllWordsInAnyOrder: (words: string[]): string => {
     return words
       .map(word => escapeRegExp(word))
-      .map(word => `(?=(?:.|\n)*${word})`).join('')
+      .map(word => `(?=(?:.|\\n)*${word})`).join('')
   },
   findFilesWithAllWordsInProvidedOrder: (words: string[]): string => {
     return words
       .map(word => escapeRegExp(word))
-      .join('(?:.|\n)*')
+      .join('(?:.|\\n)*')
   },
   findFilesWithAllWordsInAnyOrder: (words: string[]): string => {
     return words
       .map(word => escapeRegExp(word))
-      .map(word => `(?=(?:.|\n)*${word})`).join('')
+      .map(word => `(?=(?:.|\\n)*${word})`).join('')
   },
 }
 
