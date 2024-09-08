@@ -15,7 +15,9 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
       quickPick.matchOnDescription = true
 
       quickPick.onDidChangeValue((input) => {
-        const words = extractWords(input)
+        const words = input.includes(' ')
+          ? input.split(' ').filter(Boolean)
+          : extractWords(input)
 
         if (words.length === 0) {
           quickPick.items = []
@@ -30,30 +32,24 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
             iconPath: new vscode.ThemeIcon('case-sensitive'),
           },
           {
-            // TODO: escape word in regex, improve regex
-            // TODO: correct regex
             detail: patterns.findLinesWithAllWordsInProvidedOrder(words),
             label: 'Find lines containing all words in provided order',
             alwaysShow: true,
             iconPath: new vscode.ThemeIcon('selection'),
           },
           {
-            // TODO: escape word in regex, improve regex
             detail: patterns.findLinesWithAllWordsInAnyOrder(words),
             label: 'Find lines containing all words in any order',
             alwaysShow: true,
             iconPath: new vscode.ThemeIcon('selection'),
           },
           {
-            // TODO: escape word in regex, improve regex
-            // TODO: correct regex
             detail: patterns.findFilesWithAllWordsInProvidedOrder(words),
             label: 'Find files containing all words in provided order',
             alwaysShow: true,
             iconPath: new vscode.ThemeIcon('files'),
           },
           {
-            // TODO: escape word in regex, improve regex
             detail: patterns.findFilesWithAllWordsInAnyOrder(words),
             label: 'Find files containing all words in any order',
             alwaysShow: true,
