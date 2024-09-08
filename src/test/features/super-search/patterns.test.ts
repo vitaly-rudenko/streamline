@@ -7,7 +7,7 @@ const input = `\
 1. foo bar baz
 2. foobar qux baz
 3. foo bar\nbaz
-4. foo, bar and baz
+4. foo, bar and baz!
 5. foo\n bar baz
 6. Hello Foo! Hi bar. Bye BAZ...
 7. F oo B ar B az
@@ -64,6 +64,8 @@ suite('patterns', () => {
       'foo.bar.baz',
     ])
 
+    assert.ok(!testPattern(pattern, 'foo\nbar\nbaz'))
+
     const escapedPattern = patterns.findLinesWithAllWordsInProvidedOrder(escapableWords)
     assert.ok(testPattern(escapedPattern, 'function foo.bar()'))
     assert.ok(!testPattern(escapedPattern, 'function foo_bar()'))
@@ -87,6 +89,8 @@ suite('patterns', () => {
       'foo.bar.baz',
     ])
 
+    assert.ok(!testPattern(pattern, 'foo\nbar\nbaz'))
+
     const escapedPattern = patterns.findLinesWithAllWordsInProvidedOrder(escapableWords)
     assert.ok(testPattern(escapedPattern, 'function foo.bar()'))
     assert.ok(!testPattern(escapedPattern, 'function foo_bar()'))
@@ -109,6 +113,8 @@ suite('patterns', () => {
     assert.ok(!testPattern(pattern, 'Hello bar!\n Hi foo. Bye baz...'))
     assert.ok(!testPattern(pattern, 'f oo bar baz'))
 
+    assert.ok(testPattern(pattern, 'foo\nbar\nbaz'))
+
     const escapedPattern = patterns.findFilesWithAllWordsInProvidedOrder(escapableWords)
     assert.ok(testPattern(escapedPattern, 'function foo.bar()'))
     assert.ok(!testPattern(escapedPattern, 'function foo_bar()'))
@@ -130,6 +136,8 @@ suite('patterns', () => {
     assert.ok(!testPattern(pattern, 'foo-bar'))
     assert.ok(!testPattern(pattern, 'bar baz'))
     assert.ok(!testPattern(pattern, 'f oo bar baz'))
+
+    assert.ok(testPattern(pattern, 'foo\nbar\nbaz'))
 
     const escapedPattern = patterns.findFilesWithAllWordsInAnyOrder(escapableWords)
     assert.ok(testPattern(escapedPattern, 'function foo.bar()'))
