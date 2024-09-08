@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { extractWords } from './extract-words'
+import { patterns } from './patterns'
 
 // TODO: feature: search presets
 // TODO: feature: find current file name (e.g. imports, usage, definition, etc)
@@ -23,7 +24,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
 
         quickPick.items = [
           {
-            detail: words.join('[-_]?'),
+            detail: patterns.findInAllNamingConventions(words),
             label: 'Search by different naming conventions',
             alwaysShow: true,
             iconPath: new vscode.ThemeIcon('case-sensitive'),
@@ -31,14 +32,14 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
           {
             // TODO: escape word in regex, improve regex
             // TODO: correct regex
-            detail: words.join('.*'),
+            detail: patterns.findLinesWithAllWordsInProvidedOrder(words),
             label: 'Find lines containing all words in provided order',
             alwaysShow: true,
             iconPath: new vscode.ThemeIcon('selection'),
           },
           {
             // TODO: escape word in regex, improve regex
-            detail: `^${words.map(word => `(?=[\\s\\S]*(${word}))`).join('')}[\\s\\S]*$`,
+            detail: patterns.findLinesWithAllWordsInAnyOrder(words),
             label: 'Find lines containing all words in any order',
             alwaysShow: true,
             iconPath: new vscode.ThemeIcon('selection'),
@@ -46,14 +47,14 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
           {
             // TODO: escape word in regex, improve regex
             // TODO: correct regex
-            detail: words.join('.*'),
+            detail: patterns.findFilesWithAllWordsInProvidedOrder(words),
             label: 'Find files containing all words in provided order',
             alwaysShow: true,
             iconPath: new vscode.ThemeIcon('files'),
           },
           {
             // TODO: escape word in regex, improve regex
-            detail: `^${words.map(word => `(?=[\\s\\S\\n]*(${word}))`).join('')}[\\s\\S\\n]*$`,
+            detail: patterns.findFilesWithAllWordsInAnyOrder(words),
             label: 'Find files containing all words in any order',
             alwaysShow: true,
             iconPath: new vscode.ThemeIcon('files'),
