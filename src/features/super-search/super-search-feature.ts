@@ -4,6 +4,7 @@ import { patterns } from './patterns'
 
 // TODO: feature: search presets
 // TODO: feature: find current file name (e.g. imports, usage, definition, etc)
+// TODO: feature: pattern builder (setup max search result length, max lines/context length, etc)
 
 export function createSuperSearchFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input

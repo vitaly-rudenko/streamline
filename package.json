@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.21.1001",
+  "version": "0.21.1002",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -23,8 +23,7 @@
     "test": "vscode-test",
     "dev": " nodemon -x 'npm run compile'",
     "deploy": "npm run compile && npm run lint && npm run test && vsce package && vsce publish",
-    "deploy:pre-release": "npm run compile && npm run lint && npm run test && vsce package --pre-release && vsce publish --pre-release",
-    "deploy:beta": "npm run deploy:pre-release"
+    "deploy:beta": "npm run compile && npm run lint && npm run test && vsce package --pre-release && vsce publish --pre-release"
   },
   "devDependencies": {
     "@types/common-tags": "^1.8.4",
