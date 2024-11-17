@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.21.0",
+  "version": "0.29.900",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -138,21 +138,6 @@
         "command": "streamline.relatedFiles.disableUseGlobalSearch",
         "title": "Disable Global Search",
         "icon": "$(compass-dot)"
-      },
-      {
-        "command": "streamline.relatedFiles.setViewRenderModeToRelative",
-        "title": "Use Relative Paths",
-        "icon": "$(list-selection)"
-      },
-      {
-        "command": "streamline.relatedFiles.setViewRenderModeToAbsolute",
-        "title": "Use Absolute Paths",
-        "icon": "$(list-unordered)"
-      },
-      {
-        "command": "streamline.relatedFiles.setViewRenderModeToCompact",
-        "title": "Use Compact Paths",
-        "icon": "$(list-tree)"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
@@ -303,18 +288,6 @@
           "when": "false"
         },
         {
-          "command": "streamline.relatedFiles.setViewRenderModeToRelative",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.setViewRenderModeToAbsolute",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.setViewRenderModeToCompact",
-          "when": "false"
-        },
-        {
           "command": "streamline.relatedFiles.openToSide",
           "when": "false"
         },
@@ -400,21 +373,6 @@
           "command": "streamline.relatedFiles.refresh",
           "group": "navigation@3",
           "when": "view == relatedFiles"
-        },
-        {
-          "command": "streamline.relatedFiles.setViewRenderModeToCompact",
-          "group": "info@1",
-          "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'compact'"
-        },
-        {
-          "command": "streamline.relatedFiles.setViewRenderModeToRelative",
-          "group": "info@2",
-          "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'relative'"
-        },
-        {
-          "command": "streamline.relatedFiles.setViewRenderModeToAbsolute",
-          "group": "info@3",
-          "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'absolute'"
         },
         {
           "command": "streamline.bookmarks.undo",
@@ -606,16 +564,6 @@
           "default": false,
           "description": "Search related files across all workspace folders"
         },
-        "streamline.relatedFiles.viewRenderMode": {
-          "type": "string",
-          "default": "compact",
-          "enum": [
-            "relative",
-            "absolute",
-            "compact"
-          ],
-          "description": "Use relative, absolute or compact paths in the related files view"
-        },
         "streamline.relatedFiles.exclude": {
           "type": "object",
           "default": {},
@@ -623,6 +571,14 @@
             "type": "boolean"
           },
           "description": "Custom exclude patterns for related files view"
+        },
+        "streamline.relatedFiles.excludedSuffixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["js", "ts", "mjs", "mts", "rb", "spec", "test", "e2e-spec"],
+          "description": "Filename suffixes to exclude from search (e.g. js, ts, test and spec)"
         },
         "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {
           "type": "array",

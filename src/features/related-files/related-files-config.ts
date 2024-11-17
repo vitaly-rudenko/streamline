@@ -3,24 +3,23 @@ import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { FeatureConfig } from '../feature-config'
-import type { ViewRenderMode } from './types'
 
 const defaultUseExcludes = true
 const defaultUseStricterQuickOpenQuery = false
 const defaultUseGlobalSearch = false
-const defaultViewRenderMode = 'compact'
 const defaultMaxLabelLength = 120
 const defaultCollapsedIndicator = '⸱⸱⸱'
+const defaultExcludedSuffixes = ['js', 'ts', 'mjs', 'mts', 'rb', 'spec', 'test', 'e2e-spec']
 
 export class RelatedFilesConfig extends FeatureConfig {
   private _customExcludes: Record<string, unknown> = {}
   private _useExcludes: boolean = defaultUseExcludes
   private _useStricterQuickOpenQuery: boolean = defaultUseStricterQuickOpenQuery
   private _useGlobalSearch: boolean = defaultUseGlobalSearch
-  private _viewRenderMode: ViewRenderMode = defaultViewRenderMode
   private _hiddenWorkspaceFoldersInGlobalSearch: string[] = []
   private _maxLabelLength: number = defaultMaxLabelLength
   private _collapsedIndicator: string = defaultCollapsedIndicator
+  private _excludedSuffixes: string[] = defaultExcludedSuffixes
 
   constructor() {
     super('RelatedFiles')
@@ -32,10 +31,10 @@ export class RelatedFilesConfig extends FeatureConfig {
     const useExcludes = config.get<boolean>('relatedFiles.useExcludes', defaultUseExcludes)
     const useStricterQuickOpenQuery = config.get<boolean>('relatedFiles.useStricterQuickOpenQuery', defaultUseStricterQuickOpenQuery)
     const useGlobalSearch = config.get<boolean>('relatedFiles.useGlobalSearch', defaultUseGlobalSearch)
-    const viewRenderMode = config.get<ViewRenderMode>('relatedFiles.viewRenderMode', defaultViewRenderMode)
     const hiddenWorkspaceFoldersInGlobalSearch = config.get<string[]>('relatedFiles.hiddenWorkspaceFoldersInGlobalSearch', [])
     const maxLabelLength = config.get<number>('relatedFiles.maxLabelLength', defaultMaxLabelLength)
     const collapsedIndicator = config.get<string>('relatedFiles.collapsedIndicator', defaultCollapsedIndicator)
+    const excludedSuffixes = config.get<string[]>('relatedFiles.excludedSuffixes', defaultExcludedSuffixes)
 
     let hasChanged = false
 
@@ -43,20 +42,20 @@ export class RelatedFilesConfig extends FeatureConfig {
       this._useExcludes !== useExcludes
       || this._useStricterQuickOpenQuery !== useStricterQuickOpenQuery
       || this._useGlobalSearch !== useGlobalSearch
-      || this._viewRenderMode !== viewRenderMode
       || this._maxLabelLength !== maxLabelLength
       || this._collapsedIndicator !== collapsedIndicator
       || !areObjectsShallowEqual(this._customExcludes, customExcludes)
       || !areArraysShallowEqual(this._hiddenWorkspaceFoldersInGlobalSearch, hiddenWorkspaceFoldersInGlobalSearch)
+      || !areArraysShallowEqual(this._excludedSuffixes, excludedSuffixes)
     ) {
       this._useExcludes = useExcludes
       this._useStricterQuickOpenQuery = useStricterQuickOpenQuery
       this._useGlobalSearch = useGlobalSearch
-      this._viewRenderMode = viewRenderMode
       this._maxLabelLength = maxLabelLength
       this._collapsedIndicator = collapsedIndicator
       this._customExcludes = customExcludes
       this._hiddenWorkspaceFoldersInGlobalSearch = hiddenWorkspaceFoldersInGlobalSearch
+      this._excludedSuffixes = excludedSuffixes
 
       hasChanged = true
     }
@@ -65,11 +64,11 @@ export class RelatedFilesConfig extends FeatureConfig {
       useExcludes,
       useStricterQuickOpenQuery,
       useGlobalSearch,
-      viewRenderMode,
       maxLabelLength,
       collapsedIndicator,
       customExcludes,
       hiddenWorkspaceFoldersInGlobalSearch,
+      excludedSuffixes,
     })
 
     return hasChanged
@@ -77,13 +76,6 @@ export class RelatedFilesConfig extends FeatureConfig {
 
   async save() {
     const config = getConfig()
-
-    await updateEffectiveConfig(
-      config,
-      ConfigurationTarget.Global,
-      'relatedFiles.viewRenderMode',
-      exists => (exists || this._viewRenderMode !== defaultViewRenderMode) ? this._viewRenderMode : undefined,
-    )
 
     await updateEffectiveConfig(
       config,
@@ -109,6 +101,10 @@ export class RelatedFilesConfig extends FeatureConfig {
     console.debug('[RelatedFiles] Config has been saved')
   }
 
+  getExcludedSuffixes() {
+    return this._excludedSuffixes
+  }
+
   getCustomExcludes() {
     return this._customExcludes
   }
@@ -131,14 +127,6 @@ export class RelatedFilesConfig extends FeatureConfig {
 
   getHiddenWorkspaceFoldersInGlobalSearch() {
     return this._hiddenWorkspaceFoldersInGlobalSearch
-  }
-
-  setViewRenderMode(value: ViewRenderMode) {
-    this._viewRenderMode = value
-  }
-
-  getViewRenderMode() {
-    return this._viewRenderMode
   }
 
   setUseGlobalSearch(value: boolean) {

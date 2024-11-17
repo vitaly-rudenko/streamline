@@ -2,11 +2,11 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { LRUCache } from 'lru-cache'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
-import { getBasename } from '../../utils/get-basename'
 import { getRelatedFilesQueries } from './get-related-files-queries'
 import type { RelatedFilesConfig } from './related-files-config'
 import { formatPaths } from '../../utils/format-paths'
 import { collapseString } from '../../utils/collapse-string'
+import { getSmartBasename } from './get-smart-basename'
 
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem | WorkspaceFolderTreeItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -77,34 +77,34 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   }
 
   private async _getRelatedFilesChildren(currentUri: vscode.Uri, workspaceFolder?: vscode.WorkspaceFolder): Promise<RelatedFileTreeItem[]> {
-    const currentBasename = getBasename(currentUri.path)
+    const relativePath = vscode.workspace.asRelativePath(currentUri, false)
+    const currentBasename = getSmartBasename(relativePath, this.config.getExcludedSuffixes())
 
-    const relatedFilesQueries = getRelatedFilesQueries(currentUri.path)
-    const bestInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, relatedFilesQueries.best) : relatedFilesQueries.best
-    const worstInclude = workspaceFolder ? new vscode.RelativePattern(workspaceFolder.uri, relatedFilesQueries.worst) : relatedFilesQueries.worst
+    const relatedFilesQueries = getRelatedFilesQueries(relativePath, this.config.getExcludedSuffixes())
+    const includes = workspaceFolder
+      ? relatedFilesQueries.map(query => new vscode.RelativePattern(workspaceFolder.uri, query))
+      : [...relatedFilesQueries]
+
+    console.log('workspaceFolder:', workspaceFolder?.uri.path)
+    console.log('relatedFilesQueries:', relatedFilesQueries)
+    console.log('includes:', includes)
 
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
     // TODO: Exclude files from search.exclude and files.exclude configurations
     const excludePattern = this._generateExcludePattern()
-    const [bestMatchedUris, worstMatchedUris] = (
-      await Promise.all([
-        vscode.workspace.findFiles(bestInclude, excludePattern, 10),
-        vscode.workspace.findFiles(worstInclude, excludePattern, 10),
-      ])
+    const matchedUrisPerQuery = (
+      await Promise.all(
+        includes.map(include => vscode.workspace.findFiles(include, excludePattern, 10))
+      )
     ).map(uris => {
       // Sort files by name to stabilize list order
       uris.sort((a, b) => a.path.localeCompare(b.path))
 
-      // Sort files by distance
-      if (this.config.getViewRenderMode() === 'relative') {
-        uris.sort((a, b) => a.path.split('/').length - b.path.split('/').length)
-      }
-
       // Sort files by basename equality
       uris.sort((a, b) => {
-        const basenameA = getBasename(a.path)
-        const basenameB = getBasename(b.path)
+        const basenameA = getSmartBasename(a.path, this.config.getExcludedSuffixes())
+        const basenameB = getSmartBasename(b.path, this.config.getExcludedSuffixes())
         if (basenameA === currentBasename && basenameB !== currentBasename) return -1
         if (basenameA !== currentBasename && basenameB === currentBasename) return 1
         return 0
@@ -113,40 +113,29 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       return uris
     })
 
+    console.log('matchedUris:', matchedUrisPerQuery.flat().map(uri => uri.path))
+
     const children: RelatedFileTreeItem[] = []
     const ignoredPaths = new Set([currentUri.path])
 
-    const uris = [...bestMatchedUris, ...worstMatchedUris]
-    let pathLabels: Map<string, string>
+    const uris = matchedUrisPerQuery.flat()
+    const pathLabels: Map<string, string> = new Map(
+      uris.map((uri) => [uri.path, vscode.workspace.asRelativePath(uri, false)])
+    )
 
-    if (this.config.getViewRenderMode() === 'relative') {
-      pathLabels = new Map(
-        uris.map((uri) => {
-          const label = path.relative(currentUri.path, uri.path).replace('../', '')
-          return [uri.path, label.startsWith('../') ? label : ('./' + label)]
-        })
-      )
-    } else {
-      pathLabels = new Map(
-        uris.map((uri) => [uri.path, vscode.workspace.asRelativePath(uri, false)])
-      )
-
-      if (this.config.getViewRenderMode() === 'compact') {
-        const formattedPaths = formatPaths([...pathLabels.values()])
-        for (const [path, label] of pathLabels) {
-          pathLabels.set(path, formattedPaths.get(label)!)
-        }
-      }
+    const formattedPaths = formatPaths([...pathLabels.values()])
+    for (const [path, label] of pathLabels) {
+      pathLabels.set(path, formattedPaths.get(label)!)
     }
 
-    for (const uri of bestMatchedUris) {
+    for (const uri of matchedUrisPerQuery[0]) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
       const label = collapseString(pathLabels.get(uri.path)!, currentBasename, this.config.getMaxLabelLength(), this.config.getCollapsedIndicator())
-      children.push(new RelatedFileTreeItem(label, uri, getBasename(uri.path) === currentBasename))
+      children.push(new RelatedFileTreeItem(label, uri, getSmartBasename(uri.path, this.config.getExcludedSuffixes()) === currentBasename))
     }
 
-    for (const uri of worstMatchedUris) {
+    for (const uri of matchedUrisPerQuery.slice(1).flat()) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
       const label = collapseString(pathLabels.get(uri.path)!, currentBasename, this.config.getMaxLabelLength(), this.config.getCollapsedIndicator())

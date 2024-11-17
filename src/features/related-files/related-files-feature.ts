@@ -2,9 +2,9 @@ import * as vscode from 'vscode'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
 import { RelatedFilesTreeDataProvider, type RelatedFileTreeItem, type WorkspaceFolderTreeItem } from './related-files-tree-data-provider'
 import { RelatedFilesConfig } from './related-files-config'
-import { getBasename } from '../../utils/get-basename'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { unique } from '../../utils/unique'
+import { getSmartBasename } from './get-smart-basename'
 
 export function createRelatedFilesFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
@@ -25,7 +25,6 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     try {
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useExcludes', config.getUseExcludes())
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useGlobalSearch', config.getUseGlobalSearch())
-      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.viewRenderMode', config.getViewRenderMode())
     } catch (error) {
       console.warn('[ScopedPaths] Could not update context', error)
     }
@@ -43,8 +42,8 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
         : undefined
 
       const basename = config.getUseStricterQuickOpenQuery()
-        ? getBasename(uri.path)
-        : getBasename(uri.path).replaceAll(/[-_]/g, '')
+        ? getSmartBasename(uri.path, config.getExcludedSuffixes())
+        : getSmartBasename(uri.path, config.getExcludedSuffixes()).replaceAll(/[-_]/g, '')
 
       const query = workspaceFolder ? `${workspaceFolder.name}/${basename}` : basename
 
@@ -78,30 +77,6 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
       )
 
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
-      config.saveInBackground()
-    })
-  )
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToRelative', () => {
-      config.setViewRenderMode('relative')
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-      updateContextInBackground()
-      config.saveInBackground()
-    }),
-    vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToAbsolute', () => {
-      config.setViewRenderMode('absolute')
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-      updateContextInBackground()
-      config.saveInBackground()
-    }),
-    vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToCompact', () => {
-      config.setViewRenderMode('compact')
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-      updateContextInBackground()
       config.saveInBackground()
     })
   )
