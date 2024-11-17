@@ -3,7 +3,6 @@ import { createHighlightedPathsFeature } from './features/highlighted-paths/high
 import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-feature'
 import { createRelatedFilesFeature } from './features/related-files/related-files-feature'
 import { uriToPath } from './utils/uri'
-import { createTabHistoryFeature } from './features/tab-history/tab-history-feature'
 import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 import { createCurrentPathFeature } from './features/current-path/current-path-feature'
 import { initialConfig } from './config'
@@ -15,7 +14,6 @@ type Feature =
 	| 'highlightedPaths'
 	| 'relatedFiles'
 	| 'scopedPaths'
-	| 'tabHistory'
   | 'smartConfig'
 
 export function activate(context: vscode.ExtensionContext) {
@@ -40,7 +38,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
 	if (isFeatureEnabled('bookmarks')) createBookmarksFeature({ context })
-	if (isFeatureEnabled('tabHistory')) createTabHistoryFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
   if (isFeatureEnabled('smartConfig')) createSmartConfigFeature({ context })
 

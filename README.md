@@ -30,13 +30,6 @@ Available as an Explorer view and as a command in the Command Palette (`Quick Op
 
 ![Demo](docs/related_files.gif)
 
-## Tab History
-
-Go through your tab history to quickly find a recently opened file.  
-Tabs can be pinned for easier access.
-
-![Demo](docs/tab_history.gif)
-
 ## Smart Config
 
 Automatically apply settings depending on current file path pattern.  
@@ -49,7 +42,7 @@ For example, it can be used to only enable Github Copilot in test files.
 Highlight files and folder using regular expressions by adding them into `streamline.highlightedPaths.patterns` in the workspace configuration.  
 Useful for highlighting tests or build files.
 
-> Files are highlighted in all Explorer views, including Related Files, Bookmarks and Tab History.
+> Files are highlighted in all Explorer views, including Related Files and Bookmarks.
 
 ## Current Path
 
