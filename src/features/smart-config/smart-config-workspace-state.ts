@@ -1,4 +1,4 @@
-import { Memento } from 'vscode';
+import { Memento } from 'vscode'
 
 export class SmartConfigWorkspaceState {
     private _toggles: string[] = []
