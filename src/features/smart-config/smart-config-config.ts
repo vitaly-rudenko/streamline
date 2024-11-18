@@ -1,26 +1,25 @@
 import { getConfig, initialConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 
-type Config = Record<string, unknown>
-type PatternsObject = Record<string, Config>
-type InspectedPatternsObject = {
-  globalValue?: PatternsObject
-  workspaceValue?: PatternsObject
-  workspaceFolderValue?: PatternsObject
+export type Config = Record<string, unknown>
+export type Condition = { filename: string } | { path: string } | { toggle: string }
+export type Rule = {
+  apply: string[]
+  when: Condition[]
+}
+export type Inspected<T> = {
+  globalValue?: T
+  workspaceValue?: T
+  workspaceFolderValue?: T
 }
 
-export type ConfigurationTargetPatterns = {
-  defaultConfig?: Config
-  patterns: [RegExp, Config][]
-}
-
-const defaultPattern = 'default'
+// TODO: add cache
 
 export class SmartConfigConfig extends FeatureConfig {
-  private _inspectedPatternsObject: InspectedPatternsObject | undefined
-  private _cachedGlobalPatterns: ConfigurationTargetPatterns | undefined
-  private _cachedWorkspacePatterns: ConfigurationTargetPatterns | undefined
-  private _cachedWorkspaceFolderPatterns: ConfigurationTargetPatterns | undefined
+  private _inspectedDefaults: Inspected<Config> | undefined
+  private _inspectedConfigs: Inspected<Record<string, Config>> | undefined
+  private _inspectedToggles: Inspected<string[]> | undefined
+  private _inspectedRules: Inspected<Rule[]> | undefined
 
   constructor() {
     super('SmartConfig')
@@ -28,51 +27,43 @@ export class SmartConfigConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const inspectedPatternsObject = config.inspect<PatternsObject>('smartConfig.patterns')
+    const inspectedDefaults = config.inspect<Config>('smartConfig.defaults')
+    const inspectedConfigs = config.inspect<Record<string, Config>>('smartConfig.configs')
+    const inspectedToggles = config.inspect<string[]>('smartConfig.toggles')
+    const inspectedRules = config.inspect<Rule[]>('smartConfig.rules')
 
-    let hasChanged = false
+    this._inspectedDefaults = inspectedDefaults
+    this._inspectedConfigs = inspectedConfigs
+    this._inspectedToggles = inspectedToggles
+    this._inspectedRules = inspectedRules
 
-    if (JSON.stringify(this._inspectedPatternsObject) !== JSON.stringify(inspectedPatternsObject)) {
-      this._inspectedPatternsObject = inspectedPatternsObject
-      this._updatePatternsCache()
-      hasChanged = true
-    }
+    // TODO: implement hasChanged
 
-    console.debug('[SmartConfig] Config has been loaded', { hasChanged, inspectedPatternsObject })
+    console.debug('[SmartConfig] Config has been loaded', {
+      inspectedDefaults,
+      inspectedConfigs,
+      inspectedToggles,
+      inspectedRules,
+    })
 
-    return hasChanged
+    return true
   }
 
   async save() {}
 
-  _updatePatternsCache() {
-    this._cachedGlobalPatterns = parsePatternsObject(this._inspectedPatternsObject?.globalValue)
-    this._cachedWorkspacePatterns = parsePatternsObject(this._inspectedPatternsObject?.workspaceValue)
-    this._cachedWorkspaceFolderPatterns = parsePatternsObject(this._inspectedPatternsObject?.workspaceFolderValue)
+  getInspectedDefaults() {
+    return this._inspectedDefaults
   }
 
-  getCachedGlobalPatterns() {
-    return this._cachedGlobalPatterns
+  getInspectedConfigs() {
+    return this._inspectedConfigs
   }
 
-  getCachedWorkspacePatterns() {
-    return this._cachedWorkspacePatterns
+  getInspectedToggles() {
+    return this._inspectedToggles
   }
 
-  getCachedWorkspaceFolderPatterns() {
-    return this._cachedWorkspaceFolderPatterns
-  }
-}
-
-function parsePatternsObject(patternsObject: PatternsObject | undefined): ConfigurationTargetPatterns | undefined {
-  if (!patternsObject || Object.keys(patternsObject).length === 0) {
-    return undefined
-  }
-
-  return {
-    defaultConfig: patternsObject[defaultPattern],
-    patterns: Object.entries(patternsObject)
-      .filter(([pattern]) => pattern !== defaultPattern)
-      .map(([pattern, config]) => [new RegExp(pattern), config] as const)
+  getInspectedRules() {
+    return this._inspectedRules
   }
 }

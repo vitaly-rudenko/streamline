@@ -243,6 +243,10 @@
         "command": "streamline.currentPath.toggleVisibility",
         "title": "Toggle Current Path Visibility",
         "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.smartConfig.toggle",
+        "title": "Toggle"
       }
     ],
     "menus": {
@@ -611,13 +615,48 @@
           "default": [],
           "description": "Serialized bookmarks"
         },
-        "streamline.smartConfig.patterns": {
+        "streamline.smartConfig.defaults": {
           "type": "object",
+          "default": {},
+          "additionalProperties": true
+        },
+        "streamline.smartConfig.configs": {
+          "type": "object",
+          "default": {},
           "additionalProperties": {
             "type": "object",
             "additionalProperties": true
-          },
-          "description": "Map of file path patterns and corresponding configuration overrides.\nKey is a regular expression (for example, \"\\\\.test\\\\.(js|ts)$\") and value is a map of custom settings to apply.\nUse \"default\" key for default settings.\nUse \"__unset_by_streamline__\" value to remove the setting."
+          }
+        },
+        "streamline.smartConfig.toggles": {
+          "type": "array",
+          "default": [],
+          "items": { "type": "string" }
+        },
+        "streamline.smartConfig.rules": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": ["apply", "when"],
+            "properties": {
+              "apply": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "when": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "filename": { "type": "string" },
+                    "path": { "type": "string" },
+                    "toggle": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

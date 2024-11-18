@@ -1,11 +1,14 @@
 import * as vscode from 'vscode'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
-import { ConfigurationTargetPatterns, SmartConfigConfig } from './smart-config-config'
+import { Config, SmartConfigConfig } from './smart-config-config'
+import { getMatchingConfigNames, SmartConfigContext } from './get-matching-config-names'
+import { SmartConfigWorkspaceState } from './smart-config-workspace-state'
 
 export function createSmartConfigFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
   const config = new SmartConfigConfig()
+  const workspaceState = new SmartConfigWorkspaceState(context.workspaceState)
 
   const debouncedUpdateRelevantConfigs = createDebouncedFunction(updateRelevantConfigs, 250)
 
@@ -14,42 +17,108 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
     debouncedUpdateRelevantConfigs()
   }, 500)
 
-  async function updateRelevantConfigs(textEditor?: vscode.TextEditor) {
-    const path = (textEditor ?? vscode.window.activeTextEditor)?.document.uri.path
-    const promises: Promise<void>[] = []
+  const appliedConfigsStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10)
+  context.subscriptions.push(appliedConfigsStatusBarItem)
 
-    const globalPatterns = config.getCachedGlobalPatterns()
-    if (globalPatterns) {
-      promises.push(applyConfig(path, globalPatterns, vscode.ConfigurationTarget.Global))
+  let toggleItems: vscode.StatusBarItem[] = []
+
+  async function updateStatusBarItems() {
+    const toggles = [...new Set([
+      ...config.getInspectedToggles()?.globalValue ?? [],
+      ...config.getInspectedToggles()?.workspaceValue ?? [],
+      ...config.getInspectedToggles()?.workspaceFolderValue ?? [],
+    ])]
+
+    for (const item of toggleItems) item.dispose()
+
+    toggleItems = []
+    for (const [i, toggle] of toggles.entries()) {
+      const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 11 + i)
+      item.text = toggle
+      item.command = {
+        command: 'streamline.smartConfig.toggle',
+        title: toggle,
+        arguments: [toggle],
+      }
+      context.subscriptions.push(item)
+      item.show()
+
+      if (workspaceState.getToggles().includes(toggle)) {
+        item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground')
+      }
+
+      toggleItems.push(item)
     }
 
-    const workspacePatterns = config.getCachedWorkspacePatterns()
-    if (workspacePatterns) {
-      promises.push(applyConfig(path, workspacePatterns, vscode.ConfigurationTarget.Workspace))
+    const ctx: SmartConfigContext = {
+      path: vscode.window.activeTextEditor?.document.uri.path,
+      toggles: workspaceState.getToggles(),
     }
 
-    const workspaceFolderPatterns = config.getCachedWorkspaceFolderPatterns()
-    if (workspaceFolderPatterns) {
-      promises.push(applyConfig(path, workspaceFolderPatterns, vscode.ConfigurationTarget.WorkspaceFolder))
-    }
+    const configNames = [...new Set([
+      ...getMatchingConfigNames(ctx, config.getInspectedRules()?.globalValue ?? []),
+      ...getMatchingConfigNames(ctx, config.getInspectedRules()?.workspaceValue ?? []),
+      ...getMatchingConfigNames(ctx, config.getInspectedRules()?.workspaceFolderValue ?? []),
+    ])]
 
-    if (promises.length > 0) {
-      await Promise.allSettled(promises)
+    if (configNames.length > 0) {
+      appliedConfigsStatusBarItem.text = '[' + configNames.join(', ') + ']'
+      appliedConfigsStatusBarItem.show()
+    } else {
+      appliedConfigsStatusBarItem.hide()
     }
   }
 
-  async function applyConfig(
-    path: string | undefined,
-    { patterns, defaultConfig }: ConfigurationTargetPatterns,
+  async function updateRelevantConfigs() {
+    const ctx: SmartConfigContext = {
+      path: vscode.window.activeTextEditor?.document.uri.path,
+      toggles: workspaceState.getToggles(),
+    }
+
+    console.debug('Context:', ctx)
+
+    // TODO: optimize
+
+    await applyConfigs(
+      config.getInspectedDefaults()?.globalValue,
+      getMatchingConfigNames(ctx, config.getInspectedRules()?.globalValue ?? [])
+        .map(configName => config.getInspectedConfigs()?.globalValue?.[configName])
+        .filter(config => config !== undefined),
+      vscode.ConfigurationTarget.Global
+    )
+
+    await applyConfigs(
+      config.getInspectedDefaults()?.workspaceValue,
+      getMatchingConfigNames(ctx, config.getInspectedRules()?.workspaceValue ?? [])
+        .map(configName => config.getInspectedConfigs()?.workspaceValue?.[configName])
+        .filter(config => config !== undefined),
+      vscode.ConfigurationTarget.Global
+    )
+
+    await applyConfigs(
+      config.getInspectedDefaults()?.workspaceFolderValue,
+      getMatchingConfigNames(ctx, config.getInspectedRules()?.workspaceFolderValue ?? [])
+        .map(configName => config.getInspectedConfigs()?.workspaceFolderValue?.[configName])
+        .filter(config => config !== undefined),
+      vscode.ConfigurationTarget.Global
+    )
+  }
+
+  async function applyConfigs(
+    defaultConfig: Config | undefined,
+    configs: Config[],
     target: vscode.ConfigurationTarget
   ) {
+    const startedAt = Date.now()
+    console.debug('Applying configs, default:', defaultConfig, 'and', configs.length, 'custom configs to', target)
+
     const vscodeConfig = vscode.workspace.getConfiguration()
 
-    const configsToApply = path ? patterns.filter(([pattern]) => pattern.test(path)).map(([_, config]) => config) : []
+    const configsToApply = [...configs]
     if (defaultConfig) configsToApply.unshift(defaultConfig)
 
     const mergedConfigToApply = Object.assign({}, ...configsToApply)
-    const remainingSectionsSet = new Set(patterns.flatMap(([_pattern, config]) => Object.keys(config)))
+    const remainingSectionsSet = new Set(configs.flatMap(config => Object.keys(config)))
 
     for (const [section, value] of Object.entries(mergedConfigToApply)) {
       try {
@@ -68,6 +137,8 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
         console.warn(error.message)
       }
     }
+
+    console.debug('Applied configs, default:', defaultConfig, 'and', configs.length, 'custom configs to', target, 'in', ((Date.now() - startedAt) / 1000).toFixed(1), 'seconds')
   }
 
   async function updateConfigIfNecessary(vscodeConfig: vscode.WorkspaceConfiguration, section: string, newValue: any, target: vscode.ConfigurationTarget) {
@@ -88,6 +159,18 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
   }
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.smartConfig.toggle', async (toggle: string) => {
+      if (workspaceState.getToggles().includes(toggle)) {
+        workspaceState.setToggles(workspaceState.getToggles().filter(t => t !== toggle))
+      } else {
+        workspaceState.setToggles([
+          ...workspaceState.getToggles(),
+          toggle,
+        ])
+      }
+
+      await updateStatusBarItems()
+    }),
     vscode.window.onDidChangeActiveTextEditor(() => {
       debouncedUpdateRelevantConfigs()
     }),
@@ -101,4 +184,5 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
   )
 
   updateRelevantConfigs()
+  updateStatusBarItems()
 }
