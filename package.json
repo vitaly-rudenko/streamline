@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.29.900",
+  "version": "0.29.901",
   "engines": {
     "vscode": "^1.92.0"
   },

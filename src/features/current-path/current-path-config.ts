@@ -1,6 +1,6 @@
-import { ConfigurationTarget } from 'vscode';
-import { getConfig, initialConfig, updateEffectiveConfig } from '../../config';
-import { FeatureConfig } from '../feature-config';
+import { ConfigurationTarget } from 'vscode'
+import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
+import { FeatureConfig } from '../feature-config'
 
 const defaultMaxLabelLength = 60
 
