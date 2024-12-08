@@ -1,20 +1,27 @@
 import * as vscode from 'vscode'
+import { CurrentPathConfig } from './current-path-config'
+import { createDebouncedFunction } from '../../utils/create-debounced-function'
+import { collapseString } from '../../utils/collapse-string'
+import { basename, extname } from 'path'
 
 export function createCurrentPathFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
-  let isVisible = true
+  const config = new CurrentPathConfig()
+  const scheduleConfigLoad = createDebouncedFunction(() => {
+    if (!config.load()) return
+    updateStatusBarItems()
+  }, 500)
 
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99)
-  textStatusBarItem.command = 'streamline.currentPath.toggleVisibility'
+  textStatusBarItem.command = 'streamline.currentPath.copy'
   context.subscriptions.push(textStatusBarItem)
 
   function updateStatusBarItems() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
-      textStatusBarItem.text = isVisible
-        ? vscode.workspace.asRelativePath(activeTextEditor.document.uri.path)
-        : '$(eye-closed)'
+      const path = activeTextEditor.document.uri.path
+      textStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), '⸱⸱⸱')
       textStatusBarItem.show()
     } else {
       textStatusBarItem.hide()
@@ -22,9 +29,15 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   }
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.currentPath.toggleVisibility', () => {
-      isVisible = !isVisible
-      updateStatusBarItems()
+    vscode.commands.registerCommand('streamline.currentPath.copy', async () => {
+      const activeTextEditor = vscode.window.activeTextEditor
+      if (!activeTextEditor) return
+
+      await vscode.env.clipboard.writeText(activeTextEditor.document.uri.path)
+
+      const copiedMessage = '⸱⸱⸱ copied!'
+      textStatusBarItem.text = textStatusBarItem.text.slice(0, -copiedMessage.length) + copiedMessage
+      setTimeout(() => updateStatusBarItems(), 1000)
     })
   )
 
@@ -32,6 +45,16 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
     vscode.window.onDidChangeActiveTextEditor(() => {
       updateStatusBarItems()
     })
+  )
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('streamline.currentPath')) {
+        if (!config.isSavingInBackground) {
+          scheduleConfigLoad()
+        }
+      }
+    }),
   )
 
   updateStatusBarItems()

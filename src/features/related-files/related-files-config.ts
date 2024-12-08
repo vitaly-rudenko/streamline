@@ -7,7 +7,7 @@ import { FeatureConfig } from '../feature-config'
 const defaultUseExcludes = true
 const defaultUseStricterQuickOpenQuery = false
 const defaultUseGlobalSearch = false
-const defaultMaxLabelLength = 120
+const defaultMaxLabelLength = 60
 const defaultCollapsedIndicator = '⸱⸱⸱'
 const defaultExcludedSuffixes = ['js', 'ts', 'mjs', 'mts', 'rb', 'spec', 'test', 'e2e-spec']
 

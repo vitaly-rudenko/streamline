@@ -240,9 +240,9 @@
         "icon": "$(discard)"
       },
       {
-        "command": "streamline.currentPath.toggleVisibility",
-        "title": "Toggle Current Path Visibility",
-        "icon": "$(eye)"
+        "command": "streamline.currentPath.copy",
+        "title": "Copy Current Path",
+        "icon": "$(copy)"
       },
       {
         "command": "streamline.smartConfig.toggle",
@@ -553,6 +553,11 @@
           },
           "description": "Highlighted paths"
         },
+        "streamline.currentPath.maxLabelLength": {
+          "type": "number",
+          "default": 60,
+          "description": "Smartly shorten current path label when exceeding certain length"
+        },
         "streamline.relatedFiles.useExcludes": {
           "type": "boolean",
           "default": true,
@@ -594,7 +599,7 @@
         },
         "streamline.relatedFiles.maxLabelLength": {
           "type": "number",
-          "default": 120,
+          "default": 60,
           "description": "Smartly shorten related file labels when exceeding certain length"
         },
         "streamline.relatedFiles.collapsedIndicator": {

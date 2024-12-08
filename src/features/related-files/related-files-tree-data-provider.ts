@@ -85,10 +85,6 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       ? relatedFilesQueries.map(query => new vscode.RelativePattern(workspaceFolder.uri, query))
       : [...relatedFilesQueries]
 
-    console.log('workspaceFolder:', workspaceFolder?.uri.path)
-    console.log('relatedFilesQueries:', relatedFilesQueries)
-    console.log('includes:', includes)
-
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
     // TODO: Exclude files from search.exclude and files.exclude configurations
@@ -112,8 +108,6 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
 
       return uris
     })
-
-    console.log('matchedUris:', matchedUrisPerQuery.flat().map(uri => uri.path))
 
     const children: RelatedFileTreeItem[] = []
     const ignoredPaths = new Set([currentUri.path])
