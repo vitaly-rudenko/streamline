@@ -21,7 +21,7 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
       const path = activeTextEditor.document.uri.path
-      textStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), '⸱⸱⸱')
+      textStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), config.getCollapsedIndicator())
       textStatusBarItem.show()
     } else {
       textStatusBarItem.hide()
@@ -36,7 +36,10 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
       await vscode.env.clipboard.writeText(activeTextEditor.document.uri.path)
 
       const copiedMessage = '⸱⸱⸱ copied!'
-      textStatusBarItem.text = textStatusBarItem.text.slice(0, -copiedMessage.length) + copiedMessage
+      textStatusBarItem.text = textStatusBarItem.text.length > copiedMessage.length
+        ? textStatusBarItem.text.slice(0, -copiedMessage.length) + copiedMessage
+        : copiedMessage
+
       setTimeout(() => updateStatusBarItems(), 1000)
     })
   )
