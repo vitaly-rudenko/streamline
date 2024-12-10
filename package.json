@@ -240,6 +240,11 @@
         "icon": "$(discard)"
       },
       {
+        "command": "streamline.bookmarks.exportAsJson",
+        "title": "Export Bookmarks as JSON",
+        "icon": "$(cloud-download)"
+      },
+      {
         "command": "streamline.currentPath.copy",
         "title": "Copy Current Path",
         "icon": "$(copy)"
@@ -384,8 +389,13 @@
           "when": "view == bookmarks && !streamline.bookmarks.isUndoHistoryEmpty"
         },
         {
-          "command": "streamline.bookmarks.addList",
+          "command": "streamline.bookmarks.exportAsJson",
           "group": "navigation@2",
+          "when": "view == bookmarks"
+        },
+        {
+          "command": "streamline.bookmarks.addList",
+          "group": "navigation@3",
           "when": "view == bookmarks"
         }
       ],
@@ -557,6 +567,11 @@
           "type": "number",
           "default": 60,
           "description": "Smartly shorten current path label when exceeding certain length"
+        },
+        "streamline.currentPath.collapsedIndicator": {
+          "type": "string",
+          "default": "⸱⸱⸱",
+          "description": "Indicator that will be placed wherever label is shortened"
         },
         "streamline.relatedFiles.useExcludes": {
           "type": "boolean",

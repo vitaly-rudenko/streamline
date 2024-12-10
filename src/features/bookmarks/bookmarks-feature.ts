@@ -355,6 +355,19 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.exportAsJson', async () => {
+      const serializedBookmarksAsJson = JSON.stringify(config.getSerializedBookmarks(), null, 2)
+
+      const document = await vscode.workspace.openTextDocument({
+        content: serializedBookmarksAsJson,
+        language: 'json',
+      })
+
+      await vscode.window.showTextDocument(document)
+    })
+  )
+
+  context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
     vscode.workspace.onDidRenameFiles((event) => {
       const oldPathNewUriMap = new Map(event.files.map(file => [file.oldUri.path, file.newUri]))

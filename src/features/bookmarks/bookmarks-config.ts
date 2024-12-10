@@ -73,6 +73,10 @@ export class BookmarksConfig extends FeatureConfig {
     this.onChange?.()
   }
 
+  getSerializedBookmarks() {
+    return this._serializedBookmarks
+  }
+
   getBookmarks() {
     return this._bookmarks
   }
