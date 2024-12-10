@@ -15,6 +15,9 @@ export class BookmarksWorkspaceState {
   private load() {
     const currentList = this.workspaceState.get<string>('streamline.bookmarks.currentList', defaultCurrentList)
 
+    this._currentList = currentList
+
+    console.debug('[Bookmarks] WorkspaceState has been loaded', { currentList })
   }
 
   async save() {
