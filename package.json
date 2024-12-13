@@ -4,7 +4,7 @@
   "description": "Streamline your workflow",
   "version": "0.29.901",
   "engines": {
-    "vscode": "^1.92.0"
+    "vscode": "^1.96.0"
   },
   "categories": [
     "Other"
@@ -21,6 +21,7 @@
     "pretest": "npm run compile",
     "lint": "eslint src --ext ts",
     "test": "vscode-test",
+    "test:unit": "jest --coverage",
     "dev": " nodemon -x 'npm run compile'",
     "deploy": "npm run compile && npm run lint && npm run test && vsce package && vsce publish",
     "deploy:pre-release": "npm run compile && npm run lint && npm run test && vsce package --pre-release && vsce publish --pre-release",
@@ -28,16 +29,19 @@
   },
   "devDependencies": {
     "@types/common-tags": "^1.8.4",
+    "@types/jest": "^29.5.14",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^18.19.43",
-    "@types/vscode": "^1.92.0",
+    "@types/node": "^18.19.68",
+    "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vscode/test-cli": "^0.0.8",
     "@vscode/test-electron": "^2.3.9",
     "eslint": "^8.57.0",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.0",
     "rimraf": "^5.0.5",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.5.4"
   },
   "publisher": "vitaly-rudenko",
@@ -534,7 +538,14 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["bookmarks", "currentPath", "highlightedPaths", "relatedFiles", "scopedPaths", "smartConfig"]
+            "enum": [
+              "bookmarks",
+              "currentPath",
+              "highlightedPaths",
+              "relatedFiles",
+              "scopedPaths",
+              "smartConfig"
+            ]
           },
           "default": [],
           "description": "Completely disable Streamline features"
@@ -601,7 +612,16 @@
           "items": {
             "type": "string"
           },
-          "default": ["js", "ts", "mjs", "mts", "rb", "spec", "test", "e2e-spec"],
+          "default": [
+            "js",
+            "ts",
+            "mjs",
+            "mts",
+            "rb",
+            "spec",
+            "test",
+            "e2e-spec"
+          ],
           "description": "Filename suffixes to exclude from search (e.g. js, ts, test and spec)"
         },
         "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {
@@ -651,27 +671,40 @@
         "streamline.smartConfig.toggles": {
           "type": "array",
           "default": [],
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "streamline.smartConfig.rules": {
           "type": "array",
           "default": [],
           "items": {
             "type": "object",
-            "required": ["apply", "when"],
+            "required": [
+              "apply",
+              "when"
+            ],
             "properties": {
               "apply": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               },
               "when": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "properties": {
-                    "filename": { "type": "string" },
-                    "path": { "type": "string" },
-                    "toggle": { "type": "string" }
+                    "filename": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "toggle": {
+                      "type": "string"
+                    }
                   }
                 }
               }

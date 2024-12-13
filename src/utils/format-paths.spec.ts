@@ -1,8 +1,8 @@
 import assert from 'assert'
-import { formatPaths } from '../../utils/format-paths'
+import { formatPaths } from './format-paths'
 
-suite('formatPaths()', () => {
-  test('formats paths (truly absolute)', () => {
+describe('formatPaths()', () => {
+  it('formats paths (truly absolute)', () => {
     const paths = [
       '/Users/user/project-1/index.js',
       '/Users/user/project-1/package.json',
@@ -25,7 +25,7 @@ suite('formatPaths()', () => {
     )
   })
 
-  test('formats paths (workspace absolute)', () => {
+  it('formats paths (workspace absolute)', () => {
     const paths = [
       'workspace-folder-1/project-1/index.js',
       'workspace-folder-1/project-1/package.json',

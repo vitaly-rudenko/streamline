@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import * as path from 'path'
 import { LRUCache } from 'lru-cache'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
 import { getRelatedFilesQueries } from './get-related-files-queries'
@@ -122,6 +121,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       pathLabels.set(path, formattedPaths.get(label)!)
     }
 
+    // Treat first query in special way, primarily "star" the related file if basename is the same
     for (const uri of matchedUrisPerQuery[0]) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)

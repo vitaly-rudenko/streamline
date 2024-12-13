@@ -111,7 +111,7 @@ function deserializeBookmark(serializedBookmark: SerializedBookmark): Bookmark {
     note: serializedBookmark.note,
     ...serializedBookmark.type === 'selection' ? {
       type: serializedBookmark.type,
-      value: 'value' in serializedBookmark ? serializedBookmark.value : serializedBookmark.preview,
+      value: serializedBookmark.value,
       selection: parseSelection(serializedBookmark.selection),
     } : {
       type: serializedBookmark.type,
@@ -120,15 +120,6 @@ function deserializeBookmark(serializedBookmark: SerializedBookmark): Bookmark {
 }
 
 function parseSelection(serializedSelection: Extract<SerializedBookmark, { type: 'selection' }>['selection']): vscode.Selection {
-  if (typeof serializedSelection === 'string') {
-    const [anchorLine, anchorCharacter, activeLine, activeCharacter] = serializedSelection.split(/:|-/).map(Number)
-    return new vscode.Selection(anchorLine, anchorCharacter, activeLine, activeCharacter)
-  }
-
-  return new vscode.Selection(
-    serializedSelection.anchorLine,
-    serializedSelection.anchorCharacter,
-    serializedSelection.activeLine,
-    serializedSelection.activeCharacter,
-  )
+  const [anchorLine, anchorCharacter, activeLine, activeCharacter] = serializedSelection.split(/:|-/).map(Number)
+  return new vscode.Selection(anchorLine, anchorCharacter, activeLine, activeCharacter)
 }

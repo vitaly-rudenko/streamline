@@ -20,29 +20,6 @@ export type SerializedBookmark = {
 } & (
   { type: 'folder' } |
   { type: 'file' } |
-  // v1
-  {
-    type: 'selection'
-    selection: {
-      anchorLine: number
-      anchorCharacter: number
-      activeLine: number
-      activeCharacter: number
-    }
-    preview: string
-  } |
-  // v2
-  {
-    type: 'selection'
-    selection: {
-      anchorLine: number
-      anchorCharacter: number
-      activeLine: number
-      activeCharacter: number
-    }
-    value: string
-  } |
-  // v3
   {
     type: 'selection'
     selection: string

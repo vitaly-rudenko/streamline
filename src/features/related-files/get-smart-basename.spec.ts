@@ -1,10 +1,10 @@
 import assert from 'assert'
-import { getSmartBasename } from '../../../features/related-files/get-smart-basename'
+import { getSmartBasename } from './get-smart-basename'
 
 const excludedSuffixes = ['test', 'js']
 
-suite('getSmartBasename()', () => {
-    test('regular files', () => {
+describe('getSmartBasename()', () => {
+    it('regular files', () => {
         assert.equal(getSmartBasename('/test/file.js', excludedSuffixes), 'file')
         assert.equal(getSmartBasename('/test/file.test.js', excludedSuffixes), 'file')
         assert.equal(getSmartBasename('/test/file.module.js', excludedSuffixes), 'file.module')
@@ -18,7 +18,7 @@ suite('getSmartBasename()', () => {
         assert.equal(getSmartBasename('/test/file.module.hello.ts', excludedSuffixes), 'file.module.hello.ts')
     })
 
-    test('dot files', () => {
+    it('dot files', () => {
         assert.equal(getSmartBasename('/test/.file.js', excludedSuffixes), '.file')
         assert.equal(getSmartBasename('/test/.file.test.js', excludedSuffixes), '.file')
         assert.equal(getSmartBasename('/test/.file.module.js', excludedSuffixes), '.file.module')

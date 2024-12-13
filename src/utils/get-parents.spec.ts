@@ -1,8 +1,8 @@
 import assert from 'assert'
-import { getParents } from '../../utils/get-parents'
+import { getParents } from './get-parents'
 
-suite('getParents()', () => {
-  test('returns parents of the given file', () => {
+describe('getParents()', () => {
+  it('returns parents of the given file', () => {
     assert.deepStrictEqual(
       getParents('A/B/C/D'),
       [

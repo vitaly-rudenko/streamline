@@ -1,6 +1,6 @@
 import assert from 'assert'
-import { generateExcludedPathsFromScopedAndExcludedPaths } from '../../../features/scoped-paths/generate-excluded-paths-from-scoped-and-excluded-paths'
-import type { DirectoryReader } from '../../../utils/types'
+import { DirectoryReader } from '../../utils/types'
+import { generateExcludedPathsFromScopedAndExcludedPaths } from './generate-excluded-paths-from-scoped-and-excluded-paths'
 
 function createFakeDirectoryReader(paths: string[]): DirectoryReader {
   return {
@@ -21,8 +21,8 @@ function createFakeDirectoryReader(paths: string[]): DirectoryReader {
   }
 }
 
-suite('createFakeDirectoryReader()', () => {
-  test('creates a valid fake directory reader', async () => {
+describe('createFakeDirectoryReader()', () => {
+  it('creates a valid fake directory reader', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/folder-1',
@@ -100,8 +100,8 @@ suite('createFakeDirectoryReader()', () => {
   })
 })
 
-suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
-  test('single workspace folder', async () => {
+describe('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
+  it('single workspace folder', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/folder-1',
@@ -160,7 +160,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     )
   })
 
-  test('hides all files from other unscoped workspace folders', async () => {
+  it('hides all files from other unscoped workspace folders', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/folder-1',
@@ -210,7 +210,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     )
   })
 
-  test('handles nested folders correctly', async () => {
+  it('handles nested folders correctly', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/file-a',
@@ -285,8 +285,8 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     )
   })
 
-  suite('[excluded paths]', () => {
-    test('handles excluded paths correctly', async () => {
+  describe('[excluded paths]', () => {
+    it('handles excluded paths correctly', async () => {
       const paths = [
         'workspace-folder-1',
         'workspace-folder-1/folder-1',
@@ -325,7 +325,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       )
     })
 
-    test('handles file existing in multiple workspace folders', async () => {
+    it('handles file existing in multiple workspace folders', async () => {
       const paths = [
         'workspace-folder-1',
         'workspace-folder-1/folder-1',
@@ -359,11 +359,11 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       )
     })
 
-    test.skip('handles folder existing in multiple workspace folders (nested files must be hidden properly)')
+    it.todo('handles folder existing in multiple workspace folders (nested files must be hidden properly)')
 
-    test.skip('ignores the fact that file exists in another workspace folder if that workspace folder is excluded')
+    it.todo('ignores the fact that file exists in another workspace folder if that workspace folder is excluded')
 
-    test('handles excluded workspace folders', async () => {
+    it('handles excluded workspace folders', async () => {
       const paths = [
         'workspace-folder-1',
         'workspace-folder-1/folder-1',
@@ -405,7 +405,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     })
   })
 
-  test('regression 1', async () => {
+  it('regression 1', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/file-a',
