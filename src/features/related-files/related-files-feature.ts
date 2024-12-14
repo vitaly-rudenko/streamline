@@ -139,7 +139,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     vscode.workspace.onDidCreateFiles(() => scheduleClearCacheAndRefresh()),
     vscode.workspace.onDidDeleteFiles(() => scheduleClearCacheAndRefresh()),
     vscode.workspace.onDidRenameFiles(() => scheduleClearCacheAndRefresh()),
-    // Clear files cache when workspace folder is renamed
+    // Clear files cache when workspace folders are added, renamed or deleted
     vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleClearCacheAndRefresh()),
   )
 

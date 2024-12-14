@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { DirectoryReader } from '../../utils/types'
+import { DirectoryReader } from '../../../utils/types'
 import { generateExcludedPathsFromScopedAndExcludedPaths } from './generate-excluded-paths-from-scoped-and-excluded-paths'
 
 function createFakeDirectoryReader(paths: string[]): DirectoryReader {

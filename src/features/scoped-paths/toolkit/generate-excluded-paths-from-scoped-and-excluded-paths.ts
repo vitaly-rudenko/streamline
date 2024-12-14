@@ -1,7 +1,8 @@
-import { getParents } from '../../utils/get-parents'
-import type { DirectoryReader } from '../../utils/types'
-import { unique } from '../../utils/unique'
+import { getParents } from '../../../utils/get-parents'
+import type { DirectoryReader } from '../../../utils/types'
+import { unique } from '../../../utils/unique'
 
+/** Generates a list of files to *safely* exclude based on selected 'scoped paths' and explicitly 'excluded paths' */
 export async function generateExcludedPathsFromScopedAndExcludedPaths(scopedAndExcludedPaths: string[], directoryReader: DirectoryReader): Promise<string[]> {
   const scopedPaths = scopedAndExcludedPaths.filter(path => !path.startsWith('!'))
   const excludedPaths = scopedAndExcludedPaths.filter(path => path.startsWith('!')).map(path => path.slice(1))
@@ -14,6 +15,7 @@ export async function generateExcludedPathsFromScopedAndExcludedPaths(scopedAndE
   return unique([...excludedPathsFromScopedPath, ...excludedPathsForExcludedPaths])
 }
 
+/** Finds all files to *safely* exclude based on 'scoped paths' */
 async function generateExcludedPathsFromScopedPaths(scopedPaths: string[], directoryReader: DirectoryReader) {
   if (scopedPaths.length === 0) return []
 
@@ -53,6 +55,7 @@ async function generateExcludedPathsFromScopedPaths(scopedPaths: string[], direc
   return results
 }
 
+/** Finds all files to *safely* exclude based on 'excluded paths' */
 async function generateExcludedPathsFromExcludedPaths(excludedPaths: string[], directoryReader: DirectoryReader) {
   if (excludedPaths.length === 0) return []
 
@@ -91,6 +94,7 @@ async function generateExcludedPathsFromExcludedPaths(excludedPaths: string[], d
   return results
 }
 
+/** Reads files from all workspace folders using provided path (relatively to the workspace folder's path) */
 async function readInAllWorkspaceFolders(workspaceFolders: string[], path: string, directoryReader: DirectoryReader): Promise<string[]> {
   return (await Promise.all(
     workspaceFolders.map(
@@ -99,6 +103,7 @@ async function readInAllWorkspaceFolders(workspaceFolders: string[], path: strin
   )).flat()
 }
 
+/** Removes first part of the path (workspace folder name), and excludes workspace folders themselves from results when specified */
 function removeWorkspaceFolders(pathOrPaths: string[], options?: { excludeWorkspaceFolders: boolean }): string[] {
   return pathOrPaths.map((path) => {
     const index = path.indexOf('/')

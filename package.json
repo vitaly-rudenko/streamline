@@ -564,11 +564,6 @@
           },
           "description": "Scopes"
         },
-        "streamline.scopedPaths.highlightStatusBarWhenEnabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Highlight status bar items when scope is enabled"
-        },
         "streamline.highlightedPaths.patterns": {
           "type": "array",
           "default": [],

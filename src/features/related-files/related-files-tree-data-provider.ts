@@ -7,6 +7,8 @@ import { formatPaths } from '../../utils/format-paths'
 import { collapseString } from '../../utils/collapse-string'
 import { getSmartBasename } from './toolkit/get-smart-basename'
 
+// TODO: integration tests (decoupling from VSCode APIs will be required)
+
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem | WorkspaceFolderTreeItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
