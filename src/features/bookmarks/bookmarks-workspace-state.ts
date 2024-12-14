@@ -1,5 +1,5 @@
 import { Memento } from 'vscode'
-import { defaultCurrentList } from './constants'
+import { defaultCurrentList } from './common'
 
 export class BookmarksWorkspaceState {
   public onChange?: Function

@@ -1,8 +1,10 @@
 import * as vscode from 'vscode'
 import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
-import type { Bookmark, SerializedBookmark } from './types'
+import type { Bookmark, SerializedBookmark } from './common'
 import { FeatureConfig } from '../feature-config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
+import { serializeBookmark } from './toolkit/serialize-bookmark'
+import { deserializeBookmark } from './toolkit/deserialize-bookmark'
 
 export class BookmarksConfig extends FeatureConfig {
   public onChange?: Function
@@ -86,40 +88,4 @@ export class BookmarksConfig extends FeatureConfig {
     this._serializedBookmarks = this._bookmarks.map((bookmark) => serializeBookmark(bookmark))
     this.onChange?.()
   }
-}
-
-function serializeBookmark(bookmark: Bookmark): SerializedBookmark {
-  return {
-    uri: bookmark.uri.path,
-    list: bookmark.list,
-    note: bookmark.note,
-    ...bookmark.type === 'selection' ? {
-      type: bookmark.type,
-      value: bookmark.value,
-      selection: `${bookmark.selection.anchor.line}:${bookmark.selection.anchor.character}-${bookmark.selection.active.line}:${bookmark.selection.active.character}`
-    } : {
-      type: bookmark.type,
-    }
-  }
-}
-
-
-function deserializeBookmark(serializedBookmark: SerializedBookmark): Bookmark {
-  return {
-    uri: vscode.Uri.file(serializedBookmark.uri),
-    list: serializedBookmark.list,
-    note: serializedBookmark.note,
-    ...serializedBookmark.type === 'selection' ? {
-      type: serializedBookmark.type,
-      value: serializedBookmark.value,
-      selection: parseSelection(serializedBookmark.selection),
-    } : {
-      type: serializedBookmark.type,
-    }
-  }
-}
-
-function parseSelection(serializedSelection: Extract<SerializedBookmark, { type: 'selection' }>['selection']): vscode.Selection {
-  const [anchorLine, anchorCharacter, activeLine, activeCharacter] = serializedSelection.split(/:|-/).map(Number)
-  return new vscode.Selection(anchorLine, anchorCharacter, activeLine, activeCharacter)
 }

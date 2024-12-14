@@ -1,5 +1,7 @@
 import type * as vscode from 'vscode'
 
+export const defaultCurrentList = 'default'
+
 export type Bookmark = {
   uri: vscode.Uri
   list: string
@@ -26,3 +28,4 @@ export type SerializedBookmark = {
     value: string
   }
 )
+

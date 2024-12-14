@@ -2,14 +2,14 @@ import * as vscode from 'vscode'
 import { formatPaths } from '../../utils/format-paths'
 import { getFilename } from '../../utils/get-filename'
 import type { BookmarksConfig } from './bookmarks-config'
-import type { Bookmark } from './types'
+import type { Bookmark } from './common'
 import { stripIndent, stripIndents } from 'common-tags'
 import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
 
 type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
-class ArchivedListsTreeItem extends vscode.TreeItem {
+export class ArchivedListsTreeItem extends vscode.TreeItem {
   constructor(expanded: boolean) {
     super('Archive', expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 
