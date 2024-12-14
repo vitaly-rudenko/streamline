@@ -14,6 +14,7 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   }, 500)
 
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99)
+  textStatusBarItem.name = 'Current Path'
   textStatusBarItem.command = 'streamline.currentPath.copy'
   context.subscriptions.push(textStatusBarItem)
 

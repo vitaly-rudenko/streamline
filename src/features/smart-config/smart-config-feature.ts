@@ -17,9 +17,6 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
     debouncedUpdateRelevantConfigs()
   }, 500)
 
-  const appliedConfigsStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10)
-  context.subscriptions.push(appliedConfigsStatusBarItem)
-
   let toggleItems: vscode.StatusBarItem[] = []
 
   async function updateStatusBarItems() {
@@ -34,6 +31,7 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
     toggleItems = []
     for (const [i, toggle] of toggles.entries()) {
       const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 11 + i)
+      item.name = `Toggle "${toggle}"`
       item.text = toggle
       item.command = {
         command: 'streamline.smartConfig.toggle',
@@ -60,13 +58,6 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
       ...getMatchingConfigNames(ctx, config.getInspectedRules()?.workspaceValue ?? []),
       ...getMatchingConfigNames(ctx, config.getInspectedRules()?.workspaceFolderValue ?? []),
     ])]
-
-    if (configNames.length > 0) {
-      appliedConfigsStatusBarItem.text = '[' + configNames.join(', ') + ']'
-      appliedConfigsStatusBarItem.show()
-    } else {
-      appliedConfigsStatusBarItem.hide()
-    }
   }
 
   async function updateRelevantConfigs() {
