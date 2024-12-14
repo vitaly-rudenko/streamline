@@ -30,15 +30,15 @@ suite('deserializeBookmark()', () => {
 
     const bookmarks = serializedBookmarks.map(deserializeBookmark)
 
-    assert.strictEqual(bookmarks[0].uri.fsPath, serializedBookmarks[0].uri)
+    assert.strictEqual(bookmarks[0].uri.path, serializedBookmarks[0].uri)
     assert.strictEqual(bookmarks[0].list, 'list-1')
     assert.strictEqual(bookmarks[0].type, 'file')
 
-    assert.strictEqual(bookmarks[1].uri.fsPath, serializedBookmarks[1].uri)
+    assert.strictEqual(bookmarks[1].uri.path, serializedBookmarks[1].uri)
     assert.strictEqual(bookmarks[1].list, 'list-1')
     assert.strictEqual(bookmarks[1].type, 'folder')
 
-    assert.strictEqual(bookmarks[2].uri.fsPath, serializedBookmarks[2].uri)
+    assert.strictEqual(bookmarks[2].uri.path, serializedBookmarks[2].uri)
     assert.strictEqual(bookmarks[2].list, 'list-1')
     assert.strictEqual(bookmarks[2].type, 'selection')
     assert.ok(new Selection(2, 5, 2, 32).isEqual((bookmarks[2] as any).selection))

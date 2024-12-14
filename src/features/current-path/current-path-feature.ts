@@ -20,7 +20,7 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   function updateStatusBarItems() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
-      const path = activeTextEditor.document.uri.path
+      const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path)
       textStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), config.getCollapsedIndicator())
       textStatusBarItem.show()
     } else {
@@ -28,6 +28,7 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
     }
   }
 
+  // Copy currently opened file's absolute path
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.currentPath.copy', async () => {
       const activeTextEditor = vscode.window.activeTextEditor
@@ -45,12 +46,7 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   )
 
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => {
-      updateStatusBarItems()
-    })
-  )
-
-  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => updateStatusBarItems()),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.currentPath')) {
         if (!config.isSavingInBackground) {
