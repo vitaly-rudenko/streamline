@@ -1,16 +1,17 @@
 import * as vscode from 'vscode'
 import { LRUCache } from 'lru-cache'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
-import { getRelatedFilesQueries } from './get-related-files-queries'
+import { getRelatedFilesQueries } from './toolkit/get-related-files-queries'
 import type { RelatedFilesConfig } from './related-files-config'
 import { formatPaths } from '../../utils/format-paths'
 import { collapseString } from '../../utils/collapse-string'
-import { getSmartBasename } from './get-smart-basename'
+import { getSmartBasename } from './toolkit/get-smart-basename'
 
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem | WorkspaceFolderTreeItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
+  // Cache related files in memory for recently opened files
   private readonly _cache = new LRUCache<string, (RelatedFileTreeItem | WorkspaceFolderTreeItem)[]>({ max: 100 })
 
   constructor(private readonly config: RelatedFilesConfig) {}
@@ -36,6 +37,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       return element.children
     }
 
+    // There are no children for RelatedFile items
     if (element) return
 
     const cache = this._cache.get(currentUri.path)
@@ -44,14 +46,14 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     let children: (WorkspaceFolderTreeItem | RelatedFileTreeItem)[] = []
 
     const currentUriWorkspaceFolder = vscode.workspace.getWorkspaceFolder(currentUri)
-    if (isMultiRootWorkspace() && this.config.getUseGlobalSearch()) {
+    if (isMultiRootWorkspace() && this.config.getUseGlobalSearch()) { // Search in all workspace folders
       const sortedWorkspaceFolders = [
         currentUriWorkspaceFolder,
         ...(vscode.workspace.workspaceFolders ?? [])
           .filter(workspaceFolder => workspaceFolder.name !== currentUriWorkspaceFolder?.name)
           .sort((a, b) => a.index - b.index),
       ]
-        .filter(isDefined)
+        .filter((workspaceFolder) => workspaceFolder !== undefined)
         .filter((workspaceFolder) => (
           workspaceFolder.name === currentUriWorkspaceFolder?.name ||
           !this.config.getHiddenWorkspaceFoldersInGlobalSearch().includes(workspaceFolder.name)
@@ -67,7 +69,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       children = workspaceFolderChildrenList
         .filter(([_workspaceFolder, children]) => children.length > 0)
         .map(([workspaceFolder, children]) => new WorkspaceFolderTreeItem(workspaceFolder, children))
-    } else {
+    } else { // Or only in current file's workspace folder
       children = await this._getRelatedFilesChildren(currentUri, currentUriWorkspaceFolder)
     }
 
@@ -80,6 +82,8 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     const currentBasename = getSmartBasename(relativePath, this.config.getExcludedSuffixes())
 
     const relatedFilesQueries = getRelatedFilesQueries(relativePath, this.config.getExcludedSuffixes())
+
+    // Limit search to workspace folder when provided
     const includes = workspaceFolder
       ? relatedFilesQueries.map(query => new vscode.RelativePattern(workspaceFolder.uri, query))
       : [...relatedFilesQueries]
@@ -116,12 +120,13 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       uris.map((uri) => [uri.path, vscode.workspace.asRelativePath(uri, false)])
     )
 
+    // Format all paths beforehand for efficiency
     const formattedPaths = formatPaths([...pathLabels.values()])
     for (const [path, label] of pathLabels) {
       pathLabels.set(path, formattedPaths.get(label)!)
     }
 
-    // Treat first query in special way, primarily "star" the related file if basename is the same
+    // Treat first query in special way ("best match"), and "star" if related file's basename matches current file's one
     for (const uri of matchedUrisPerQuery[0]) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
@@ -139,7 +144,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
     return children
   }
 
-  // TODO: Does not belong here? Also we do not need to regenerate it every time.
+  // TODO: Does not belong here? Also we do not need to regenerate it every time
   private _generateExcludePattern() {
     const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
     const excludeEntries = Object.entries({ ...searchExcludes, ...this.config.getCustomExcludes() })
@@ -170,8 +175,4 @@ export class RelatedFileTreeItem extends vscode.TreeItem {
       title: 'Open file'
     }
   }
-}
-
-function isDefined<T>(i: T | undefined): i is T {
-  return i !== undefined
 }

@@ -1,3 +1,4 @@
+import { fromPartial } from '@total-typescript/shoehorn'
 import { suite, before, test } from 'mocha'
 import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksConfig } from './bookmarks-config'
@@ -6,7 +7,6 @@ import { Bookmark } from './common'
 import { ArchivedListsTreeItem, BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
 import { Selection, Uri } from 'vscode'
 import assert from 'assert'
-import { join } from 'path'
 
 // TODO: use better assertions
 
@@ -16,7 +16,7 @@ suite('BookmarksTreeDataProvider', () => {
   let cache: BookmarksCache
 
   before(() => {
-    config = {
+    config = fromPartial({
       getArchivedLists: () => [
         'list-1',
         'list-2',
@@ -25,17 +25,17 @@ suite('BookmarksTreeDataProvider', () => {
         {
           list: 'list-1',
           type: 'file',
-          uri: Uri.file(join(__dirname, '__fixtures__', 'file-1.txt')),
+          uri: Uri.file('/path/to/file-1.txt'),
         },
         {
           list: 'list-2',
           type: 'folder',
-          uri: Uri.file(join(__dirname, '__fixtures__')),
+          uri: Uri.file('/path/to/folder-1'),
         },
         {
           list: 'list-3',
           type: 'selection',
-          uri: Uri.file(join(__dirname, '__fixtures__', 'file-1.txt')),
+          uri: Uri.file('/path/to/file-1.txt'),
           selection: new Selection(2, 5, 2, 32),
           value: 'const hello = "world";',
           note: 'Hello world!',
@@ -43,14 +43,14 @@ suite('BookmarksTreeDataProvider', () => {
         {
           list: 'list-4',
           type: 'file',
-          uri: Uri.file(join(__dirname, '__fixtures__', 'file-1.txt')),
+          uri: Uri.file('/path/to/file-2.txt'),
         },
       ] as Bookmark[],
-    } as unknown as BookmarksConfig
+    })
 
-    workspaceState = {
+    workspaceState = fromPartial({
       getCurrentList: () => 'list-3',
-    } as unknown as BookmarksWorkspaceState
+    })
 
     cache = new BookmarksCache(config, workspaceState)
   })
