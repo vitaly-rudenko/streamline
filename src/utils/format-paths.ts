@@ -1,24 +1,23 @@
-import { getFilename } from './get-filename'
+import { basename } from 'path'
 import { getSharedPath } from './get-shared-path'
 
 export function formatPaths(paths: string[]): Map<string, string> {
-  const filenamePaths = new Map<string, string[]>()
+  const basenamePaths = new Map<string, string[]>()
   for (const path of paths) {
-    const filename = getFilename(path)
-    filenamePaths.set(filename, filenamePaths.has(filename) ? filenamePaths.get(filename)!.concat(path) : [path])
+    const pathBasename = basename(path)
+    basenamePaths.set(pathBasename, basenamePaths.has(pathBasename) ? basenamePaths.get(pathBasename)!.concat(path) : [path])
   }
 
-  const filenameSharedPaths = new Map<string, string>()
-  for (const [filename, paths] of filenamePaths.entries()) {
-    filenameSharedPaths.set(filename, getSharedPath(paths))
+  const basenameSharedPaths = new Map<string, string>()
+  for (const [basename, paths] of basenamePaths.entries()) {
+    basenameSharedPaths.set(basename, getSharedPath(paths))
   }
 
   const results = new Map<string, string>()
   for (const path of paths) {
     if (results.has(path)) continue
 
-    const filename = getFilename(path)
-    const sharedPath = filenameSharedPaths.get(filename)!
+    const sharedPath = basenameSharedPaths.get(basename(path))!
     results.set(path, sharedPath !== '' ? path.slice(sharedPath.length + 1) : path)
   }
 

@@ -2,7 +2,7 @@ import { getConfig, initialConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 
 export type Config = Record<string, unknown>
-export type Condition = { filename: string } | { path: string } | { toggle: string }
+export type Condition = { basename: string } | { path: string } | { toggle: string }
 export type Rule = {
   apply: string[]
   when: Condition[]

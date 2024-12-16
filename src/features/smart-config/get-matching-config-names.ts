@@ -1,5 +1,5 @@
-import { getFilename } from '../../utils/get-filename'
-import { Condition, Config, Rule } from './smart-config-config'
+import { basename } from 'path'
+import { Condition, Rule } from './smart-config-config'
 
 export type SmartConfigContext = {
   path: string | undefined
@@ -24,8 +24,8 @@ function testCondition(context: SmartConfigContext, condition: Condition): boole
       return new RegExp(condition.path).test(context.path)
     }
 
-    if ('filename' in condition) {
-      return new RegExp(condition.filename).test(getFilename(context.path))
+    if ('basename' in condition) {
+      return new RegExp(condition.basename).test(basename(context.path))
     }
   }
 

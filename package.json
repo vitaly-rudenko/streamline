@@ -590,7 +590,7 @@
         "streamline.relatedFiles.useStricterQuickOpenQuery": {
           "type": "boolean",
           "default": false,
-          "description": "Do not remove hyphens or underscores in filenames when using 'Quick Open Related Files' command"
+          "description": "Keep hyphens or underscores in basename when using 'Quick Open Related Files' command"
         },
         "streamline.relatedFiles.useGlobalSearch": {
           "type": "boolean",
@@ -620,7 +620,7 @@
             "test",
             "e2e-spec"
           ],
-          "description": "Filename suffixes to exclude from search (e.g. js, ts, test and spec)"
+          "description": "Basename suffixes to exclude from search (e.g. js, ts, test and spec)"
         },
         "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {
           "type": "array",
@@ -694,7 +694,7 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "filename": {
+                    "basename": {
                       "type": "string"
                     },
                     "path": {

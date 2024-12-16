@@ -1,11 +1,11 @@
 import * as vscode from 'vscode'
 import { formatPaths } from '../../utils/format-paths'
-import { getFilename } from '../../utils/get-filename'
 import type { BookmarksConfig } from './bookmarks-config'
 import type { Bookmark } from './common'
 import { stripIndent, stripIndents } from 'common-tags'
 import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
+import { basename } from 'path'
 
 type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
@@ -88,14 +88,14 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
     const folderUris = bookmarks
       .filter(bookmark => bookmark.type === 'folder')
       .map(bookmark => bookmark.uri)
-      // Sort by filename
-      .sort((a, b) => getFilename(a.path).localeCompare(getFilename(b.path)))
+      // Sort by basename
+      .sort((a, b) => basename(a.path).localeCompare(basename(b.path)))
 
     const fileUris = bookmarks
       .filter(bookmark => bookmark.type === 'file' || bookmark.type === 'selection')
       .map(bookmark => bookmark.uri)
-      // Sort by filename
-      .sort((a, b) => getFilename(a.path).localeCompare(getFilename(b.path)))
+      // Sort by basename
+      .sort((a, b) => basename(a.path).localeCompare(basename(b.path)))
 
     // Show folders at the top
     const uris = [...folderUris, ...fileUris]
