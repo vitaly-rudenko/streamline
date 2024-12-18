@@ -202,6 +202,10 @@
         "icon": "$(edit)"
       },
       {
+        "command": "streamline.bookmarks.move",
+        "title": "Move to List..."
+      },
+      {
         "command": "streamline.bookmarks.revealInExplorer",
         "title": "Reveal in Explorer",
         "icon": "$(eye)"
@@ -415,6 +419,11 @@
         {
           "command": "streamline.bookmarks.editNote",
           "when": "view == bookmarks && viewItem == selection",
+          "group": "info@1"
+        },
+        {
+          "command": "streamline.bookmarks.move",
+          "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == selection)",
           "group": "info@1"
         },
         {

@@ -141,6 +141,8 @@ export class ListTreeItem extends vscode.TreeItem {
 }
 
 export class FolderTreeItem extends vscode.TreeItem {
+  public readonly type = 'folder'
+
   constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean) {
     super(label, hasChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)
 
@@ -152,6 +154,8 @@ export class FolderTreeItem extends vscode.TreeItem {
 }
 
 export class FileTreeItem extends vscode.TreeItem {
+  public readonly type = 'file'
+
   constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean, isRealFile: boolean) {
     super(
       isRealFile ? label : `[${label}]`,
@@ -182,6 +186,8 @@ const noteThemeIcon = new vscode.ThemeIcon('note')
 const selectionThemeIcon = new vscode.ThemeIcon('selection')
 
 export class SelectionTreeItem extends vscode.TreeItem {
+  public readonly type = 'selection'
+
   constructor(
     public readonly bookmark: Bookmark,
     public readonly list: string,

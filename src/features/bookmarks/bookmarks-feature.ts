@@ -158,22 +158,55 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     vscode.commands.registerCommand('streamline.bookmarks.editNote', async (item?: SelectionTreeItem) => {
       if (!item) return
 
-      const oldNote = item.note
       const newNote = await vscode.window.showInputBox({ prompt: 'Enter the note', value: item?.note })
-      if (newNote === undefined || oldNote === newNote) return
+      if (newNote === undefined) return
 
       // Check if bookmark still exists
       const bookmarks = config.getBookmarks()
-      if (!bookmarks.includes(item.bookmark)) {
+      const bookmarkToEdit = item.bookmark
+
+      if (!bookmarks.includes(bookmarkToEdit)) {
         bookmarksTreeDataProvider.refresh()
         await vscode.window.showWarningMessage('Something went wrong, please try again')
         return
       }
 
+      if (bookmarkToEdit.note === newNote) return
+
       // Replace old bookmark with new bookmark (with updated note)
       config.setBookmarks([
-        ...bookmarks.filter((bookmark) => bookmark !== item.bookmark),
-        { ...item.bookmark, note: newNote === '' ? undefined : newNote },
+        ...bookmarks.filter((bookmark) => bookmark !== bookmarkToEdit),
+        { ...bookmarkToEdit, note: newNote === '' ? undefined : newNote },
+      ])
+
+      bookmarksTreeDataProvider.refresh()
+      config.saveInBackground()
+    })
+  )
+
+  // Move a single bookmark to another list
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.move', async (item?: FolderTreeItem | FileTreeItem | SelectionTreeItem) => {
+      if (!item) return
+
+      const newList = await promptListSelection()
+      if (!newList) return
+
+      // Check if bookmark still exists
+      const bookmarks = config.getBookmarks()
+      const bookmarkToMove = bookmarks.find(bookmark => bookmark.list === item.list && bookmark.uri.path === item.uri.path && bookmark.type === item.type)
+
+      if (!bookmarkToMove) {
+        bookmarksTreeDataProvider.refresh()
+        await vscode.window.showWarningMessage('Something went wrong, please try again')
+        return
+      }
+
+      if (bookmarkToMove.list === newList) return
+
+      config.setBookmarks([
+        ...config.getBookmarks().filter((bookmark) => bookmark !== bookmarkToMove),
+        { ...bookmarkToMove, list: newList },
       ])
 
       bookmarksTreeDataProvider.refresh()
