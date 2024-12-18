@@ -564,6 +564,19 @@
           },
           "description": "Scopes"
         },
+        "streamline.scopedPaths.hideWorkspaceFolders": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hide unscoped Workspace Folders when currently scoped (experimental, may cause Workspace Folders to be lost)"
+        },
+        "streamline.scopedPaths.workspaceFoldersSnapshot": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Snapshot of Workspace Folders to safely restore after unscoped"
+        },
         "streamline.highlightedPaths.patterns": {
           "type": "array",
           "default": [],

@@ -3,23 +3,26 @@ import type { DirectoryReader } from '../../../utils/types'
 import { unique } from '../../../utils/unique'
 
 /** Generates a list of files to *safely* exclude based on selected 'scoped paths' and explicitly 'excluded paths' */
-export async function generateExcludedPathsFromScopedAndExcludedPaths(scopedAndExcludedPaths: string[], directoryReader: DirectoryReader): Promise<string[]> {
+export async function generateExcludedPathsFromScopedAndExcludedPaths(
+  scopedAndExcludedPaths: string[],
+  directoryReader: DirectoryReader,
+  workspaceFolders: string[]
+): Promise<string[]> {
   const scopedPaths = scopedAndExcludedPaths.filter(path => !path.startsWith('!'))
   const excludedPaths = scopedAndExcludedPaths.filter(path => path.startsWith('!')).map(path => path.slice(1))
 
   const [excludedPathsFromScopedPath, excludedPathsForExcludedPaths] = await Promise.all([
-    generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader),
-    generateExcludedPathsFromExcludedPaths(excludedPaths, directoryReader),
+    generateExcludedPathsFromScopedPaths(scopedPaths, directoryReader, workspaceFolders),
+    generateExcludedPathsFromExcludedPaths(excludedPaths, directoryReader, workspaceFolders),
   ])
 
   return unique([...excludedPathsFromScopedPath, ...excludedPathsForExcludedPaths])
 }
 
 /** Finds all files to *safely* exclude based on 'scoped paths' */
-async function generateExcludedPathsFromScopedPaths(scopedPaths: string[], directoryReader: DirectoryReader) {
+async function generateExcludedPathsFromScopedPaths(scopedPaths: string[], directoryReader: DirectoryReader, workspaceFolders: string[]) {
   if (scopedPaths.length === 0) return []
 
-  const workspaceFolders = await directoryReader.read('')
   const recursiveScopedOrphanPaths = new Set(
     removeWorkspaceFolders([
       ...scopedPaths,
@@ -56,12 +59,11 @@ async function generateExcludedPathsFromScopedPaths(scopedPaths: string[], direc
 }
 
 /** Finds all files to *safely* exclude based on 'excluded paths' */
-async function generateExcludedPathsFromExcludedPaths(excludedPaths: string[], directoryReader: DirectoryReader) {
+async function generateExcludedPathsFromExcludedPaths(excludedPaths: string[], directoryReader: DirectoryReader, workspaceFolders: string[]) {
   if (excludedPaths.length === 0) return []
 
-  const allWorkspaceFolders = await directoryReader.read('')
   const excludedWorkspaceFolders = excludedPaths.filter(path => !path.includes('/'))
-  const nonExcludedWorkspaceFolders = allWorkspaceFolders.filter(workspaceFolder => !excludedWorkspaceFolders.includes(workspaceFolder))
+  const nonExcludedWorkspaceFolders = workspaceFolders.filter(workspaceFolder => !excludedWorkspaceFolders.includes(workspaceFolder))
 
   const pathsToExclude = excludedPaths.filter(path => path.includes('/'))
   const pathsToExcludeWithoutWorkspaceFolders = removeWorkspaceFolders(pathsToExclude)
@@ -69,7 +71,7 @@ async function generateExcludedPathsFromExcludedPaths(excludedPaths: string[], d
   const results = []
   for (const excludedPathWithoutWorkspaceFolder of pathsToExcludeWithoutWorkspaceFolders) {
     const excludedOrNotExistsPerWorkspaceFolder = await Promise.all(
-      allWorkspaceFolders.map(async (workspaceFolder) => {
+      workspaceFolders.map(async (workspaceFolder) => {
         const pathToCheck = `${workspaceFolder}/${excludedPathWithoutWorkspaceFolder}`
         if (excludedPaths.includes(pathToCheck)) return true
 

@@ -22,24 +22,23 @@ export class CachedDirectoryReader implements DirectoryReader {
 	}
 
 	async read(path: string): Promise<string[]> {
+		if (path === '') throw new Error('Empty path is provided')
+
 		const cached = this._cache.get(path)
 		if (cached) return cached
 
 		let results: string[] = []
-		if (path !== '') {
-			const uri = pathToUri(path)
-			if (uri) {
-				try {
-					const files = await vscode.workspace.fs.readDirectory(uri)
-					results = files.map(([name]) => `${path}/${name}`)
-				} catch (error) {
-					if (!(error instanceof vscode.FileSystemError && (error.code === 'FileNotADirectory' || error.code === 'FileNotFound'))) {
-						throw error
-					}
+
+		const uri = pathToUri(path)
+		if (uri) {
+			try {
+				const files = await vscode.workspace.fs.readDirectory(uri)
+				results = files.map(([name]) => `${path}/${name}`)
+			} catch (error) {
+				if (!(error instanceof vscode.FileSystemError && (error.code === 'FileNotADirectory' || error.code === 'FileNotFound'))) {
+					throw error
 				}
 			}
-		} else {
-			results = (vscode.workspace.workspaceFolders ?? []).map(workspaceFolder => workspaceFolder.name)
 		}
 
 		this._cache.set(path, results)
