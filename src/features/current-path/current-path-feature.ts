@@ -10,22 +10,50 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   const config = new CurrentPathConfig()
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
-    updateStatusBarItems()
+    updateCurrentPathStatusBarItem()
+    updateCurrentSelectionStatusBarItem()
   }, 500)
 
-  const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99)
-  textStatusBarItem.name = 'Current Path'
-  textStatusBarItem.command = 'streamline.currentPath.copy'
-  context.subscriptions.push(textStatusBarItem)
+  const currentPathStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99)
+  currentPathStatusBarItem.name = 'Current Path'
+  currentPathStatusBarItem.command = 'streamline.currentPath.copy'
+  context.subscriptions.push(currentPathStatusBarItem)
 
-  function updateStatusBarItems() {
+  const currentSelectionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99)
+  currentSelectionStatusBarItem.name = 'Current Selection'
+  context.subscriptions.push(currentSelectionStatusBarItem)
+
+  function updateCurrentPathStatusBarItem() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
       const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path)
-      textStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), config.getCollapsedIndicator())
-      textStatusBarItem.show()
+      currentPathStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), config.getCollapsedIndicator())
+      currentPathStatusBarItem.show()
     } else {
-      textStatusBarItem.hide()
+      currentPathStatusBarItem.hide()
+    }
+  }
+
+  function updateCurrentSelectionStatusBarItem() {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (activeTextEditor) {
+      if (activeTextEditor.selection.isEmpty) {
+        currentSelectionStatusBarItem.text = `${activeTextEditor.selection.start.line}:${activeTextEditor.selection.start.character}`
+      } else {
+        const stats = activeTextEditor.selection.isSingleLine
+          ? `${activeTextEditor.selection.end.character - activeTextEditor.selection.start.character}C`
+          : `${activeTextEditor.selection.end.line - activeTextEditor.selection.start.line + 1}L ${activeTextEditor.document.getText(activeTextEditor.selection).length}C`
+
+        if (activeTextEditor.selection.isSingleLine) {
+          currentSelectionStatusBarItem.text = `${activeTextEditor.selection.start.line}:${activeTextEditor.selection.start.character}-${activeTextEditor.selection.end.character} (${stats})`
+        } else {
+          currentSelectionStatusBarItem.text = `${activeTextEditor.selection.start.line}:${activeTextEditor.selection.start.character}-${activeTextEditor.selection.end.line}:${activeTextEditor.selection.end.character} (${stats})`
+        }
+      }
+
+      currentSelectionStatusBarItem.show()
+    } else {
+      currentPathStatusBarItem.hide()
     }
   }
 
@@ -38,16 +66,17 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
       await vscode.env.clipboard.writeText(activeTextEditor.document.uri.path)
 
       const copiedMessage = '⸱⸱⸱ copied!'
-      textStatusBarItem.text = textStatusBarItem.text.length > copiedMessage.length
-        ? textStatusBarItem.text.slice(0, -copiedMessage.length) + copiedMessage
+      currentPathStatusBarItem.text = currentPathStatusBarItem.text.length > copiedMessage.length
+        ? currentPathStatusBarItem.text.slice(0, -copiedMessage.length) + copiedMessage
         : copiedMessage
 
-      setTimeout(() => updateStatusBarItems(), 1000)
+      setTimeout(() => updateCurrentPathStatusBarItem(), 1000)
     })
   )
 
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => updateStatusBarItems()),
+    vscode.window.onDidChangeActiveTextEditor(() => updateCurrentPathStatusBarItem()),
+    vscode.window.onDidChangeTextEditorSelection(() => updateCurrentSelectionStatusBarItem()),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.currentPath')) {
         if (!config.isSavingInBackground) {
@@ -57,5 +86,6 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
     }),
   )
 
-  updateStatusBarItems()
+  updateCurrentPathStatusBarItem()
+  updateCurrentSelectionStatusBarItem()
 }
