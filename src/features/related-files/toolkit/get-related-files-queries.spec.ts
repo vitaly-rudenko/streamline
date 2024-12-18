@@ -1,7 +1,7 @@
 import assert from 'assert'
 import { getRelatedFilesQueries } from './get-related-files-queries'
 
-const excludedSuffixes = ['test', 'js']
+const excludedSuffixes = ['test']
 
 describe('getPathQuery()', () => {
   it('returns a basename', () => {

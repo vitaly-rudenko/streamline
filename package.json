@@ -632,16 +632,7 @@
           "items": {
             "type": "string"
           },
-          "default": [
-            "js",
-            "ts",
-            "mjs",
-            "mts",
-            "rb",
-            "spec",
-            "test",
-            "e2e-spec"
-          ],
+          "default": ["spec", "test", "e2e-spec"],
           "description": "Basename suffixes to exclude from search (e.g. js, ts, test and spec)"
         },
         "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {

@@ -9,7 +9,7 @@ const defaultUseStricterQuickOpenQuery = false
 const defaultUseGlobalSearch = false
 const defaultMaxLabelLength = 60
 const defaultCollapsedIndicator = '⸱⸱⸱'
-const defaultExcludedSuffixes = ['js', 'ts', 'mjs', 'mts', 'rb', 'spec', 'test', 'e2e-spec', 'snap']
+const defaultExcludedSuffixes = ['spec', 'test', 'e2e-spec']
 
 export class RelatedFilesConfig extends FeatureConfig {
   private _customExcludes: Record<string, unknown> = {}
