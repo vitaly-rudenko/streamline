@@ -47,21 +47,16 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   }
 
   async function promptListSelection() {
-    const archiveItem = '------------ Archive ------------'
     const addNewListItem = '+ Add new list'
 
     let selectedList = await vscode.window.showQuickPick(
       [
         ...cache.getCachedSortedUnarchivedLists(),
         addNewListItem,
-        ...cache.getCachedSortedArchivedLists().length > 0 ? [archiveItem, ...cache.getCachedSortedArchivedLists()] : [],
       ],
       { title: 'Select Bookmarks List' }
     )
     if (!selectedList) return undefined
-    if (selectedList === archiveItem) {
-      return promptListSelection()
-    }
 
     if (selectedList === addNewListItem) {
       selectedList = await vscode.window.showInputBox({ prompt: 'Enter the name of new list' })
