@@ -83,7 +83,6 @@ export function createScopedPathsFeature(input: {
 
   /** Updates current workspace folders to match 'expected' list of workspace folders (depending on whether scope is enabled in state) - only if necessary */
   function applyWorkspaceFolders() {
-    if (!config.getHideWorkspaceFolders()) return false
     if (!vscode.workspace.workspaceFolders) return // Do nothing when no workspace is opened
 
     const currentWorkspaceFolders = [...vscode.workspace.workspaceFolders]
@@ -163,7 +162,6 @@ export function createScopedPathsFeature(input: {
 
   /** Create / update snapshot of 'current' workspace folders to be able to restore from it when unscoped */
   async function saveCurrentWorkspaceFoldersSnapshot() {
-    if (!config.getHideWorkspaceFolders()) return
     if (!vscode.workspace.workspaceFolders) return // Do nothing when no workspace is opened
 
     let currentWorkspaceFolders: vscode.WorkspaceFolder[]
@@ -206,8 +204,6 @@ export function createScopedPathsFeature(input: {
   }
 
   function getCurrentWorkspaceFoldersSnapshot(): vscode.WorkspaceFolder[] {
-    if (!config.getHideWorkspaceFolders()) return [...vscode.workspace.workspaceFolders ?? []]
-
     const serializedWorkspaceFolders = getConfig().inspect<string[]>('scopedPaths.workspaceFoldersSnapshot')?.workspaceValue ?? []
     return serializedWorkspaceFolders
       .map((serializedWorkspaceFolder, index) => {

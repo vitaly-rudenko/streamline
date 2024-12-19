@@ -3,13 +3,10 @@ import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 import { isScopesObjectSerializable } from './toolkit/is-scopes-object-serializable'
 
-const defaultHideWorkspaceFolders = false
-
 export class ScopedPathsConfig extends FeatureConfig {
   public onChange?: Function
 
   private _scopesObject: Record<string, string[]> = {}
-  private _hideWorkspaceFolders: boolean = defaultHideWorkspaceFolders
 
   constructor() {
     super('ScopedPaths')
@@ -18,16 +15,11 @@ export class ScopedPathsConfig extends FeatureConfig {
 
   load(config = getConfig()) {
     const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
-    const hideWorkspaceFolders = config.get<boolean>('scopedPaths.hideWorkspaceFolders', defaultHideWorkspaceFolders)
 
     let hasChanged = false
 
-    if (
-      JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)
-      || this._hideWorkspaceFolders !== hideWorkspaceFolders
-    ) {
+    if (JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)) {
       this._scopesObject = scopesObject
-      this._hideWorkspaceFolders = hideWorkspaceFolders
 
       hasChanged = true
     }
@@ -36,7 +28,7 @@ export class ScopedPathsConfig extends FeatureConfig {
       this.onChange?.()
     }
 
-    console.debug('[ScopedPaths] Config has been loaded', { hasChanged, hideWorkspaceFolders, scopesObject })
+    console.debug('[ScopedPaths] Config has been loaded', { hasChanged, scopesObject })
 
     return hasChanged
   }
@@ -61,9 +53,5 @@ export class ScopedPathsConfig extends FeatureConfig {
 
   getScopesObject() {
     return this._scopesObject
-  }
-
-  getHideWorkspaceFolders() {
-    return this._hideWorkspaceFolders
   }
 }
