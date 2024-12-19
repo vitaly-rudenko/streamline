@@ -1,10 +1,5 @@
 import { basename } from 'path'
-import { Condition, Rule } from './smart-config-config'
-
-export type SmartConfigContext = {
-  path: string | undefined
-  toggles: string[]
-}
+import { Rule, Condition, SmartConfigContext } from '../common'
 
 export function getMatchingConfigNames(context: SmartConfigContext, rules: Rule[]): string[] {
   const configNames: string[] = []

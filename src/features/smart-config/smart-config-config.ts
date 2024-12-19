@@ -1,13 +1,8 @@
 import { getConfig, initialConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
+import { Config, Rule } from './common'
 
-export type Config = Record<string, unknown>
-export type Condition = { basename: string } | { path: string } | { toggle: string }
-export type Rule = {
-  apply: string[]
-  when: Condition[]
-}
-export type Inspected<T> = {
+type Inspected<T> = {
   globalValue?: T
   workspaceValue?: T
   workspaceFolderValue?: T

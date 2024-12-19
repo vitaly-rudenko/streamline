@@ -1,8 +1,9 @@
 import * as vscode from 'vscode'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
-import { Config, SmartConfigConfig } from './smart-config-config'
-import { getMatchingConfigNames, SmartConfigContext } from './get-matching-config-names'
+import { SmartConfigConfig } from './smart-config-config'
+import { getMatchingConfigNames } from './toolkit/get-matching-config-names'
 import { SmartConfigWorkspaceState } from './smart-config-workspace-state'
+import { Config, SmartConfigContext } from './common'
 
 export function createSmartConfigFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
