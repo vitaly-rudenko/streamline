@@ -37,18 +37,38 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   function updateCurrentSelectionStatusBarItem() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
-      if (activeTextEditor.selection.isEmpty) {
-        currentSelectionStatusBarItem.text = `${activeTextEditor.selection.start.line}:${activeTextEditor.selection.start.character}`
-      } else {
-        const stats = activeTextEditor.selection.isSingleLine
-          ? `${activeTextEditor.selection.end.character - activeTextEditor.selection.start.character}C`
-          : `${activeTextEditor.selection.end.line - activeTextEditor.selection.start.line + 1}L ${activeTextEditor.document.getText(activeTextEditor.selection).length}C`
+      const { start, end, isEmpty, isSingleLine } = activeTextEditor.selection
 
-        if (activeTextEditor.selection.isSingleLine) {
-          currentSelectionStatusBarItem.text = `${activeTextEditor.selection.start.line}:${activeTextEditor.selection.start.character}-${activeTextEditor.selection.end.character} (${stats})`
-        } else {
-          currentSelectionStatusBarItem.text = `${activeTextEditor.selection.start.line}:${activeTextEditor.selection.start.character}-${activeTextEditor.selection.end.line}:${activeTextEditor.selection.end.character} (${stats})`
+      const tabSize = Number(vscode.workspace.getConfiguration('editor').get('tabSize', 4))
+
+      function line(position: vscode.Position) {
+        return position.line + 1
+      }
+
+      // Get current character position on the screen (column), calculates tab widths
+      function col(position: vscode.Position) {
+        const line = activeTextEditor!.document.lineAt(position.line)
+
+        let column = 0
+        for (let i = 0; i < position.character; i++) {
+          column = line.text[i] === '\t'
+            ? Math.ceil((column + 1) / tabSize) * tabSize // Round up to the next tab stop
+            : column + 1
         }
+
+        return column + 1
+      }
+
+      if (isEmpty) {
+        currentSelectionStatusBarItem.text = `${line(start)}:${col(start)}`
+      } else {
+        const stats = isSingleLine
+          ? `${end.character - start.character}C`
+          : `${end.line - start.line + 1}L ${activeTextEditor.document.getText(activeTextEditor.selection).length}C`
+
+        currentSelectionStatusBarItem.text = isSingleLine
+          ? `${line(start)}:${col(start)}-${col(end)} (${stats})`
+          : `${line(start)}:${col(start)}-${line(end)}:${col(end)} (${stats})`
       }
 
       currentSelectionStatusBarItem.show()
