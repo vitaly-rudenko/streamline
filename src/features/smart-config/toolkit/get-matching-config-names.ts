@@ -38,5 +38,12 @@ function testCondition(context: SmartConfigContext, condition: Condition): boole
     }
   }
 
+  if (context.scope) {
+    if ('scope' in condition) {
+      return context.scope === condition.scope
+         && (condition.enabled === undefined || condition.enabled === context.scopeEnabled)
+    }
+  }
+
   return false
 }

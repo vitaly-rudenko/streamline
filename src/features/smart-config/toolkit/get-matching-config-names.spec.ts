@@ -14,10 +14,7 @@ describe('getMatchingConfigNames()', () => {
       },
       {
         apply: ['js-config'],
-        when: [
-          { path: '\/src\/' },
-          { basename: '\\.js$' },
-        ]
+        when: [{ path: '\/src\/' }, { basename: '\\.js$' }]
       },
       {
         apply: ['focus-mode'],
@@ -34,6 +31,18 @@ describe('getMatchingConfigNames()', () => {
       {
         apply: ['plain-text'],
         when: [{ languageId: 'plaintext' }]
+      },
+      {
+        apply: ['minimal-mode'],
+        when: [{ scope: 'Minimal' }]
+      },
+      {
+        apply: ['loose-minimal-mode'],
+        when: [{ scope: 'Minimal', enabled: false }]
+      },
+      {
+        apply: ['strict-minimal-mode'],
+        when: [{ scope: 'Minimal', enabled: true }]
       }
     ]
 
@@ -43,6 +52,7 @@ describe('getMatchingConfigNames()', () => {
         path: '/path/to/file.test.js',
         toggles: [],
         colorThemeKind: 'dark',
+        scopeEnabled: false,
       }, rules)
     ).toEqual(['test-config', 'copilot', 'js-config', 'dark-theme'])
 
@@ -52,6 +62,7 @@ describe('getMatchingConfigNames()', () => {
         path: '/path/to/file.test.tsx',
         toggles: [],
         colorThemeKind: 'high-contrast',
+        scopeEnabled: false,
       }, rules)
     ).toEqual(['test-config', 'copilot', 'dark-theme'])
 
@@ -61,6 +72,7 @@ describe('getMatchingConfigNames()', () => {
         path: '/path/to/file.js',
         toggles: [],
         colorThemeKind: 'dark',
+        scopeEnabled: false,
       }, rules)
     ).toEqual(['js-config', 'dark-theme'])
 
@@ -70,6 +82,7 @@ describe('getMatchingConfigNames()', () => {
         path: '/path/to/file.ts',
         toggles: [],
         colorThemeKind: 'high-contrast-light',
+        scopeEnabled: false,
       }, rules)
     ).toEqual(['light-theme'])
 
@@ -77,6 +90,7 @@ describe('getMatchingConfigNames()', () => {
       getMatchingConfigNames({
         toggles: [],
         colorThemeKind: 'high-contrast-light',
+        scopeEnabled: false,
       }, rules)
     ).toEqual(['light-theme'])
 
@@ -86,6 +100,7 @@ describe('getMatchingConfigNames()', () => {
         path: '/path/to/file.md',
         toggles: ['Copilot', 'Focus'],
         colorThemeKind: 'light',
+        scopeEnabled: false,
       }, rules)
     ).toEqual(['copilot', 'focus-mode', 'light-theme'])
 
@@ -94,8 +109,32 @@ describe('getMatchingConfigNames()', () => {
         path: '/path/to/file.txt',
         toggles: ['Copilot', 'Focus'],
         colorThemeKind: 'light',
-        languageId: 'plaintext'
+        languageId: 'plaintext',
+        scope: 'Maximum',
+        scopeEnabled: false,
       }, rules)
     ).toEqual(['copilot', 'focus-mode', 'light-theme', 'plain-text'])
+
+    expect(
+      getMatchingConfigNames({
+        path: '/path/to/file.rb',
+        toggles: [],
+        colorThemeKind: 'light',
+        languageId: 'ruby',
+        scope: 'Minimal',
+        scopeEnabled: true,
+      }, rules)
+    ).toEqual(['light-theme', 'minimal-mode', 'strict-minimal-mode'])
+
+    expect(
+      getMatchingConfigNames({
+        path: '/path/to/file.rb',
+        toggles: [],
+        colorThemeKind: 'light',
+        languageId: 'ruby',
+        scope: 'Minimal',
+        scopeEnabled: false,
+      }, rules)
+    ).toEqual(['light-theme', 'minimal-mode', 'loose-minimal-mode'])
   })
 })

@@ -4,23 +4,44 @@ import { SmartConfigConfig } from './smart-config-config'
 import { getMatchingConfigNames } from './toolkit/get-matching-config-names'
 import { SmartConfigWorkspaceState } from './smart-config-workspace-state'
 import { Config, SmartConfigContext } from './common'
+import { createScopedPathsFeature } from '../scoped-paths/scoped-paths-feature'
 
-export function createSmartConfigFeature(input: { context: vscode.ExtensionContext }) {
+export function createSmartConfigFeature(input: {
+  context: vscode.ExtensionContext
+}) {
   const { context } = input
 
   const config = new SmartConfigConfig()
   const workspaceState = new SmartConfigWorkspaceState(context.workspaceState)
 
-  const debouncedUpdateRelevantConfigs = createDebouncedFunction(updateRelevantConfigs, 250)
-
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
-    debouncedUpdateRelevantConfigs()
+    updateRelevantConfigsInBackground()
+    updateStatusBarItems()
   }, 500)
+
+  const scheduleRefresh = createDebouncedFunction(() => {
+    updateRelevantConfigsInBackground()
+    updateStatusBarItems()
+  }, 100)
 
   let toggleItems: vscode.StatusBarItem[] = []
 
-  async function updateStatusBarItems() {
+  function generateSmartConfigContext(): SmartConfigContext {
+    return {
+      languageId: vscode.window.activeTextEditor?.document.languageId,
+      path: vscode.window.activeTextEditor?.document.uri.path,
+      toggles: workspaceState.getToggles(),
+      colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
+        : 'high-contrast-light',
+      scope: 'test',
+      scopeEnabled: false,
+    }
+  }
+
+  function updateStatusBarItems() {
     const toggles = [...new Set([
       ...config.getInspectedToggles()?.globalValue ?? [],
       ...config.getInspectedToggles()?.workspaceValue ?? [],
@@ -42,6 +63,7 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
       context.subscriptions.push(item)
       item.show()
 
+      // TODO: Use icon instead of background
       if (workspaceState.getToggles().includes(toggle)) {
         item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground')
       }
@@ -49,17 +71,7 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
       toggleItems.push(item)
     }
 
-    const ctx: SmartConfigContext = {
-      languageId: vscode.window.activeTextEditor?.document.languageId,
-      path: vscode.window.activeTextEditor?.document.uri.path,
-      toggles: workspaceState.getToggles(),
-      colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
-        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
-        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
-        : 'high-contrast-light',
-    }
-
-    vscode.window.activeTextEditor?.document.languageId
+    const ctx = generateSmartConfigContext()
 
     const configNames = [...new Set([
       ...getMatchingConfigNames(ctx, config.getInspectedRules()?.globalValue ?? []),
@@ -68,16 +80,8 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
     ])]
   }
 
-  async function updateRelevantConfigs() {
-    const ctx: SmartConfigContext = {
-      languageId: vscode.window.activeTextEditor?.document.languageId,
-      path: vscode.window.activeTextEditor?.document.uri.path,
-      toggles: workspaceState.getToggles(),
-      colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
-        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
-        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
-        : 'high-contrast-light'
-    }
+  async function updateRelevantConfigsInBackground() {
+    const ctx = generateSmartConfigContext()
 
     console.debug('Context:', ctx)
 
@@ -163,34 +167,32 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
   }
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.smartConfig.toggle', async (toggle: string) => {
+    vscode.commands.registerCommand('streamline.smartConfig.toggle', (toggle: string) => {
       if (workspaceState.getToggles().includes(toggle)) {
         workspaceState.setToggles(workspaceState.getToggles().filter(t => t !== toggle))
       } else {
         workspaceState.setToggles([...workspaceState.getToggles(), toggle])
       }
 
-      await updateStatusBarItems()
+      scheduleRefresh()
     }),
-    vscode.window.onDidChangeActiveTextEditor(() => {
-      debouncedUpdateRelevantConfigs()
-    }),
+  )
+
+  context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
-      console.log('config changed')
       if (event.affectsConfiguration('streamline.smartConfig')) {
         if (!config.isSavingInBackground) {
           scheduleConfigLoad()
         }
       }
     }),
-    vscode.window.onDidChangeActiveColorTheme((event) => {
-      console.log('theme', event.kind)
-    }),
-    vscode.window.onDidChangeWindowState((e) => {
-      console.log('window', e)
-    }),
+    vscode.window.onDidChangeActiveTextEditor(() => scheduleRefresh()),
+    vscode.window.onDidChangeActiveColorTheme(() => scheduleRefresh()),
   )
 
-  updateRelevantConfigs()
-  updateStatusBarItems()
+  scheduleRefresh()
+
+  return {
+    scheduleRefresh,
+  }
 }
