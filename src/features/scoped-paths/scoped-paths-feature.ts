@@ -75,7 +75,9 @@ export function createScopedPathsFeature(input: {
     const currentWorkspaceFoldersSnapshot = getCurrentWorkspaceFoldersSnapshot()
     const scopedWorkspaceFolderNames = cache.getCachedCurrentlyScopedWorkspaceFolderNames()
 
-    return currentWorkspaceFoldersSnapshot.filter(wf => scopedWorkspaceFolderNames.includes(wf.name))
+    return scopedWorkspaceFolderNames.length > 0
+      ? currentWorkspaceFoldersSnapshot.filter(wf => scopedWorkspaceFolderNames.includes(wf.name))
+      : currentWorkspaceFoldersSnapshot // Do not hide workspace folders if none are currently scoped
   }
 
   /** Stores timestamp of latest workspace folders change by the extension, used for cooldown */
