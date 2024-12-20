@@ -7,6 +7,7 @@ export type Condition =
  | { path: string }
  | { toggle: string }
  | { colorThemeKind: ColorThemeKindSlug }
+ | { languageId: string }
 
 export type Rule = {
   apply: string[]
@@ -14,7 +15,8 @@ export type Rule = {
 }
 
 export type SmartConfigContext = {
-  path: string | undefined
+  languageId?: string | undefined
+  path?: string | undefined
   toggles: string[]
   colorThemeKind: ColorThemeKindSlug
 }

@@ -50,13 +50,16 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
     }
 
     const ctx: SmartConfigContext = {
+      languageId: vscode.window.activeTextEditor?.document.languageId,
       path: vscode.window.activeTextEditor?.document.uri.path,
       toggles: workspaceState.getToggles(),
       colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
-        : 'high-contrast-light'
+        : 'high-contrast-light',
     }
+
+    vscode.window.activeTextEditor?.document.languageId
 
     const configNames = [...new Set([
       ...getMatchingConfigNames(ctx, config.getInspectedRules()?.globalValue ?? []),
@@ -67,6 +70,7 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
 
   async function updateRelevantConfigs() {
     const ctx: SmartConfigContext = {
+      languageId: vscode.window.activeTextEditor?.document.languageId,
       path: vscode.window.activeTextEditor?.document.uri.path,
       toggles: workspaceState.getToggles(),
       colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'

@@ -32,5 +32,11 @@ function testCondition(context: SmartConfigContext, condition: Condition): boole
     return context.colorThemeKind === condition.colorThemeKind
   }
 
+  if (context.languageId) {
+    if ('languageId' in condition) {
+      return context.languageId === condition.languageId
+    }
+  }
+
   return false
 }

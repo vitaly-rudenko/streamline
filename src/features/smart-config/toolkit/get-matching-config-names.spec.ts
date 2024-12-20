@@ -6,7 +6,7 @@ describe('getMatchingConfigNames()', () => {
     const rules: Rule[] = [
       {
         apply: ['test-config', 'copilot'],
-        when: [{ basename: '\\.test\\.(js|ts)$' }]
+        when: [{ basename: '\\.test\\.(js|tsx?)$' }]
       },
       {
         apply: ['copilot'],
@@ -30,11 +30,16 @@ describe('getMatchingConfigNames()', () => {
       {
         apply: ['dark-theme'],
         when: [{ colorThemeKind: 'dark' }, { colorThemeKind: 'high-contrast' }]
+      },
+      {
+        apply: ['plain-text'],
+        when: [{ languageId: 'plaintext' }]
       }
     ]
 
     expect(
       getMatchingConfigNames({
+        languageId: 'javascript',
         path: '/path/to/file.test.js',
         toggles: [],
         colorThemeKind: 'dark',
@@ -43,7 +48,8 @@ describe('getMatchingConfigNames()', () => {
 
     expect(
       getMatchingConfigNames({
-        path: '/path/to/file.test.ts',
+        languageId: 'typescriptreact',
+        path: '/path/to/file.test.tsx',
         toggles: [],
         colorThemeKind: 'high-contrast',
       }, rules)
@@ -51,6 +57,7 @@ describe('getMatchingConfigNames()', () => {
 
     expect(
       getMatchingConfigNames({
+        languageId: 'javascript',
         path: '/path/to/file.js',
         toggles: [],
         colorThemeKind: 'dark',
@@ -59,6 +66,7 @@ describe('getMatchingConfigNames()', () => {
 
     expect(
       getMatchingConfigNames({
+        languageId: 'typescript',
         path: '/path/to/file.ts',
         toggles: [],
         colorThemeKind: 'high-contrast-light',
@@ -67,10 +75,27 @@ describe('getMatchingConfigNames()', () => {
 
     expect(
       getMatchingConfigNames({
-        path: '/path/to/file.txt',
+        toggles: [],
+        colorThemeKind: 'high-contrast-light',
+      }, rules)
+    ).toEqual(['light-theme'])
+
+    expect(
+      getMatchingConfigNames({
+        languageId: 'markdown',
+        path: '/path/to/file.md',
         toggles: ['Copilot', 'Focus'],
         colorThemeKind: 'light',
       }, rules)
     ).toEqual(['copilot', 'focus-mode', 'light-theme'])
+
+    expect(
+      getMatchingConfigNames({
+        path: '/path/to/file.txt',
+        toggles: ['Copilot', 'Focus'],
+        colorThemeKind: 'light',
+        languageId: 'plaintext'
+      }, rules)
+    ).toEqual(['copilot', 'focus-mode', 'light-theme', 'plain-text'])
   })
 })
