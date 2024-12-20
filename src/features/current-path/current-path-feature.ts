@@ -73,7 +73,7 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
 
       currentSelectionStatusBarItem.show()
     } else {
-      currentPathStatusBarItem.hide()
+      currentSelectionStatusBarItem.hide()
     }
   }
 
@@ -95,7 +95,10 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   )
 
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => updateCurrentPathStatusBarItem()),
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      updateCurrentPathStatusBarItem()
+      updateCurrentSelectionStatusBarItem()
+    }),
     vscode.window.onDidChangeTextEditorSelection(() => updateCurrentSelectionStatusBarItem()),
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.currentPath')) {
