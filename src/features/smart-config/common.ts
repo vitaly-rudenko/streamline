@@ -1,6 +1,12 @@
 export type Config = Record<string, unknown>
 
-export type Condition = { basename: string } | { path: string } | { toggle: string }
+export type ColorThemeKindSlug = 'dark' | 'light' | 'high-contrast' | 'high-contrast-light'
+
+export type Condition =
+ | { basename: string }
+ | { path: string }
+ | { toggle: string }
+ | { colorThemeKind: ColorThemeKindSlug }
 
 export type Rule = {
   apply: string[]
@@ -10,4 +16,5 @@ export type Rule = {
 export type SmartConfigContext = {
   path: string | undefined
   toggles: string[]
+  colorThemeKind: ColorThemeKindSlug
 }

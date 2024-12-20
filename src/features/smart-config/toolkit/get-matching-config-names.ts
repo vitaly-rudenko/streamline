@@ -28,5 +28,9 @@ function testCondition(context: SmartConfigContext, condition: Condition): boole
     return context.toggles.includes(condition.toggle)
   }
 
+  if ('colorThemeKind' in condition) {
+    return context.colorThemeKind === condition.colorThemeKind
+  }
+
   return false
 }

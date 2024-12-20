@@ -52,6 +52,10 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
     const ctx: SmartConfigContext = {
       path: vscode.window.activeTextEditor?.document.uri.path,
       toggles: workspaceState.getToggles(),
+      colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
+        : 'high-contrast-light'
     }
 
     const configNames = [...new Set([
@@ -65,6 +69,10 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
     const ctx: SmartConfigContext = {
       path: vscode.window.activeTextEditor?.document.uri.path,
       toggles: workspaceState.getToggles(),
+      colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
+        : 'high-contrast-light'
     }
 
     console.debug('Context:', ctx)
@@ -155,10 +163,7 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
       if (workspaceState.getToggles().includes(toggle)) {
         workspaceState.setToggles(workspaceState.getToggles().filter(t => t !== toggle))
       } else {
-        workspaceState.setToggles([
-          ...workspaceState.getToggles(),
-          toggle,
-        ])
+        workspaceState.setToggles([...workspaceState.getToggles(), toggle])
       }
 
       await updateStatusBarItems()
@@ -167,12 +172,19 @@ export function createSmartConfigFeature(input: { context: vscode.ExtensionConte
       debouncedUpdateRelevantConfigs()
     }),
     vscode.workspace.onDidChangeConfiguration((event) => {
+      console.log('config changed')
       if (event.affectsConfiguration('streamline.smartConfig')) {
         if (!config.isSavingInBackground) {
           scheduleConfigLoad()
         }
       }
-    })
+    }),
+    vscode.window.onDidChangeActiveColorTheme((event) => {
+      console.log('theme', event.kind)
+    }),
+    vscode.window.onDidChangeWindowState((e) => {
+      console.log('window', e)
+    }),
   )
 
   updateRelevantConfigs()
