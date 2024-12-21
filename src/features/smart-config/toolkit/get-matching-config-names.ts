@@ -1,6 +1,7 @@
 import { basename } from 'path'
 import { Rule, Condition, SmartConfigContext } from '../common'
 
+/** Matches rules against the provided context, at least one condition must match per rule */
 export function getMatchingConfigNames(ctx: SmartConfigContext, rules: Rule[]): string[] {
   const configNames: string[] = []
 
@@ -13,6 +14,7 @@ export function getMatchingConfigNames(ctx: SmartConfigContext, rules: Rule[]): 
   return configNames
 }
 
+/** Match specific condition against the provided context */
 function testCondition(ctx: SmartConfigContext, condition: Condition): boolean {
   if (ctx.path) {
     if ('path' in condition) {
@@ -37,8 +39,7 @@ function testCondition(ctx: SmartConfigContext, condition: Condition): boolean {
   }
 
   if ('scope' in condition) {
-    return ctx.scopeSelected === condition.scope
-        && ctx.scopeEnabled
+    return ctx.scopeSelected === condition.scope && ctx.scopeEnabled
   }
 
   if ('scopeSelected' in condition) {

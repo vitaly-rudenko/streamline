@@ -5,8 +5,6 @@ import { unique } from '../../utils/unique'
 import { FeatureConfig } from '../feature-config'
 import { Config, Rule } from './common'
 
-// TODO: add cache
-
 type Inspected<T> = {
   globalValue?: T
   workspaceValue?: T
