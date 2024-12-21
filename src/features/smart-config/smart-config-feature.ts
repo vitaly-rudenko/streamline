@@ -123,10 +123,12 @@ export function createSmartConfigFeature(input: {
     const allSectionsInTarget = unique([defaultConfigInTarget, ...Object.values(allConfigsInTarget)].flatMap(config => Object.keys(config))) satisfies string[]
 
     // Merge all matching configs into one, overriding sections when necessary
-    const mergedConfigs = matchingConfigNames.reduce<Config>((mergedConfigs, configName) => ({ ...mergedConfigs, ...allConfigsInTarget[configName] }), { ...defaultConfigInTarget })
+    const mergedMatchedConfigs = matchingConfigNames.reduce<Config>((mergedConfigs, configName) => ({ ...mergedConfigs, ...allConfigsInTarget[configName] }), { ...defaultConfigInTarget })
+
+    console.debug(`[SmartConfig] Applying merged matched configs in target ${target}:`, mergedMatchedConfigs, allSectionsInTarget)
 
     for (const section of allSectionsInTarget) {
-      const value: any | undefined = mergedConfigs[section]
+      const value: any | undefined = mergedMatchedConfigs[section]
 
       // Value may be undefined if not set by any matching config
       // This is expected behavior, and the section will be removed if value is undefined
@@ -149,7 +151,6 @@ export function createSmartConfigFeature(input: {
     if (oldValue !== newValue) {
       try {
         await vscodeConfig.update(section, newValue, target)
-        console.debug('[SmartConfig] Setting section', section, 'to value', newValue, 'in target', target)
       } catch (error: any) {
         console.warn('[SmartConfig] Could not set section', section, 'to value', newValue, 'in target', target, 'due to', error)
       }
