@@ -14,12 +14,12 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
     updateCurrentSelectionStatusBarItem()
   }, 500)
 
-  const currentPathStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99)
+  const currentPathStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 999)
   currentPathStatusBarItem.name = 'Current Path'
   currentPathStatusBarItem.command = 'streamline.currentPath.copy'
   context.subscriptions.push(currentPathStatusBarItem)
 
-  const currentSelectionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99)
+  const currentSelectionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 999)
   currentSelectionStatusBarItem.name = 'Current Selection'
   context.subscriptions.push(currentSelectionStatusBarItem)
 

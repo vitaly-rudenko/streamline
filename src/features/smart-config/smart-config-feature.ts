@@ -44,6 +44,7 @@ export function createSmartConfigFeature(input: {
     }
   }
 
+  // TODO: avoid unnecessary updates (check by toggle changes)
   function updateStatusBarItems() {
     const toggles = [...new Set([
       ...config.getInspectedToggles()?.globalValue ?? [],
@@ -57,7 +58,7 @@ export function createSmartConfigFeature(input: {
     for (const [i, toggle] of toggles.entries()) {
       const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 11 + i)
       item.name = `Toggle "${toggle}"`
-      item.text = toggle
+      item.text = `${workspaceState.getToggles().includes(toggle) ? '$(circle-filled)' : '$(circle-outline)'}${toggle}`
       item.command = {
         command: 'streamline.smartConfig.toggle',
         title: toggle,
@@ -65,11 +66,6 @@ export function createSmartConfigFeature(input: {
       }
       context.subscriptions.push(item)
       item.show()
-
-      // TODO: Use icon instead of background
-      if (workspaceState.getToggles().includes(toggle)) {
-        item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground')
-      }
 
       toggleItems.push(item)
     }
@@ -83,6 +79,7 @@ export function createSmartConfigFeature(input: {
     ])]
   }
 
+  // TODO: avoid unnecessary updates (check by context changes)
   async function updateRelevantConfigsInBackground() {
     const ctx = generateSmartConfigContext()
 
