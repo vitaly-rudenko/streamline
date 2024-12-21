@@ -29,17 +29,29 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 		: undefined
 
-	const scopedPathsFeature = isFeatureEnabled('scopedPaths')
+  const smartConfigFeature = isFeatureEnabled('smartConfig')
+    ? createSmartConfigFeature({
+      context,
+      dependencies: {
+        getCurrentScope: () => scopedPathsFeature?.getCurrentScope(),
+        isScopeEnabled: () => scopedPathsFeature?.isScopeEnabled() ?? false,
+      }
+    })
+    : undefined
+
+  const scopedPathsFeature = isFeatureEnabled('scopedPaths')
 		? createScopedPathsFeature({
 			context,
-			onChange: async () => onDidChangeFileDecorationsEmitter.fire(undefined),
+			onChange: () => {
+        onDidChangeFileDecorationsEmitter.fire(undefined)
+        smartConfigFeature?.scheduleRefresh()
+      },
 		})
 		: undefined
 
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
 	if (isFeatureEnabled('bookmarks')) createBookmarksFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
-  if (isFeatureEnabled('smartConfig')) createSmartConfigFeature({ context })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')

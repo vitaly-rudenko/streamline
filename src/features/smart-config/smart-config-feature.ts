@@ -4,12 +4,15 @@ import { SmartConfigConfig } from './smart-config-config'
 import { getMatchingConfigNames } from './toolkit/get-matching-config-names'
 import { SmartConfigWorkspaceState } from './smart-config-workspace-state'
 import { Config, SmartConfigContext } from './common'
-import { createScopedPathsFeature } from '../scoped-paths/scoped-paths-feature'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
+  dependencies: {
+    getCurrentScope: () => string | undefined
+    isScopeEnabled: () => boolean
+  }
 }) {
-  const { context } = input
+  const { context, dependencies } = input
 
   const config = new SmartConfigConfig()
   const workspaceState = new SmartConfigWorkspaceState(context.workspaceState)
@@ -36,8 +39,8 @@ export function createSmartConfigFeature(input: {
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
         : 'high-contrast-light',
-      scopeSelected: 'test',
-      scopeEnabled: false,
+      scopeSelected: dependencies.getCurrentScope(),
+      scopeEnabled: dependencies.isScopeEnabled(),
     }
   }
 

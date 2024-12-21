@@ -457,6 +457,12 @@ export function createScopedPathsFeature(input: {
   updateExcludesInBackground()
 
   return {
+    isScopeEnabled() {
+      return workspaceState.getEnabled()
+    },
+    getCurrentScope() {
+      return workspaceState.getCurrentScope()
+    },
     isPathCurrentlyScoped(path: string) {
       return cache.getCachedCurrentlyScopedPathsSet().has(path)
     },
