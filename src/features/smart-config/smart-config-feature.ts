@@ -6,6 +6,10 @@ import { SmartConfigWorkspaceState } from './smart-config-workspace-state'
 import { Config, SmartConfigContext } from './common'
 import { unique } from '../../utils/unique'
 
+// TODO: warn when unknown configName is used
+// TODO: warn when unknown toggle is used
+// TODO: warn when rules are invalid
+
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
   dependencies: {

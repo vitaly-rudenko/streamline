@@ -10,6 +10,8 @@ import { defaultCurrentList } from './common'
 
 const UNDO_HISTORY_SIZE = 10
 
+// TODO: warn when serialized bookmarks are invalid
+
 export function createBookmarksFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
