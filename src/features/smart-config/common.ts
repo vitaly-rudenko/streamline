@@ -1,6 +1,6 @@
 export type Config = Record<string, unknown>
 
-export type ColorThemeKindSlug = 'dark' | 'light' | 'high-contrast' | 'high-contrast-light'
+type ColorThemeKindSlug = 'dark' | 'light' | 'high-contrast' | 'high-contrast-light'
 
 export type Condition =
  | { basename: string }

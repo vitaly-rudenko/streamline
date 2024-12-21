@@ -6,7 +6,7 @@ export function getConfig() {
 }
 
 /** Get real configuration target of the config section – a.k.a. where it's currently set */
-export function getEffectiveTarget(config: vscode.WorkspaceConfiguration, section: string): vscode.ConfigurationTarget | undefined {
+function getEffectiveTarget(config: vscode.WorkspaceConfiguration, section: string): vscode.ConfigurationTarget | undefined {
   const detail = config.inspect(section)
   if (detail === undefined) {
     return undefined

@@ -27,7 +27,8 @@
     "dev": "nodemon -x 'npm run compile'",
     "deploy": "npm run compile && npm run lint && npm run test && vsce package && vsce publish",
     "deploy:pre-release": "npm run compile && npm run lint && npm run test && vsce package --pre-release && vsce publish --pre-release",
-    "deploy:beta": "npm run deploy:pre-release"
+    "deploy:beta": "npm run deploy:pre-release",
+    "check:unused-exports": "npx ts-unused-exports tsconfig.json src/**/*.ts"
   },
   "devDependencies": {
     "@total-typescript/shoehorn": "^0.1.2",
