@@ -635,7 +635,11 @@
           "items": {
             "type": "string"
           },
-          "default": ["spec", "test", "e2e-spec"],
+          "default": [
+            "spec",
+            "test",
+            "e2e-spec"
+          ],
           "description": "Basename suffixes to exclude from search (e.g. js, ts, test and spec)"
         },
         "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {
@@ -672,51 +676,84 @@
         "streamline.smartConfig.defaults": {
           "type": "object",
           "default": {},
-          "additionalProperties": true
+          "additionalProperties": true,
+          "description": "Default configuration values to fall back to when config(s) are inactive"
         },
         "streamline.smartConfig.configs": {
           "type": "object",
           "default": {},
           "additionalProperties": {
             "type": "object",
-            "additionalProperties": true
-          }
+            "additionalProperties": true,
+            "description": "Configuration preset, can be used in rule definitions"
+          },
+          "description": "Configuration presets to choose from in \"rules[].apply\" list"
         },
         "streamline.smartConfig.toggles": {
           "type": "array",
           "default": [],
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Custom toggles that can be used in \"rules[].when[].toggle\" conditions (will appear in the status bar)"
         },
         "streamline.smartConfig.rules": {
           "type": "array",
           "default": [],
+          "description": "List of rules, describes which config presets to apply and when",
           "items": {
             "type": "object",
             "required": [
               "apply",
               "when"
             ],
+            "description": "Rule definition, consists of config presets list to apply and required conditions",
             "properties": {
               "apply": {
                 "type": "array",
+                "minLength": 1,
+                "description": "Config presets to apply when a condition triggers in the rule",
                 "items": {
                   "type": "string"
                 }
               },
               "when": {
                 "type": "array",
+                "minLength": 1,
+                "description": "List of conditions for applying config presets - if at least one condition matches, specified config presets will be applied",
                 "items": {
                   "type": "object",
                   "properties": {
                     "basename": {
+                      "description": "Regular expression for basename of the currently active document",
                       "type": "string"
                     },
                     "path": {
+                      "description": "Regular expression for absolute path of the currently active document",
                       "type": "string"
                     },
                     "toggle": {
+                      "description": "Triggers when custom toggle is currently enabled",
+                      "type": "string"
+                    },
+                    "colorThemeKind": {
+                      "description": "Triggers when current theme is light/dark",
+                      "type": "string"
+                    },
+                    "languageId": {
+                      "description": "Triggers for specific language of the currently active document",
+                      "type": "string"
+                    },
+                    "scopeSelected": {
+                      "description": "Triggers when a Scope is selected (regardless of being enabled/disabled)",
+                      "type": "string"
+                    },
+                    "scopeEnabled": {
+                      "description": "Triggers when a Scope is enabled (regardless of which one is selected)",
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "description": "Triggers when a specific Scope is selected AND enabled",
                       "type": "string"
                     }
                   }
