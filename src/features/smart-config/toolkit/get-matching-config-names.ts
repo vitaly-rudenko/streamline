@@ -1,11 +1,11 @@
 import { basename } from 'path'
 import { Rule, Condition, SmartConfigContext } from '../common'
 
-export function getMatchingConfigNames(context: SmartConfigContext, rules: Rule[]): string[] {
+export function getMatchingConfigNames(ctx: SmartConfigContext, rules: Rule[]): string[] {
   const configNames: string[] = []
 
   for (const rule of rules) {
-    if (rule.when.some(condition => testCondition(context, condition))) {
+    if (rule.when.some(condition => testCondition(ctx, condition))) {
       configNames.push(...rule.apply)
     }
   }
@@ -13,40 +13,40 @@ export function getMatchingConfigNames(context: SmartConfigContext, rules: Rule[
   return configNames
 }
 
-function testCondition(context: SmartConfigContext, condition: Condition): boolean {
-  if (context.path) {
+function testCondition(ctx: SmartConfigContext, condition: Condition): boolean {
+  if (ctx.path) {
     if ('path' in condition) {
-      return new RegExp(condition.path).test(context.path)
+      return new RegExp(condition.path).test(ctx.path)
     }
 
     if ('basename' in condition) {
-      return new RegExp(condition.basename).test(basename(context.path))
+      return new RegExp(condition.basename).test(basename(ctx.path))
     }
   }
 
   if ('toggle' in condition) {
-    return context.toggles.includes(condition.toggle)
+    return ctx.toggles.includes(condition.toggle)
   }
 
   if ('colorThemeKind' in condition) {
-    return context.colorThemeKind === condition.colorThemeKind
+    return ctx.colorThemeKind === condition.colorThemeKind
   }
 
   if ('languageId' in condition) {
-    return context.languageId === condition.languageId
+    return ctx.languageId === condition.languageId
   }
 
   if ('scope' in condition) {
-    return context.scopeSelected === condition.scope
-        && context.scopeEnabled
+    return ctx.scopeSelected === condition.scope
+        && ctx.scopeEnabled
   }
 
   if ('scopeSelected' in condition) {
-    return context.scopeSelected === condition.scopeSelected
+    return ctx.scopeSelected === condition.scopeSelected
   }
 
   if ('scopeEnabled' in condition) {
-    return context.scopeEnabled === condition.scopeEnabled
+    return ctx.scopeEnabled === condition.scopeEnabled
   }
 
   return false
