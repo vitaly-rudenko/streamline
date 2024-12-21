@@ -168,7 +168,9 @@ export function createScopedPathsFeature(input: {
 
     let currentWorkspaceFolders: vscode.WorkspaceFolder[]
 
-    // If currently scoped (effectively or in state), allow to only add new workspace folders to the snapshot, never delete
+    // Safe mode:
+    // If currently scoped (effectively or in state) or in cooldown, allow to only add new workspace folders to the snapshot
+    // This prevents extension from permanently losing workspace folders from the snapshot
     if ((Date.now() - appliedWorkspaceFoldersAt) < APPLY_WORKSPACE_FOLDERS_COOLDOWN_MS
         || isScopedPathsEffectivelyEnabled()
         || workspaceState.getEnabled()) {
@@ -179,7 +181,7 @@ export function createScopedPathsFeature(input: {
           currentWorkspaceFolders.push(workspaceFolder)
         }
       }
-    } else { // When not scoped, snapshot should just match current workspace folders list
+    } else { // Otherwise, reflect current workspace folder list (unsafe mode)
       currentWorkspaceFolders = [...vscode.workspace.workspaceFolders]
     }
 

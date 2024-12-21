@@ -26,6 +26,7 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   function updateCurrentPathStatusBarItem() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
+      // Show relative path when possible
       const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path)
       currentPathStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), config.getCollapsedIndicator())
       currentPathStatusBarItem.show()
@@ -83,7 +84,9 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
       const activeTextEditor = vscode.window.activeTextEditor
       if (!activeTextEditor) return
 
-      await vscode.env.clipboard.writeText(activeTextEditor.document.uri.path)
+      // Save relative path when possible (copy-what-you-see)
+      const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path)
+      await vscode.env.clipboard.writeText(path)
 
       const copiedMessage = '⸱⸱⸱ copied!'
       currentPathStatusBarItem.text = currentPathStatusBarItem.text.length > copiedMessage.length
