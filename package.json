@@ -148,7 +148,7 @@
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
-        "title": "Quick Open Related Files...",
+        "title": "Quick Open Related File...",
         "icon": "$(sparkle)"
       },
       {
@@ -345,6 +345,14 @@
         },
         {
           "command": "streamline.bookmarks.unarchiveList",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.move",
+          "when": "false"
+        },
+        {
+          "command": "streamline.smartConfig.toggle",
           "when": "false"
         }
       ],
