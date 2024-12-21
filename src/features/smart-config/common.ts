@@ -8,10 +8,9 @@ export type Condition =
  | { toggle: string }
  | { colorThemeKind: ColorThemeKindSlug }
  | { languageId: string }
- | {
-    scope: string
-    enabled?: boolean | undefined
-  }
+ | { scopeSelected: string }
+ | { scopeEnabled: boolean }
+ | { scope: string } // Shorthand for { scopeSelected: 'scope' } && { scopeEnabled: true }
 
 export type Rule = {
   apply: string[]
@@ -23,6 +22,6 @@ export type SmartConfigContext = {
   path?: string | undefined
   toggles: string[]
   colorThemeKind: ColorThemeKindSlug
-  scope?: string | undefined
+  scopeSelected?: string | undefined
   scopeEnabled: boolean
 }

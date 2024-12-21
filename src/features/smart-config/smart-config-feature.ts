@@ -36,7 +36,7 @@ export function createSmartConfigFeature(input: {
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
         : 'high-contrast-light',
-      scope: 'test',
+      scopeSelected: 'test',
       scopeEnabled: false,
     }
   }

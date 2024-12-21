@@ -32,17 +32,21 @@ function testCondition(context: SmartConfigContext, condition: Condition): boole
     return context.colorThemeKind === condition.colorThemeKind
   }
 
-  if (context.languageId) {
-    if ('languageId' in condition) {
-      return context.languageId === condition.languageId
-    }
+  if ('languageId' in condition) {
+    return context.languageId === condition.languageId
   }
 
-  if (context.scope) {
-    if ('scope' in condition) {
-      return context.scope === condition.scope
-         && (condition.enabled === undefined || condition.enabled === context.scopeEnabled)
-    }
+  if ('scope' in condition) {
+    return context.scopeSelected === condition.scope
+        && context.scopeEnabled
+  }
+
+  if ('scopeSelected' in condition) {
+    return context.scopeSelected === condition.scopeSelected
+  }
+
+  if ('scopeEnabled' in condition) {
+    return context.scopeEnabled === condition.scopeEnabled
   }
 
   return false

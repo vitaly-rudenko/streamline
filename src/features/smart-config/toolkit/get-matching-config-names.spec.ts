@@ -34,15 +34,15 @@ describe('getMatchingConfigNames()', () => {
       },
       {
         apply: ['minimal-mode'],
-        when: [{ scope: 'Minimal' }]
-      },
-      {
-        apply: ['loose-minimal-mode'],
-        when: [{ scope: 'Minimal', enabled: false }]
+        when: [{ scopeSelected: 'Minimal' }]
       },
       {
         apply: ['strict-minimal-mode'],
-        when: [{ scope: 'Minimal', enabled: true }]
+        when: [{ scope: 'Minimal' }]
+      },
+      {
+        apply: ['scoped-in'],
+        when: [{ scopeEnabled: true }]
       }
     ]
 
@@ -110,7 +110,7 @@ describe('getMatchingConfigNames()', () => {
         toggles: ['Copilot', 'Focus'],
         colorThemeKind: 'light',
         languageId: 'plaintext',
-        scope: 'Maximum',
+        scopeSelected: 'Maximum',
         scopeEnabled: false,
       }, rules)
     ).toEqual(['copilot', 'focus-mode', 'light-theme', 'plain-text'])
@@ -121,10 +121,10 @@ describe('getMatchingConfigNames()', () => {
         toggles: [],
         colorThemeKind: 'light',
         languageId: 'ruby',
-        scope: 'Minimal',
+        scopeSelected: 'Minimal',
         scopeEnabled: true,
       }, rules)
-    ).toEqual(['light-theme', 'minimal-mode', 'strict-minimal-mode'])
+    ).toEqual(['light-theme', 'minimal-mode', 'strict-minimal-mode', 'scoped-in'])
 
     expect(
       getMatchingConfigNames({
@@ -132,9 +132,9 @@ describe('getMatchingConfigNames()', () => {
         toggles: [],
         colorThemeKind: 'light',
         languageId: 'ruby',
-        scope: 'Minimal',
+        scopeSelected: 'Minimal',
         scopeEnabled: false,
       }, rules)
-    ).toEqual(['light-theme', 'minimal-mode', 'loose-minimal-mode'])
+    ).toEqual(['light-theme', 'minimal-mode'])
   })
 })
