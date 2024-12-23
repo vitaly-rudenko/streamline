@@ -1,13 +1,47 @@
 # Change Log
 
+## 0.30
+
+### Bookmarks
+
+- Bookmarks can now be moved between lists
+- Undo history now persists when VS Code is restarted
+- Removed deprecated configuration & features
+
+### Current Path
+
+- Collapses the path if it's too long
+- Clicking on the status bar item will now copy the path into the clipboard
+- Added "Current Selection" status bar item, which shows more information about current selection than built-in VS Code feature
+
+### Related Files
+
+- Now works better for files like `my.service.test.ts` (e.g. in NestJS)
+- Removed deprecated configuration & features
+
+### Scoped Paths
+
+- Now automatically & safely hides workspace folders when scoped in
+
+### Smart Config
+
+- Reworked the configuration:
+  - Added "configuration presets" that can be applied in multiple rules
+  - Added "rules" that can contain multiple conditions, such as: path, basename, current color theme, scope, languageId and custom toggles
+- Added "custom toggles" that are shown in the status bar and can be used to quickly toggle configuration presets
+
+### Tab History
+
+- Removed
+
 ## 0.21
 
 ### Smart Config
 
 - **Automatically update settings depending on the current file path pattern**
-  > You can now enable or disable certain configuration settings by using `streamline.smartConfig.patterns` object.  
-  > Each key is a regular expression pattern and each value is an object that contains settings overrides.  
-  > `"default"` is a special key for settings that are always applied before applying overrides.  
+  > You can now enable or disable certain configuration settings by using `streamline.smartConfig.patterns` object.
+  > Each key is a regular expression pattern and each value is an object that contains settings overrides.
+  > `"default"` is a special key for settings that are always applied before applying overrides.
   > `"__unset_by_streamline__"` is a special value to remove settings, including default and overridden ones.
 
 ## 0.20
@@ -62,7 +96,7 @@
 
 - Adding workspace folders to a scope now correctly hides files in other workspace folders
 - Improved algorithm for better reliability
-  > Due to VS Code limitations for `files.excludes` in multi-folder workspaces, some non-scoped files may be shown.  
+  > Due to VS Code limitations for `files.excludes` in multi-folder workspaces, some non-scoped files may be shown.
   > The priority is to always show scoped files even if it means showing some non-scoped ones.
 
 ## 0.16
