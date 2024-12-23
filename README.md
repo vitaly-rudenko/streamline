@@ -12,6 +12,16 @@ Useful in large projects and monorepos to focus on modules that you're currently
 
 ![Demo](docs/scoped_paths.gif)
 
+Configuration example:
+```json
+"streamline.scopedPaths.scopes": {
+    "Bookmarks": [
+        "streamline/src/features/bookmarks",
+        "streamline/test/features/bookmarks"
+    ]
+}
+```
+
 ## Bookmarks
 
 Bookmark folders, files and text  selections – and organize them into lists.
@@ -37,12 +47,49 @@ For example, it can be used to only enable Github Copilot in test files or when 
 
 ![Demo](docs/smart_config.gif)
 
+Configuration example:
+```json
+"streamline.smartConfig.defaults": {
+    "workbench.iconTheme": "catppuccin-latte",
+    "github.copilot.editor.enableAutoCompletions": false
+},
+"streamline.smartConfig.configs": {
+    "Copilot": { "github.copilot.editor.enableAutoCompletions": true },
+    "Dark theme": { "workbench.iconTheme": "catppuccin-macchiato" }
+},
+"streamline.smartConfig.toggles": ["Copilot"],
+"streamline.smartConfig.rules": [
+    {
+        "apply": ["Copilot"],
+        "when": [
+            { "basename": "\\.(test|spec|e2e-spec)\\.(c?m?jsx?|c?m?tsx?)$" },
+            { "basename": "\\.(model|controller)\\.(c?m?jsx?|c?m?tsx?)$" },
+            { "path": "\\/__(tests|mocks|snapshots)__\\/" },
+            { "toggle": "Copilot" }
+        ]
+    },
+    {
+        "apply": ["Dark theme"],
+        "when": [{ "colorThemeKind": "dark" }]
+    }
+]
+```
+
 ## Highlighted Paths
 
 Highlight files and folder using regular expressions by adding them into `streamline.highlightedPaths.patterns` in the workspace configuration.
 Useful for highlighting tests or build files.
 
 > Files are highlighted in all Explorer views, including Related Files and Bookmarks.
+
+Configuration example:
+```json
+"streamline.highlightedPaths.patterns": [
+    "\\.(test|spec|snap|mock|e2e-spec)",
+    "__(tests|mocks|snapshots)__",
+    "_spec\\."
+]
+```
 
 ## Current Path
 
