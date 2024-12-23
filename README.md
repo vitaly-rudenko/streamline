@@ -22,18 +22,18 @@ You can also add notes to your bookmarks and archive lists.
 ## Related Files
 
 Quickly discover potentially related files, such as tests, fixtures and components.
-Available as an Explorer view and as a command in the Command Palette (`Quick Open Related Files`).
+Available as an Explorer view and as a command in the Command Palette (`Quick Open Related File...`).
 
 > The extension searches for files whose basename include the current file's basename.
 > Priority is given to files within the same parent folder name.
-> You can also enable global search across all workspace folders, customize path rendering, and enable stricter search query in the settings.
+> You can also enable global search across all workspace folders and enable stricter search query in the settings.
 
 ![Demo](docs/related_files.gif)
 
 ## Smart Config
 
-Automatically apply settings depending on current file path pattern.
-For example, it can be used to only enable Github Copilot in test files.
+Automatically apply configuration presets when certain conditions are met (such as current path, language or color theme).
+For example, it can be used to only enable Github Copilot in test files or when toggled in the status bar.
 
 ![Demo](docs/smart_config.gif)
 
@@ -46,6 +46,6 @@ Useful for highlighting tests or build files.
 
 ## Current Path
 
-Show currently opened file path in the status bar.
+Show currently opened file path in the status bar, as well as detailed information about current selection.
 
-> Click to temporarily toggle the visibility.
+> Click to quickly copy current path.
