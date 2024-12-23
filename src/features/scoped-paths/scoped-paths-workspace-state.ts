@@ -1,5 +1,5 @@
 import { Memento } from 'vscode'
-import { defaultCurrentScope, QUICK_SCOPE_PREFIX } from './constants'
+import { defaultCurrentScope, QUICK_SCOPE_PREFIX } from './common'
 
 const defaultEnabled = false
 

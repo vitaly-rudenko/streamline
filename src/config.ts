@@ -1,13 +1,12 @@
 import * as vscode from 'vscode'
 
+/** Get current extension configuration */
 export function getConfig() {
   return vscode.workspace.getConfiguration('streamline')
 }
 
-/**
- * Get real configuration target of the config section – a.k.a. where it's currently set.
- */
-export function getEffectiveTarget(config: vscode.WorkspaceConfiguration, section: string): vscode.ConfigurationTarget | undefined {
+/** Get real configuration target of the config section – a.k.a. where it's currently set */
+function getEffectiveTarget(config: vscode.WorkspaceConfiguration, section: string): vscode.ConfigurationTarget | undefined {
   const detail = config.inspect(section)
   if (detail === undefined) {
     return undefined
@@ -22,10 +21,7 @@ export function getEffectiveTarget(config: vscode.WorkspaceConfiguration, sectio
   return undefined
 }
 
-/**
- * Update config section in the place where it's currently set,
- * otherwise use default target.
- */
+/** Update config section in the place where it's currently set, otherwise use default target */
 export async function updateEffectiveConfig<T>(config: vscode.WorkspaceConfiguration, defaultTarget: vscode.ConfigurationTarget, section: string, generateValue: (existsInNonDefaultTarget: boolean) => T | undefined) {
   const effectiveTarget = getEffectiveTarget(config, section)
   const target = effectiveTarget ?? defaultTarget
@@ -34,5 +30,5 @@ export async function updateEffectiveConfig<T>(config: vscode.WorkspaceConfigura
   await config.update(section, generateValue(existsInNonDefaultTarget), target)
 }
 
+/** Configuration loaded during extension startup (may be outdated) */
 export const initialConfig = getConfig()
-

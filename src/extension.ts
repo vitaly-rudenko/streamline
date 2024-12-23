@@ -3,7 +3,6 @@ import { createHighlightedPathsFeature } from './features/highlighted-paths/high
 import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-feature'
 import { createRelatedFilesFeature } from './features/related-files/related-files-feature'
 import { uriToPath } from './utils/uri'
-import { createTabHistoryFeature } from './features/tab-history/tab-history-feature'
 import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 import { createCurrentPathFeature } from './features/current-path/current-path-feature'
 import { initialConfig } from './config'
@@ -15,7 +14,6 @@ type Feature =
 	| 'highlightedPaths'
 	| 'relatedFiles'
 	| 'scopedPaths'
-	| 'tabHistory'
   | 'smartConfig'
 
 export function activate(context: vscode.ExtensionContext) {
@@ -31,18 +29,29 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 		: undefined
 
-	const scopedPathsFeature = isFeatureEnabled('scopedPaths')
+  const smartConfigFeature = isFeatureEnabled('smartConfig')
+    ? createSmartConfigFeature({
+      context,
+      dependencies: {
+        getCurrentScope: () => scopedPathsFeature?.getCurrentScope(),
+        isScopeEnabled: () => scopedPathsFeature?.isScopeEnabled() ?? false,
+      }
+    })
+    : undefined
+
+  const scopedPathsFeature = isFeatureEnabled('scopedPaths')
 		? createScopedPathsFeature({
 			context,
-			onChange: async () => onDidChangeFileDecorationsEmitter.fire(undefined),
+			onChange: () => {
+        onDidChangeFileDecorationsEmitter.fire(undefined)
+        smartConfigFeature?.scheduleRefresh()
+      },
 		})
 		: undefined
 
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
 	if (isFeatureEnabled('bookmarks')) createBookmarksFeature({ context })
-	if (isFeatureEnabled('tabHistory')) createTabHistoryFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
-  if (isFeatureEnabled('smartConfig')) createSmartConfigFeature({ context })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')

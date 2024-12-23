@@ -9,6 +9,12 @@
 		"strict": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-		"noUnusedParameters": true
+		"noUnusedParameters": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"types": [
+			"node",
+			"jest"
+		]
 	}
 }

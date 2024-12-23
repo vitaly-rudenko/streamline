@@ -1,104 +1,208 @@
 import * as vscode from 'vscode'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
-import { ConfigurationTargetPatterns, SmartConfigConfig } from './smart-config-config'
+import { SmartConfigConfig } from './smart-config-config'
+import { getMatchingConfigNames } from './toolkit/get-matching-config-names'
+import { SmartConfigWorkspaceState } from './smart-config-workspace-state'
+import { Config, SmartConfigContext } from './common'
+import { unique } from '../../utils/unique'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 
-export function createSmartConfigFeature(input: { context: vscode.ExtensionContext }) {
-  const { context } = input
+// TODO: warn when rules are invalid
+
+export function createSmartConfigFeature(input: {
+  context: vscode.ExtensionContext
+  dependencies: {
+    getCurrentScope: () => string | undefined
+    isScopeEnabled: () => boolean
+  }
+}) {
+  const { context, dependencies } = input
 
   const config = new SmartConfigConfig()
-
-  const debouncedUpdateRelevantConfigs = createDebouncedFunction(updateRelevantConfigs, 250)
+  const workspaceState = new SmartConfigWorkspaceState(context.workspaceState)
 
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
-    debouncedUpdateRelevantConfigs()
+    clearCache()
+    applyMatchingConfigsInBackground()
+    updateStatusBarItems()
   }, 500)
 
-  async function updateRelevantConfigs(textEditor?: vscode.TextEditor) {
-    const path = (textEditor ?? vscode.window.activeTextEditor)?.document.uri.path
-    const promises: Promise<void>[] = []
+  const scheduleRefresh = createDebouncedFunction(() => {
+    applyMatchingConfigsInBackground()
+    updateStatusBarItems()
+  }, 100)
 
-    const globalPatterns = config.getCachedGlobalPatterns()
-    if (globalPatterns) {
-      promises.push(applyConfig(path, globalPatterns, vscode.ConfigurationTarget.Global))
-    }
+  /** Stores currently created toggle buttons in the status bar to be able to update them */
+  let toggleItems: vscode.StatusBarItem[] = []
 
-    const workspacePatterns = config.getCachedWorkspacePatterns()
-    if (workspacePatterns) {
-      promises.push(applyConfig(path, workspacePatterns, vscode.ConfigurationTarget.Workspace))
-    }
+  // Cache to avoid unnecessary updates to status bar items and configuration
+  let cachedMergedToggles: string[] = []
+  let cachedEnabledToggles: string[] = []
+  let cachedMatchingConfigNames: string[] = []
+  function clearCache() {
+    cachedMergedToggles = []
+    cachedEnabledToggles = []
+    cachedMatchingConfigNames = []
+  }
 
-    const workspaceFolderPatterns = config.getCachedWorkspaceFolderPatterns()
-    if (workspaceFolderPatterns) {
-      promises.push(applyConfig(path, workspaceFolderPatterns, vscode.ConfigurationTarget.WorkspaceFolder))
-    }
-
-    if (promises.length > 0) {
-      await Promise.allSettled(promises)
+  /** Generates current context for rules to be matched against */
+  function generateSmartConfigContext(): SmartConfigContext {
+    return {
+      languageId: vscode.window.activeTextEditor?.document.languageId,
+      path: vscode.window.activeTextEditor?.document.uri.path,
+      toggles: workspaceState.getEnabledToggles(),
+      colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
+        : 'high-contrast-light',
+      scopeSelected: dependencies.getCurrentScope(),
+      scopeEnabled: dependencies.isScopeEnabled(),
     }
   }
 
-  async function applyConfig(
-    path: string | undefined,
-    { patterns, defaultConfig }: ConfigurationTargetPatterns,
+  // Creates toggle buttons in the status bar
+  function updateStatusBarItems() {
+    const mergedToggles = config.getMergedToggles()
+    const enabledToggles = workspaceState.getEnabledToggles()
+
+    if (areArraysShallowEqual(cachedEnabledToggles, enabledToggles) && areArraysShallowEqual(cachedMergedToggles, mergedToggles)) return
+    cachedMergedToggles = mergedToggles
+    cachedEnabledToggles = enabledToggles
+
+    // Delete all current toggle buttons
+    for (const item of toggleItems) item.dispose()
+
+    // Create new toggle buttons
+    toggleItems = []
+    for (const [i, toggle] of mergedToggles.entries()) {
+      const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 11 + i)
+      item.name = `Toggle "${toggle}"`
+      item.text = `${enabledToggles.includes(toggle) ? '$(circle-filled)' : '$(circle-outline)'}${toggle}`
+      item.command = {
+        command: 'streamline.smartConfig.toggle',
+        title: toggle,
+        arguments: [toggle],
+      }
+      context.subscriptions.push(item)
+      item.show()
+
+      toggleItems.push(item)
+    }
+  }
+
+  /** Applies matching configs for each configuration target */
+  async function applyMatchingConfigsInBackground() {
+    const ctx = generateSmartConfigContext()
+    const matchingConfigNames = getMatchingConfigNames(ctx, config.getMergedRules())
+
+    if (areArraysShallowEqual(cachedMatchingConfigNames, matchingConfigNames)) return
+    cachedMatchingConfigNames = matchingConfigNames
+
+    await applyMatchingConfigsForConfigurationTarget(
+      config.getInspectedDefaults()?.globalValue,
+      config.getInspectedConfigs()?.globalValue,
+      matchingConfigNames,
+      vscode.ConfigurationTarget.Global
+    )
+
+    await applyMatchingConfigsForConfigurationTarget(
+      config.getInspectedDefaults()?.workspaceValue,
+      config.getInspectedConfigs()?.workspaceValue,
+      matchingConfigNames,
+      vscode.ConfigurationTarget.Workspace
+    )
+
+    await applyMatchingConfigsForConfigurationTarget(
+      config.getInspectedDefaults()?.workspaceFolderValue,
+      config.getInspectedConfigs()?.workspaceFolderValue,
+      matchingConfigNames,
+      vscode.ConfigurationTarget.WorkspaceFolder
+    )
+  }
+
+  /** Apply sections from all matching configs in a given configuration target and remove all other sections */
+  async function applyMatchingConfigsForConfigurationTarget(
+    defaultConfigInTarget: Config | undefined,
+    allConfigsInTarget: Record<string, Config> | undefined,
+    matchingConfigNames: string[],
     target: vscode.ConfigurationTarget
   ) {
+    if (!defaultConfigInTarget && !allConfigsInTarget) return
+
+    defaultConfigInTarget ??= {}
+    allConfigsInTarget ??= {}
+
     const vscodeConfig = vscode.workspace.getConfiguration()
 
-    const configsToApply = path ? patterns.filter(([pattern]) => pattern.test(path)).map(([_, config]) => config) : []
-    if (defaultConfig) configsToApply.unshift(defaultConfig)
+    // All sections that can potentially be set in this configuration target
+    const allSectionsInTarget = unique([defaultConfigInTarget, ...Object.values(allConfigsInTarget)].flatMap(config => Object.keys(config))) satisfies string[]
 
-    const mergedConfigToApply = Object.assign({}, ...configsToApply)
-    const remainingSectionsSet = new Set(patterns.flatMap(([_pattern, config]) => Object.keys(config)))
+    // Merge all matching configs into one, overriding sections when necessary
+    const mergedMatchedConfigs = matchingConfigNames.reduce<Config>((mergedConfigs, configName) => ({ ...mergedConfigs, ...allConfigsInTarget[configName] }), { ...defaultConfigInTarget })
 
-    for (const [section, value] of Object.entries(mergedConfigToApply)) {
-      try {
-        await updateConfigIfNecessary(vscodeConfig, section, value === '__unset_by_streamline__' ? undefined : value, target)
-      } catch (error: any) {
-        console.warn(error.message)
-      }
+    console.debug(`[SmartConfig] Applying merged matched configs in target ${target}:`, mergedMatchedConfigs, allSectionsInTarget)
 
-      remainingSectionsSet.delete(section)
-    }
+    for (const section of allSectionsInTarget) {
+      const value: any | undefined = mergedMatchedConfigs[section]
 
-    for (const section of remainingSectionsSet) {
-      try {
-        await updateConfigIfNecessary(vscodeConfig, section, undefined, target)
-      } catch (error: any) {
-        console.warn(error.message)
-      }
+      // Value may be undefined if not set by any matching config
+      // This is expected behavior, and the section will be removed if value is undefined
+      await safelyUpdateSectionIfNecessary(vscodeConfig, section, value === '__unset_by_streamline__' ? undefined : value, target)
     }
   }
 
-  async function updateConfigIfNecessary(vscodeConfig: vscode.WorkspaceConfiguration, section: string, newValue: any, target: vscode.ConfigurationTarget) {
+  /** Updates section in a given configuration target if value has changed */
+  async function safelyUpdateSectionIfNecessary(
+    vscodeConfig: vscode.WorkspaceConfiguration,
+    section: string,
+    newValue: object | undefined,
+    target: vscode.ConfigurationTarget
+  ) {
     const inspected = vscodeConfig.inspect(section)
-    const oldValue = target === vscode.ConfigurationTarget.Global
-      ? inspected?.globalValue
-      : target === vscode.ConfigurationTarget.Workspace
-      ? inspected?.workspaceValue
+    const oldValue = target === vscode.ConfigurationTarget.Global ? inspected?.globalValue
+      : target === vscode.ConfigurationTarget.Workspace ? inspected?.workspaceValue
       : inspected?.workspaceFolderValue
 
-    if (oldValue === newValue) {
-      console.debug('[SmartConfig] Skipping section', section, 'with value', newValue, 'in target', target)
-      return
+    if (oldValue !== newValue) {
+      try {
+        await vscodeConfig.update(section, newValue, target)
+      } catch (error: any) {
+        console.warn('[SmartConfig] Could not set section', section, 'to value', newValue, 'in target', target, 'due to', error)
+      }
     }
-
-    console.debug('[SmartConfig] Setting section', section, 'to value', newValue, 'in target', target)
-    await vscodeConfig.update(section, newValue, target)
   }
 
+  // Command for toggle buttons in the status bar
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => {
-      debouncedUpdateRelevantConfigs()
+    vscode.commands.registerCommand('streamline.smartConfig.toggle', async (toggle: string) => {
+      if (workspaceState.getEnabledToggles().includes(toggle)) {
+        workspaceState.setEnabledToggles(workspaceState.getEnabledToggles().filter(t => t !== toggle))
+      } else {
+        workspaceState.setEnabledToggles([...workspaceState.getEnabledToggles(), toggle])
+      }
+
+      scheduleRefresh()
+      await workspaceState.save()
     }),
+  )
+
+  context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.smartConfig')) {
         if (!config.isSavingInBackground) {
           scheduleConfigLoad()
         }
       }
-    })
+    }),
+    // Context to match rules against relies on currently active document and color theme
+    vscode.window.onDidChangeActiveTextEditor(() => scheduleRefresh()),
+    vscode.window.onDidChangeActiveColorTheme(() => scheduleRefresh()),
   )
 
-  updateRelevantConfigs()
+  scheduleRefresh()
+
+  return {
+    scheduleRefresh,
+  }
 }

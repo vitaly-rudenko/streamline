@@ -1,26 +1,21 @@
 import { getConfig, initialConfig } from '../../config'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
+import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
+import { unique } from '../../utils/unique'
 import { FeatureConfig } from '../feature-config'
+import { Config, Rule } from './common'
 
-type Config = Record<string, unknown>
-type PatternsObject = Record<string, Config>
-type InspectedPatternsObject = {
-  globalValue?: PatternsObject
-  workspaceValue?: PatternsObject
-  workspaceFolderValue?: PatternsObject
+type Inspected<T> = {
+  globalValue?: T
+  workspaceValue?: T
+  workspaceFolderValue?: T
 }
-
-export type ConfigurationTargetPatterns = {
-  defaultConfig?: Config
-  patterns: [RegExp, Config][]
-}
-
-const defaultPattern = 'default'
 
 export class SmartConfigConfig extends FeatureConfig {
-  private _inspectedPatternsObject: InspectedPatternsObject | undefined
-  private _cachedGlobalPatterns: ConfigurationTargetPatterns | undefined
-  private _cachedWorkspacePatterns: ConfigurationTargetPatterns | undefined
-  private _cachedWorkspaceFolderPatterns: ConfigurationTargetPatterns | undefined
+  private _inspectedDefaults: Inspected<Config> = {}
+  private _inspectedConfigs: Inspected<Record<string, Config>> = {}
+  private _mergedToggles: string[] = []
+  private _mergedRules: Rule[] = []
 
   constructor() {
     super('SmartConfig')
@@ -28,51 +23,63 @@ export class SmartConfigConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const inspectedPatternsObject = config.inspect<PatternsObject>('smartConfig.patterns')
+    const inspectedDefaults = config.inspect<Config>('smartConfig.defaults')
+    const inspectedConfigs = config.inspect<Record<string, Config>>('smartConfig.configs')
+    const inspectedToggles = config.inspect<string[]>('smartConfig.toggles')
+    const inspectedRules = config.inspect<Rule[]>('smartConfig.rules')
+
+    // Arrays are overridden by VS Code, so we merge them instead
+    const mergedToggles: string[] = unique([
+      ...inspectedToggles?.defaultValue ?? [],
+      ...inspectedToggles?.globalValue ?? [],
+      ...inspectedToggles?.workspaceValue ?? [],
+      ...inspectedToggles?.workspaceFolderValue ?? [],
+    ])
+
+    // Arrays are overridden by VS Code, so we merge them instead
+    const mergedRules: Rule[] = [
+      ...inspectedRules?.defaultValue ?? [],
+      ...inspectedRules?.globalValue ?? [],
+      ...inspectedRules?.workspaceValue ?? [],
+      ...inspectedRules?.workspaceFolderValue ?? [],
+    ]
 
     let hasChanged = false
 
-    if (JSON.stringify(this._inspectedPatternsObject) !== JSON.stringify(inspectedPatternsObject)) {
-      this._inspectedPatternsObject = inspectedPatternsObject
-      this._updatePatternsCache()
+    if (
+      !areArraysShallowEqual(this._mergedToggles, mergedToggles)
+      || JSON.stringify(this._inspectedDefaults) !== JSON.stringify(inspectedDefaults)
+      || JSON.stringify(this._inspectedConfigs) !== JSON.stringify(inspectedConfigs)
+      || JSON.stringify(this._mergedRules) !== JSON.stringify(mergedRules)
+    ) {
+      this._inspectedDefaults = inspectedDefaults ?? {}
+      this._inspectedConfigs = inspectedConfigs ?? {}
+      this._mergedToggles = mergedToggles
+      this._mergedRules = mergedRules
+
       hasChanged = true
     }
 
-    console.debug('[SmartConfig] Config has been loaded', { hasChanged, inspectedPatternsObject })
+    console.debug('[SmartConfig] Config has been loaded', { hasChanged, inspectedDefaults, inspectedConfigs, mergedToggles, mergedRules })
 
     return hasChanged
   }
 
   async save() {}
 
-  _updatePatternsCache() {
-    this._cachedGlobalPatterns = parsePatternsObject(this._inspectedPatternsObject?.globalValue)
-    this._cachedWorkspacePatterns = parsePatternsObject(this._inspectedPatternsObject?.workspaceValue)
-    this._cachedWorkspaceFolderPatterns = parsePatternsObject(this._inspectedPatternsObject?.workspaceFolderValue)
+  getInspectedDefaults() {
+    return this._inspectedDefaults
   }
 
-  getCachedGlobalPatterns() {
-    return this._cachedGlobalPatterns
+  getInspectedConfigs() {
+    return this._inspectedConfigs
   }
 
-  getCachedWorkspacePatterns() {
-    return this._cachedWorkspacePatterns
+  getMergedToggles() {
+    return this._mergedToggles
   }
 
-  getCachedWorkspaceFolderPatterns() {
-    return this._cachedWorkspaceFolderPatterns
-  }
-}
-
-function parsePatternsObject(patternsObject: PatternsObject | undefined): ConfigurationTargetPatterns | undefined {
-  if (!patternsObject || Object.keys(patternsObject).length === 0) {
-    return undefined
-  }
-
-  return {
-    defaultConfig: patternsObject[defaultPattern],
-    patterns: Object.entries(patternsObject)
-      .filter(([pattern]) => pattern !== defaultPattern)
-      .map(([pattern, config]) => [new RegExp(pattern), config] as const)
+  getMergedRules() {
+    return this._mergedRules
   }
 }

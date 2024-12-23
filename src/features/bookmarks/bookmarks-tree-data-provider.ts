@@ -1,15 +1,15 @@
 import * as vscode from 'vscode'
 import { formatPaths } from '../../utils/format-paths'
-import { getFilename } from '../../utils/get-filename'
 import type { BookmarksConfig } from './bookmarks-config'
-import type { Bookmark } from './types'
+import type { Bookmark } from './common'
 import { stripIndent, stripIndents } from 'common-tags'
 import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
+import { basename } from 'path'
 
 type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
-class ArchivedListsTreeItem extends vscode.TreeItem {
+export class ArchivedListsTreeItem extends vscode.TreeItem {
   constructor(expanded: boolean) {
     super('Archive', expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 
@@ -88,14 +88,14 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
     const folderUris = bookmarks
       .filter(bookmark => bookmark.type === 'folder')
       .map(bookmark => bookmark.uri)
-      // Sort by filename
-      .sort((a, b) => getFilename(a.path).localeCompare(getFilename(b.path)))
+      // Sort by basename
+      .sort((a, b) => basename(a.path).localeCompare(basename(b.path)))
 
     const fileUris = bookmarks
       .filter(bookmark => bookmark.type === 'file' || bookmark.type === 'selection')
       .map(bookmark => bookmark.uri)
-      // Sort by filename
-      .sort((a, b) => getFilename(a.path).localeCompare(getFilename(b.path)))
+      // Sort by basename
+      .sort((a, b) => basename(a.path).localeCompare(basename(b.path)))
 
     // Show folders at the top
     const uris = [...folderUris, ...fileUris]
@@ -141,6 +141,8 @@ export class ListTreeItem extends vscode.TreeItem {
 }
 
 export class FolderTreeItem extends vscode.TreeItem {
+  public readonly type = 'folder'
+
   constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean) {
     super(label, hasChildren ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None)
 
@@ -152,6 +154,8 @@ export class FolderTreeItem extends vscode.TreeItem {
 }
 
 export class FileTreeItem extends vscode.TreeItem {
+  public readonly type = 'file'
+
   constructor(label: string, public readonly list: string, public readonly uri: vscode.Uri, hasChildren: boolean, isRealFile: boolean) {
     super(
       isRealFile ? label : `[${label}]`,
@@ -182,6 +186,8 @@ const noteThemeIcon = new vscode.ThemeIcon('note')
 const selectionThemeIcon = new vscode.ThemeIcon('selection')
 
 export class SelectionTreeItem extends vscode.TreeItem {
+  public readonly type = 'selection'
+
   constructor(
     public readonly bookmark: Bookmark,
     public readonly list: string,

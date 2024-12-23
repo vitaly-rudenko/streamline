@@ -1,6 +1,6 @@
 import assert from 'assert'
-import { generateExcludedPathsFromScopedAndExcludedPaths } from '../../../features/scoped-paths/generate-excluded-paths-from-scoped-and-excluded-paths'
-import type { DirectoryReader } from '../../../utils/types'
+import { DirectoryReader } from '../../../utils/types'
+import { generateExcludedPathsFromScopedAndExcludedPaths } from './generate-excluded-paths-from-scoped-and-excluded-paths'
 
 function createFakeDirectoryReader(paths: string[]): DirectoryReader {
   return {
@@ -9,7 +9,7 @@ function createFakeDirectoryReader(paths: string[]): DirectoryReader {
     },
     read: async (path: string): Promise<string[]> => {
       if (path === '') {
-        return paths.filter((p) => !p.includes('/'))
+        throw new Error('Empty path is provided')
       }
 
       return paths.filter((p) =>
@@ -21,8 +21,14 @@ function createFakeDirectoryReader(paths: string[]): DirectoryReader {
   }
 }
 
-suite('createFakeDirectoryReader()', () => {
-  test('creates a valid fake directory reader', async () => {
+const workspaceFolders = [
+  'workspace-folder-1',
+  'workspace-folder-2',
+  'workspace-folder-3',
+]
+
+describe('createFakeDirectoryReader()', () => {
+  it('creates a valid fake directory reader', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/folder-1',
@@ -49,15 +55,6 @@ suite('createFakeDirectoryReader()', () => {
     ]
 
     const directoryReader = createFakeDirectoryReader(paths)
-
-    assert.deepStrictEqual(
-      await directoryReader.read(''),
-      [
-        'workspace-folder-1',
-        'workspace-folder-2',
-        'workspace-folder-3',
-      ]
-    )
 
     assert.deepStrictEqual(
       await directoryReader.read('workspace-folder-3'),
@@ -100,8 +97,8 @@ suite('createFakeDirectoryReader()', () => {
   })
 })
 
-suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
-  test('single workspace folder', async () => {
+describe('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
+  it('single workspace folder', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/folder-1',
@@ -114,21 +111,21 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     ]
 
     assert.deepStrictEqual(
-      await generateExcludedPathsFromScopedAndExcludedPaths([], createFakeDirectoryReader(paths)),
+      await generateExcludedPathsFromScopedAndExcludedPaths([], createFakeDirectoryReader(paths), workspaceFolders),
       []
     )
 
     assert.deepStrictEqual(
       await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-1',
-      ], createFakeDirectoryReader(paths)),
+      ], createFakeDirectoryReader(paths), workspaceFolders),
       []
     )
 
     assert.deepStrictEqual(
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-1/folder-2/file-1',
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-1',
         'file-2',
@@ -140,7 +137,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     assert.deepStrictEqual(
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-1/folder-2',
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-1',
         'file-2',
@@ -151,7 +148,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     assert.deepStrictEqual(
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-1/file-2',
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-1',
         'folder-1',
@@ -160,7 +157,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     )
   })
 
-  test('hides all files from other unscoped workspace folders', async () => {
+  it('hides all files from other unscoped workspace folders', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/folder-1',
@@ -182,7 +179,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     assert.deepStrictEqual(
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-1',
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-2',
         'file-3',
@@ -194,7 +191,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-1',
         'workspace-folder-2',
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-3',
         'folder-2',
@@ -205,12 +202,12 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-2',
         'workspace-folder-3',
-      ], createFakeDirectoryReader(paths)),
+      ], createFakeDirectoryReader(paths), workspaceFolders),
       []
     )
   })
 
-  test('handles nested folders correctly', async () => {
+  it('handles nested folders correctly', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/file-a',
@@ -236,7 +233,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     assert.deepStrictEqual(
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-2',
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-a',
       ]
@@ -246,7 +243,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-1/folder',
         'workspace-folder-2/folder/sub-folder',
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-a',
         'file-b',
@@ -260,7 +257,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-1/folder/file-d',
         'workspace-folder-2/folder/sub-folder/file-g'
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-a',
         'file-b',
@@ -276,7 +273,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     assert.deepStrictEqual(
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-2/file-b',
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-a',
         'file-c',
@@ -285,8 +282,8 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     )
   })
 
-  suite('[excluded paths]', () => {
-    test('handles excluded paths correctly', async () => {
+  describe('[excluded paths]', () => {
+    it('handles excluded paths correctly', async () => {
       const paths = [
         'workspace-folder-1',
         'workspace-folder-1/folder-1',
@@ -304,7 +301,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
         (await generateExcludedPathsFromScopedAndExcludedPaths([
           '!workspace-folder-1/folder-1',
           '!workspace-folder-2/file-d',
-        ], createFakeDirectoryReader(paths))).sort(),
+        ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
         [
           'file-d',
           'folder-1',
@@ -315,7 +312,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
         (await generateExcludedPathsFromScopedAndExcludedPaths([
           'workspace-folder-1/folder-1',
           '!workspace-folder-1/folder-1/file-b',
-        ], createFakeDirectoryReader(paths))).sort(),
+        ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
         [
           'file-d',
           'file-e',
@@ -325,7 +322,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       )
     })
 
-    test('handles file existing in multiple workspace folders', async () => {
+    it('handles file existing in multiple workspace folders', async () => {
       const paths = [
         'workspace-folder-1',
         'workspace-folder-1/folder-1',
@@ -343,7 +340,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       assert.deepStrictEqual(
         (await generateExcludedPathsFromScopedAndExcludedPaths([
           '!workspace-folder-1/file-e',
-        ], createFakeDirectoryReader(paths))).sort(),
+        ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
         []
       )
 
@@ -352,18 +349,18 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
         (await generateExcludedPathsFromScopedAndExcludedPaths([
           '!workspace-folder-1/file-e',
           '!workspace-folder-2/file-e',
-        ], createFakeDirectoryReader(paths))).sort(),
+        ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
         [
           'file-e'
         ]
       )
     })
 
-    test.skip('handles folder existing in multiple workspace folders (nested files must be hidden properly)')
+    // it.todo('handles folder existing in multiple workspace folders (nested files must be hidden properly)')
 
-    test.skip('ignores the fact that file exists in another workspace folder if that workspace folder is excluded')
+    // it.todo('ignores the fact that file exists in another workspace folder if that workspace folder is excluded')
 
-    test('handles excluded workspace folders', async () => {
+    it('handles excluded workspace folders', async () => {
       const paths = [
         'workspace-folder-1',
         'workspace-folder-1/folder-1',
@@ -381,7 +378,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
       assert.deepStrictEqual(
         (await generateExcludedPathsFromScopedAndExcludedPaths([
           '!workspace-folder-1',
-        ], createFakeDirectoryReader(paths))).sort(),
+        ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
         [
           'folder-1',
           'folder-2',
@@ -394,7 +391,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
         (await generateExcludedPathsFromScopedAndExcludedPaths([
           '!workspace-folder-1',
           '!workspace-folder-2',
-        ], createFakeDirectoryReader(paths))).sort(),
+        ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
         [
           'file-d',
           'file-e',
@@ -405,7 +402,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     })
   })
 
-  test('regression 1', async () => {
+  it('regression 1', async () => {
     const paths = [
       'workspace-folder-1',
       'workspace-folder-1/file-a',
@@ -426,7 +423,7 @@ suite('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     assert.deepStrictEqual(
       (await generateExcludedPathsFromScopedAndExcludedPaths([
         'workspace-folder-2/folder-2/file-f',
-      ], createFakeDirectoryReader(paths))).sort(),
+      ], createFakeDirectoryReader(paths), workspaceFolders)).sort(),
       [
         'file-a',
         'file-b',

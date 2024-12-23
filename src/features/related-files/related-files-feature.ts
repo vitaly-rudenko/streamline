@@ -2,9 +2,9 @@ import * as vscode from 'vscode'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
 import { RelatedFilesTreeDataProvider, type RelatedFileTreeItem, type WorkspaceFolderTreeItem } from './related-files-tree-data-provider'
 import { RelatedFilesConfig } from './related-files-config'
-import { getBasename } from '../../utils/get-basename'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { unique } from '../../utils/unique'
+import { getSmartBasename } from './toolkit/get-smart-basename'
 
 export function createRelatedFilesFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
@@ -25,7 +25,6 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     try {
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useExcludes', config.getUseExcludes())
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useGlobalSearch', config.getUseGlobalSearch())
-      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.viewRenderMode', config.getViewRenderMode())
     } catch (error) {
       console.warn('[ScopedPaths] Could not update context', error)
     }
@@ -33,6 +32,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
 
 	context.subscriptions.push(vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider))
 
+  // Open "Quick Open" modal with pre-filled search query for the related files of currently opened file
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.quickOpen', async (uri: vscode.Uri | undefined) => {
       uri ||= vscode.window.activeTextEditor?.document.uri
@@ -43,8 +43,8 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
         : undefined
 
       const basename = config.getUseStricterQuickOpenQuery()
-        ? getBasename(uri.path)
-        : getBasename(uri.path).replaceAll(/[-_]/g, '')
+        ? getSmartBasename(uri.path, config.getExcludedSuffixes())
+        : getSmartBasename(uri.path, config.getExcludedSuffixes()).replaceAll(/[-_]/g, ' ')
 
       const query = workspaceFolder ? `${workspaceFolder.name}/${basename}` : basename
 
@@ -52,6 +52,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     })
   )
 
+  // Reload "Related files" panel
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.refresh', () => {
       relatedFilesTreeDataProvider.clearCacheAndRefresh()
@@ -59,6 +60,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     })
   )
 
+  // Open related file side-by-side (button in "Related files" panel)
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.openToSide', async (item?: RelatedFileTreeItem) => {
       if (!item?.resourceUri) return
@@ -66,6 +68,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     })
   )
 
+  // Hide files from the selected workspace folder from the related files list (context menu item in "Related files" panel)
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch', async (item?: WorkspaceFolderTreeItem) => {
       if (!item) return
@@ -82,30 +85,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     })
   )
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToRelative', () => {
-      config.setViewRenderMode('relative')
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-      updateContextInBackground()
-      config.saveInBackground()
-    }),
-    vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToAbsolute', () => {
-      config.setViewRenderMode('absolute')
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-      updateContextInBackground()
-      config.saveInBackground()
-    }),
-    vscode.commands.registerCommand('streamline.relatedFiles.setViewRenderModeToCompact', () => {
-      config.setViewRenderMode('compact')
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-      updateContextInBackground()
-      config.saveInBackground()
-    })
-  )
-
+  // Toggle "Use Excludes" option
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.enableUseExcludes', () => {
       config.setUseExcludes(true)
@@ -123,6 +103,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     })
   )
 
+  // Toggle "Use Global Search" option
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.relatedFiles.enableUseGlobalSearch', () => {
       config.setUseGlobalSearch(true)
@@ -152,10 +133,13 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
         }
       }
     }),
+    // Reload "Related files" panel when currently opened file changes
     vscode.window.onDidChangeActiveTextEditor(() => scheduleRefresh()),
+    // Clear files cache when files are created/deleted/renamed
     vscode.workspace.onDidCreateFiles(() => scheduleClearCacheAndRefresh()),
     vscode.workspace.onDidDeleteFiles(() => scheduleClearCacheAndRefresh()),
     vscode.workspace.onDidRenameFiles(() => scheduleClearCacheAndRefresh()),
+    // Clear files cache when workspace folders are added, renamed or deleted
     vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleClearCacheAndRefresh()),
   )
 

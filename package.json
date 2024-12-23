@@ -2,9 +2,9 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Streamline your workflow",
-  "version": "0.21.0",
+  "version": "0.30.0",
   "engines": {
-    "vscode": "^1.92.0"
+    "vscode": "^1.96.0"
   },
   "categories": [
     "Other"
@@ -20,24 +20,32 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test",
-    "dev": " nodemon -x 'npm run compile'",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "jest --coverage",
+    "test:unit:watch": "npm run test:unit -- --watch",
+    "test:integration": "npm run compile && vscode-test",
+    "dev": "nodemon -x 'npm run compile'",
     "deploy": "npm run compile && npm run lint && npm run test && vsce package && vsce publish",
     "deploy:pre-release": "npm run compile && npm run lint && npm run test && vsce package --pre-release && vsce publish --pre-release",
-    "deploy:beta": "npm run deploy:pre-release"
+    "deploy:beta": "npm run deploy:pre-release",
+    "check:unused-exports": "npx ts-unused-exports tsconfig.json src/**/*.ts"
   },
   "devDependencies": {
+    "@total-typescript/shoehorn": "^0.1.2",
     "@types/common-tags": "^1.8.4",
+    "@types/jest": "^29.5.14",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^18.19.43",
-    "@types/vscode": "^1.92.0",
+    "@types/node": "^18.19.68",
+    "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vscode/test-cli": "^0.0.8",
     "@vscode/test-electron": "^2.3.9",
     "eslint": "^8.57.0",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.0",
     "rimraf": "^5.0.5",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.5.4"
   },
   "publisher": "vitaly-rudenko",
@@ -52,13 +60,6 @@
   "contributes": {
     "views": {
       "explorer": [
-        {
-          "id": "tabHistory",
-          "name": "Tab history",
-          "contextualTitle": "Tab history",
-          "visibility": "collapsed",
-          "icon": "$(history)"
-        },
         {
           "id": "relatedFiles",
           "name": "Related files",
@@ -147,23 +148,8 @@
         "icon": "$(compass-dot)"
       },
       {
-        "command": "streamline.relatedFiles.setViewRenderModeToRelative",
-        "title": "Use Relative Paths",
-        "icon": "$(list-selection)"
-      },
-      {
-        "command": "streamline.relatedFiles.setViewRenderModeToAbsolute",
-        "title": "Use Absolute Paths",
-        "icon": "$(list-unordered)"
-      },
-      {
-        "command": "streamline.relatedFiles.setViewRenderModeToCompact",
-        "title": "Use Compact Paths",
-        "icon": "$(list-tree)"
-      },
-      {
         "command": "streamline.relatedFiles.quickOpen",
-        "title": "Quick Open Related Files...",
+        "title": "Quick Open Related File...",
         "icon": "$(sparkle)"
       },
       {
@@ -175,31 +161,6 @@
         "command": "streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch",
         "title": "Hide Workspace Folder",
         "icon": "$(close)"
-      },
-      {
-        "command": "streamline.tabHistory.refresh",
-        "title": "Refresh",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "streamline.tabHistory.clear",
-        "title": "Clear",
-        "icon": "$(close)"
-      },
-      {
-        "command": "streamline.tabHistory.pinTab",
-        "title": "Pin Tab",
-        "icon": "$(pin)"
-      },
-      {
-        "command": "streamline.tabHistory.unpinTab",
-        "title": "Unpin Tab",
-        "icon": "$(pinned)"
-      },
-      {
-        "command": "streamline.tabHistory.quickOpen",
-        "title": "Quick Open from Tab History",
-        "icon": "$(history)"
       },
       {
         "command": "streamline.bookmarks.add",
@@ -240,6 +201,10 @@
         "command": "streamline.bookmarks.editNote",
         "title": "Edit Note...",
         "icon": "$(edit)"
+      },
+      {
+        "command": "streamline.bookmarks.move",
+        "title": "Move to List..."
       },
       {
         "command": "streamline.bookmarks.revealInExplorer",
@@ -287,9 +252,18 @@
         "icon": "$(discard)"
       },
       {
-        "command": "streamline.currentPath.toggleVisibility",
-        "title": "Toggle Current Path Visibility",
-        "icon": "$(eye)"
+        "command": "streamline.bookmarks.exportAsJson",
+        "title": "Export Bookmarks as JSON",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "streamline.currentPath.copy",
+        "title": "Copy Current Path",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "streamline.smartConfig.toggle",
+        "title": "Toggle"
       }
     ],
     "menus": {
@@ -335,39 +309,11 @@
           "when": "false"
         },
         {
-          "command": "streamline.relatedFiles.setViewRenderModeToRelative",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.setViewRenderModeToAbsolute",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.setViewRenderModeToCompact",
-          "when": "false"
-        },
-        {
           "command": "streamline.relatedFiles.openToSide",
           "when": "false"
         },
         {
           "command": "streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch",
-          "when": "false"
-        },
-        {
-          "command": "streamline.tabHistory.refresh",
-          "when": "false"
-        },
-        {
-          "command": "streamline.tabHistory.clear",
-          "when": "false"
-        },
-        {
-          "command": "streamline.tabHistory.pinTab",
-          "when": "false"
-        },
-        {
-          "command": "streamline.tabHistory.unpinTab",
           "when": "false"
         },
         {
@@ -400,6 +346,14 @@
         },
         {
           "command": "streamline.bookmarks.unarchiveList",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.move",
+          "when": "false"
+        },
+        {
+          "command": "streamline.smartConfig.toggle",
           "when": "false"
         }
       ],
@@ -450,33 +404,18 @@
           "when": "view == relatedFiles"
         },
         {
-          "command": "streamline.relatedFiles.setViewRenderModeToCompact",
-          "group": "info@1",
-          "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'compact'"
-        },
-        {
-          "command": "streamline.relatedFiles.setViewRenderModeToRelative",
-          "group": "info@2",
-          "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'relative'"
-        },
-        {
-          "command": "streamline.relatedFiles.setViewRenderModeToAbsolute",
-          "group": "info@3",
-          "when": "view == relatedFiles && streamline.relatedFiles.viewRenderMode != 'absolute'"
-        },
-        {
-          "command": "streamline.tabHistory.refresh",
-          "group": "navigation@2",
-          "when": "view == tabHistory"
-        },
-        {
           "command": "streamline.bookmarks.undo",
           "group": "navigation@1",
           "when": "view == bookmarks && !streamline.bookmarks.isUndoHistoryEmpty"
         },
         {
-          "command": "streamline.bookmarks.addList",
+          "command": "streamline.bookmarks.exportAsJson",
           "group": "navigation@2",
+          "when": "view == bookmarks"
+        },
+        {
+          "command": "streamline.bookmarks.addList",
+          "group": "navigation@3",
           "when": "view == bookmarks"
         }
       ],
@@ -489,6 +428,11 @@
         {
           "command": "streamline.bookmarks.editNote",
           "when": "view == bookmarks && viewItem == selection",
+          "group": "info@1"
+        },
+        {
+          "command": "streamline.bookmarks.move",
+          "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == selection)",
           "group": "info@1"
         },
         {
@@ -535,21 +479,6 @@
           "command": "streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch",
           "when": "view == relatedFiles && viewItem == workspaceFolder",
           "group": "info@1"
-        },
-        {
-          "command": "streamline.tabHistory.pinTab",
-          "when": "view == tabHistory && viewItem == tab",
-          "group": "inline@1"
-        },
-        {
-          "command": "streamline.tabHistory.unpinTab",
-          "when": "view == tabHistory && viewItem == pinnedTab",
-          "group": "inline@1"
-        },
-        {
-          "command": "streamline.tabHistory.clear",
-          "group": "inline@1",
-          "when": "view == tabHistory && viewItem == recentlyOpened"
         }
       ],
       "explorer/context": [
@@ -630,7 +559,14 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["bookmarks", "currentPath", "highlightedPaths", "relatedFiles", "scopedPaths", "tabHistory", "smartConfig"]
+            "enum": [
+              "bookmarks",
+              "currentPath",
+              "highlightedPaths",
+              "relatedFiles",
+              "scopedPaths",
+              "smartConfig"
+            ]
           },
           "default": [],
           "description": "Completely disable Streamline features"
@@ -646,10 +582,13 @@
           },
           "description": "Scopes"
         },
-        "streamline.scopedPaths.highlightStatusBarWhenEnabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Highlight status bar items when scope is enabled"
+        "streamline.scopedPaths.workspaceFoldersSnapshot": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Snapshot of Workspace Folders to safely restore after unscoped"
         },
         "streamline.highlightedPaths.patterns": {
           "type": "array",
@@ -659,6 +598,16 @@
           },
           "description": "Highlighted paths"
         },
+        "streamline.currentPath.maxLabelLength": {
+          "type": "number",
+          "default": 60,
+          "description": "Smartly shorten current path label when exceeding certain length"
+        },
+        "streamline.currentPath.collapsedIndicator": {
+          "type": "string",
+          "default": "⸱⸱⸱",
+          "description": "Indicator that will be placed wherever label is shortened"
+        },
         "streamline.relatedFiles.useExcludes": {
           "type": "boolean",
           "default": true,
@@ -667,22 +616,12 @@
         "streamline.relatedFiles.useStricterQuickOpenQuery": {
           "type": "boolean",
           "default": false,
-          "description": "Do not remove hyphens or underscores in filenames when using 'Quick Open Related Files' command"
+          "description": "Keep hyphens or underscores in basename when using 'Quick Open Related Files' command"
         },
         "streamline.relatedFiles.useGlobalSearch": {
           "type": "boolean",
           "default": false,
           "description": "Search related files across all workspace folders"
-        },
-        "streamline.relatedFiles.viewRenderMode": {
-          "type": "string",
-          "default": "compact",
-          "enum": [
-            "relative",
-            "absolute",
-            "compact"
-          ],
-          "description": "Use relative, absolute or compact paths in the related files view"
         },
         "streamline.relatedFiles.exclude": {
           "type": "object",
@@ -691,6 +630,18 @@
             "type": "boolean"
           },
           "description": "Custom exclude patterns for related files view"
+        },
+        "streamline.relatedFiles.excludedSuffixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "spec",
+            "test",
+            "e2e-spec"
+          ],
+          "description": "Basename suffixes to exclude from search (e.g. js, ts, test and spec)"
         },
         "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {
           "type": "array",
@@ -702,7 +653,7 @@
         },
         "streamline.relatedFiles.maxLabelLength": {
           "type": "number",
-          "default": 120,
+          "default": 60,
           "description": "Smartly shorten related file labels when exceeding certain length"
         },
         "streamline.relatedFiles.collapsedIndicator": {
@@ -723,13 +674,94 @@
           "default": [],
           "description": "Serialized bookmarks"
         },
-        "streamline.smartConfig.patterns": {
+        "streamline.smartConfig.defaults": {
           "type": "object",
+          "default": {},
+          "additionalProperties": true,
+          "description": "Default configuration values to fall back to when config(s) are inactive"
+        },
+        "streamline.smartConfig.configs": {
+          "type": "object",
+          "default": {},
           "additionalProperties": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": true,
+            "description": "Configuration preset, can be used in rule definitions"
           },
-          "description": "Map of file path patterns and corresponding configuration overrides.\nKey is a regular expression (for example, \"\\\\.test\\\\.(js|ts)$\") and value is a map of custom settings to apply.\nUse \"default\" key for default settings.\nUse \"__unset_by_streamline__\" value to remove the setting."
+          "description": "Configuration presets to choose from in \"rules[].apply\" list"
+        },
+        "streamline.smartConfig.toggles": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Custom toggles that can be used in \"rules[].when[].toggle\" conditions (will appear in the status bar)"
+        },
+        "streamline.smartConfig.rules": {
+          "type": "array",
+          "default": [],
+          "description": "List of rules, describes which config presets to apply and when",
+          "items": {
+            "type": "object",
+            "required": [
+              "apply",
+              "when"
+            ],
+            "description": "Rule definition, consists of config presets list to apply and required conditions",
+            "properties": {
+              "apply": {
+                "type": "array",
+                "minLength": 1,
+                "description": "Config presets to apply when a condition triggers in the rule",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "when": {
+                "type": "array",
+                "minLength": 1,
+                "description": "List of conditions for applying config presets - if at least one condition matches, specified config presets will be applied",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "basename": {
+                      "description": "Regular expression for basename of the currently active document",
+                      "type": "string"
+                    },
+                    "path": {
+                      "description": "Regular expression for absolute path of the currently active document",
+                      "type": "string"
+                    },
+                    "toggle": {
+                      "description": "Triggers when custom toggle is currently enabled",
+                      "type": "string"
+                    },
+                    "colorThemeKind": {
+                      "description": "Triggers when current theme is light/dark",
+                      "type": "string"
+                    },
+                    "languageId": {
+                      "description": "Triggers for specific language of the currently active document",
+                      "type": "string"
+                    },
+                    "scopeSelected": {
+                      "description": "Triggers when a Scope is selected (regardless of being enabled/disabled)",
+                      "type": "string"
+                    },
+                    "scopeEnabled": {
+                      "description": "Triggers when a Scope is enabled (regardless of which one is selected)",
+                      "type": "boolean"
+                    },
+                    "scope": {
+                      "description": "Triggers when a specific Scope is selected AND enabled",
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
