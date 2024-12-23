@@ -1,7 +1,7 @@
 import { Memento } from 'vscode'
 
 export class SmartConfigWorkspaceState {
-    private _toggles: string[] = []
+    private _enabledToggles: string[] = []
 
     constructor(
         private readonly workspaceState: Memento
@@ -10,27 +10,27 @@ export class SmartConfigWorkspaceState {
     }
 
     private load() {
-        const toggles = this.workspaceState.get<string[]>('streamline.smartConfig.toggles', [])
+        const enabledToggles = this.workspaceState.get<string[]>('streamline.smartConfig.enabledToggles', [])
 
-        this._toggles = toggles
+        this._enabledToggles = enabledToggles
 
-        console.debug('[SmartConfig] WorkspaceState has been loaded', { toggles })
+        console.debug('[SmartConfig] WorkspaceState has been loaded', { enabledToggles })
     }
 
     async save() {
         await this.workspaceState.update(
-            'streamline.smartConfig.toggle',
-            this._toggles.length > 0 ? this._toggles : undefined,
+            'streamline.smartConfig.enabledToggles',
+            this._enabledToggles.length > 0 ? this._enabledToggles : undefined,
         )
 
         console.debug('[SmartConfig] WorkspaceState has been saved')
     }
 
-    setToggles(value: string[]) {
-        this._toggles = value
+    setEnabledToggles(value: string[]) {
+        this._enabledToggles = value
     }
 
-    getToggles() {
-        return this._toggles
+    getEnabledToggles() {
+        return this._enabledToggles
     }
 }

@@ -5,9 +5,8 @@ import { getMatchingConfigNames } from './toolkit/get-matching-config-names'
 import { SmartConfigWorkspaceState } from './smart-config-workspace-state'
 import { Config, SmartConfigContext } from './common'
 import { unique } from '../../utils/unique'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 
-// TODO: warn when unknown configName is used
-// TODO: warn when unknown toggle is used
 // TODO: warn when rules are invalid
 
 export function createSmartConfigFeature(input: {
@@ -24,6 +23,7 @@ export function createSmartConfigFeature(input: {
 
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
+    clearCache()
     applyMatchingConfigsInBackground()
     updateStatusBarItems()
   }, 500)
@@ -36,12 +36,22 @@ export function createSmartConfigFeature(input: {
   /** Stores currently created toggle buttons in the status bar to be able to update them */
   let toggleItems: vscode.StatusBarItem[] = []
 
+  // Cache to avoid unnecessary updates to status bar items and configuration
+  let cachedMergedToggles: string[] = []
+  let cachedEnabledToggles: string[] = []
+  let cachedMatchingConfigNames: string[] = []
+  function clearCache() {
+    cachedMergedToggles = []
+    cachedEnabledToggles = []
+    cachedMatchingConfigNames = []
+  }
+
   /** Generates current context for rules to be matched against */
   function generateSmartConfigContext(): SmartConfigContext {
     return {
       languageId: vscode.window.activeTextEditor?.document.languageId,
       path: vscode.window.activeTextEditor?.document.uri.path,
-      toggles: workspaceState.getToggles(),
+      toggles: workspaceState.getEnabledToggles(),
       colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
@@ -51,18 +61,24 @@ export function createSmartConfigFeature(input: {
     }
   }
 
-  // TODO: avoid unnecessary updates (check by toggle changes)
   // Creates toggle buttons in the status bar
   function updateStatusBarItems() {
+    const mergedToggles = config.getMergedToggles()
+    const enabledToggles = workspaceState.getEnabledToggles()
+
+    if (areArraysShallowEqual(cachedEnabledToggles, enabledToggles) && areArraysShallowEqual(cachedMergedToggles, mergedToggles)) return
+    cachedMergedToggles = mergedToggles
+    cachedEnabledToggles = enabledToggles
+
     // Delete all current toggle buttons
     for (const item of toggleItems) item.dispose()
 
     // Create new toggle buttons
     toggleItems = []
-    for (const [i, toggle] of config.getMergedToggles().entries()) {
+    for (const [i, toggle] of mergedToggles.entries()) {
       const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 11 + i)
       item.name = `Toggle "${toggle}"`
-      item.text = `${workspaceState.getToggles().includes(toggle) ? '$(circle-filled)' : '$(circle-outline)'}${toggle}`
+      item.text = `${enabledToggles.includes(toggle) ? '$(circle-filled)' : '$(circle-outline)'}${toggle}`
       item.command = {
         command: 'streamline.smartConfig.toggle',
         title: toggle,
@@ -75,12 +91,13 @@ export function createSmartConfigFeature(input: {
     }
   }
 
-  // TODO: avoid unnecessary updates (check by context changes)
   /** Applies matching configs for each configuration target */
   async function applyMatchingConfigsInBackground() {
     const ctx = generateSmartConfigContext()
-
     const matchingConfigNames = getMatchingConfigNames(ctx, config.getMergedRules())
+
+    if (areArraysShallowEqual(cachedMatchingConfigNames, matchingConfigNames)) return
+    cachedMatchingConfigNames = matchingConfigNames
 
     await applyMatchingConfigsForConfigurationTarget(
       config.getInspectedDefaults()?.globalValue,
@@ -118,7 +135,6 @@ export function createSmartConfigFeature(input: {
 
     const vscodeConfig = vscode.workspace.getConfiguration()
 
-    // TODO: can be cached
     // All sections that can potentially be set in this configuration target
     const allSectionsInTarget = unique([defaultConfigInTarget, ...Object.values(allConfigsInTarget)].flatMap(config => Object.keys(config))) satisfies string[]
 
@@ -159,14 +175,15 @@ export function createSmartConfigFeature(input: {
 
   // Command for toggle buttons in the status bar
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.smartConfig.toggle', (toggle: string) => {
-      if (workspaceState.getToggles().includes(toggle)) {
-        workspaceState.setToggles(workspaceState.getToggles().filter(t => t !== toggle))
+    vscode.commands.registerCommand('streamline.smartConfig.toggle', async (toggle: string) => {
+      if (workspaceState.getEnabledToggles().includes(toggle)) {
+        workspaceState.setEnabledToggles(workspaceState.getEnabledToggles().filter(t => t !== toggle))
       } else {
-        workspaceState.setToggles([...workspaceState.getToggles(), toggle])
+        workspaceState.setEnabledToggles([...workspaceState.getEnabledToggles(), toggle])
       }
 
       scheduleRefresh()
+      await workspaceState.save()
     }),
   )
 
