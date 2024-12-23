@@ -2,20 +2,17 @@ import * as vscode from 'vscode'
 import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
 import { BookmarksConfig } from './bookmarks-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
-import type { Bookmark } from './common'
 import { filter } from '../../utils/filter'
 import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
 import { defaultCurrentList } from './common'
 
-const UNDO_HISTORY_SIZE = 10
+const UNDO_HISTORY_SIZE = 25
 
 // TODO: warn when serialized bookmarks are invalid
 
 export function createBookmarksFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
-
-  let undoHistory: Bookmark[][] = []
 
   const config = new BookmarksConfig()
   const workspaceState = new BookmarksWorkspaceState(context.workspaceState)
@@ -42,7 +39,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
         : false
 
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.activeTextEditorBookmarked', isActiveTextEditorBookmarked)
-      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isUndoHistoryEmpty', undoHistory.length === 0)
+      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isUndoHistoryEmpty', workspaceState.getUndoHistory().length === 0)
     } catch (error) {
       console.warn('[Bookmarks] Could not update context', error)
     }
@@ -385,7 +382,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       if (removedBookmarks.length === 0) return
 
       // Save deleted bookmarks in memory to be able to revert the deletion
-      undoHistory = [...undoHistory, removedBookmarks].slice(0, UNDO_HISTORY_SIZE)
+      workspaceState.setUndoHistory([...workspaceState.getUndoHistory(), removedBookmarks].slice(0, UNDO_HISTORY_SIZE))
       config.setBookmarks(bookmarks)
 
       bookmarksTreeDataProvider.refresh()
@@ -398,14 +395,16 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   // Reverts bookmarks deletion (stored in memory)
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.undo', async () => {
-      const bookmarksToRestore = undoHistory.pop()
+      const bookmarksToRestore = workspaceState.getUndoHistory().at(-1)
       if (!bookmarksToRestore) return
 
       config.setBookmarks([...config.getBookmarks(), ...bookmarksToRestore])
+      workspaceState.setUndoHistory(workspaceState.getUndoHistory().slice(0, -1))
 
       bookmarksTreeDataProvider.refresh()
       updateContextInBackground()
       config.saveInBackground()
+      await workspaceState.save()
     })
   )
 
