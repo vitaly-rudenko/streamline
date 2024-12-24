@@ -55,7 +55,8 @@
   },
   "dependencies": {
     "common-tags": "^1.8.2",
-    "lru-cache": "^10.2.2"
+    "lru-cache": "^10.2.2",
+    "zod": "^3.24.1"
   },
   "contributes": {
     "views": {
@@ -555,6 +556,14 @@
     "configuration": {
       "title": "Streamline",
       "properties": {
+        "streamline.invalidConfigurationBackups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "description": "When configuration is invalid, it's stored here"
+        },
         "streamline.disabledFeatures": {
           "type": "array",
           "items": {
@@ -641,7 +650,7 @@
             "test",
             "e2e-spec"
           ],
-          "description": "Basename suffixes to exclude from search (e.g. js, ts, test and spec)"
+          "description": "Basename suffixes to exclude from search (e.g. 'test' and 'spec')"
         },
         "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {
           "type": "array",
