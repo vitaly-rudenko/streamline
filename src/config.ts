@@ -42,21 +42,23 @@ export const initialConfig = getConfig()
 // If configuration section is invalid, the extension will store a backup of the invalid configuration section with the error
 let configErrorQueue = Promise.resolve()
 function handleConfigError(section: string, value: unknown, error: any, target?: vscode.ConfigurationTarget) {
-  console.warn('Failed to parse configuration section', section, 'due to', error)
+  console.warn('Failed to parse configuration section', section, 'with value', value, 'due to', error)
   vscode.window.showWarningMessage(`Failed to parse configuration section "${section}"`).then(() => {}, () => {})
 
-  // Save backup of invalid configuration, sequentially to avoid overwriting other backups that are being saved at the same time
-  configErrorQueue = configErrorQueue.then(async () => {
-    const config = getConfig()
-    const invalidConfigurationBackups = target
-      ? config.inspect<unknown[]>('invalidConfigurationBackups')?.[getInspectKeyFromConfigurationTarget(target)]
-      : config.get<unknown[]>('invalidConfigurationBackups')
+  // Save backup of invalid configuration section, sequentially to avoid overwriting other backups that are being saved at the same time
+  configErrorQueue = configErrorQueue
+    .then(async () => {
+      const config = getConfig()
+      const invalidConfigurationBackups = target
+        ? config.inspect<unknown[]>('invalidConfigurationBackups')?.[getInspectKeyFromConfigurationTarget(target)]
+        : config.get<unknown[]>('invalidConfigurationBackups')
 
-    await config.update('invalidConfigurationBackups', [
-      { timestamp: new Date().toISOString(), section, value, error: { ...error, message: error.message } },
-      ...invalidConfigurationBackups ?? [],
-    ].slice(0, 50), target)
-  })
+      await config.update('invalidConfigurationBackups', [
+        { timestamp: new Date().toISOString(), section, value, error: { ...error, message: error.message } },
+        ...invalidConfigurationBackups ?? [],
+      ].slice(0, 50), target)
+    })
+    .catch((error) => console.warn('Could not save backup of invalid configuration section', section, 'with value', value, 'due to', error))
 }
 
 /** To be used with `config.inspect()`, for example: `config.inspect()[getInspectKeyFromConfigurationTarget(target)]` */
