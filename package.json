@@ -1,8 +1,8 @@
 {
   "name": "streamline",
   "displayName": "Streamline",
-  "description": "Streamline your workflow",
-  "version": "0.30.0",
+  "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
+  "version": "0.30.901",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -27,8 +27,7 @@
     "dev": "nodemon -x 'npm run compile'",
     "deploy": "npm run compile && npm run lint && npm run test && vsce package && vsce publish",
     "deploy:pre-release": "npm run compile && npm run lint && npm run test && vsce package --pre-release && vsce publish --pre-release",
-    "deploy:beta": "npm run deploy:pre-release",
-    "check:unused-exports": "npx ts-unused-exports tsconfig.json src/**/*.ts"
+    "deploy:beta": "npm run deploy:pre-release"
   },
   "devDependencies": {
     "@total-typescript/shoehorn": "^0.1.2",
