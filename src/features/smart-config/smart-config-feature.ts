@@ -8,8 +8,6 @@ import { unique } from '../../utils/unique'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getInspectKeyFromConfigurationTarget } from '../../config'
 
-// TODO: warn when rules are invalid
-
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
   dependencies: {

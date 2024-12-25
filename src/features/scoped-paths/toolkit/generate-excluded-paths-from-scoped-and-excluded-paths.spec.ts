@@ -357,7 +357,6 @@ describe('generateExcludedPathsFromScopedAndExcludedPaths()', () => {
     })
 
     // it.todo('handles folder existing in multiple workspace folders (nested files must be hidden properly)')
-
     // it.todo('ignores the fact that file exists in another workspace folder if that workspace folder is excluded')
 
     it('handles excluded workspace folders', async () => {

@@ -5,11 +5,10 @@ import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { filter } from '../../utils/filter'
 import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
-import { defaultCurrentList } from './common'
+import { Bookmark, defaultCurrentList } from './common'
+import { getTargetItemsForCommand } from './toolkit/get-target-items-for-command'
 
-const UNDO_HISTORY_SIZE = 25
-
-// TODO: warn when serialized bookmarks are invalid
+const UNDO_HISTORY_SIZE = 50
 
 export function createBookmarksFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
@@ -24,6 +23,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   const bookmarksTreeView = vscode.window.createTreeView('bookmarks', {
     treeDataProvider: bookmarksTreeDataProvider,
     showCollapseAll: true,
+    canSelectMany: true,
   })
 
   const scheduleConfigLoad = createDebouncedFunction(() => {
@@ -183,29 +183,34 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     })
   )
 
-  // Move a single bookmark to another list
+  // Move bookmarks to another list
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.move', async (item?: FolderTreeItem | FileTreeItem | SelectionTreeItem) => {
-      if (!item) return
+    vscode.commands.registerCommand('streamline.bookmarks.move', async (
+      item?: FolderTreeItem | FileTreeItem | SelectionTreeItem,
+      selectedItems?: (FolderTreeItem | FileTreeItem | SelectionTreeItem)[],
+    ) => {
+      const items = getTargetItemsForCommand(item, selectedItems)
+        // We allow selecting virtual files for better UX, but it's not possible to move them because they're not real bookmarks
+        .filter(item => item.contextValue !== 'virtualFile')
+      if (items.length === 0) return
 
       const newList = await promptListSelection()
       if (!newList) return
 
       // Check if bookmark still exists
       const bookmarks = config.getBookmarks()
-      const bookmarkToMove = bookmarks.find(bookmark => bookmark.list === item.list && bookmark.uri.path === item.uri.path && bookmark.type === item.type)
+      const bookmarksToMove = bookmarks
+        .filter(bookmark => items.some(item => bookmark.list === item.list && bookmark.uri.path === item.uri.path && bookmark.type === item.type))
+        .filter(bookmark => bookmark.list !== newList)
 
-      if (!bookmarkToMove) {
+      if (bookmarksToMove.length === 0) {
         bookmarksTreeDataProvider.refresh()
-        await vscode.window.showWarningMessage('Something went wrong, please try again')
         return
       }
 
-      if (bookmarkToMove.list === newList) return
-
       config.setBookmarks([
-        ...config.getBookmarks().filter((bookmark) => bookmark !== bookmarkToMove),
-        { ...bookmarkToMove, list: newList },
+        ...config.getBookmarks().filter((bookmark) => !bookmarksToMove.includes(bookmark)),
+        ...bookmarksToMove.map(bookmark => ({ ...bookmark, list: newList })),
       ])
 
       bookmarksTreeDataProvider.refresh()
@@ -353,37 +358,51 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
 
   // Deletes an individual bookmark (file, folder or selection) or all bookmarks in a list
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.bookmarks.delete', async (itemOrUri: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem | vscode.Uri) => {
-      if (itemOrUri instanceof ListTreeItem) {
-        config.setArchivedLists(config.getArchivedLists().filter(list => list !== itemOrUri.list))
+    vscode.commands.registerCommand('streamline.bookmarks.delete', async (
+      item?: ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem | vscode.Uri,
+      selectedItems?: (ListTreeItem | FileTreeItem | FolderTreeItem | SelectionTreeItem | vscode.Uri)[]
+    ) => {
+      const itemsToDelete = getTargetItemsForCommand(item, selectedItems)
+        // We allow selecting virtual files for better UX, but it's not possible to delete them because they're not real bookmarks
+        .filter(item => !(item instanceof FileTreeItem) || item.contextValue !== 'virtualFile')
+      if (itemsToDelete.length === 0) return
 
-        if (workspaceState.getCurrentList() === itemOrUri.list) {
-          workspaceState.setCurrentList(defaultCurrentList)
-        }
-      }
-
-      const [bookmarks, removedBookmarks] = filter(
-        config.getBookmarks(),
-        (bookmark) => {
-          if (itemOrUri instanceof ListTreeItem) {
-            return !(bookmark.list === itemOrUri.list)
-          } else if (itemOrUri instanceof FolderTreeItem) {
-            return !(bookmark.type === 'folder' && bookmark.uri.path === itemOrUri.uri.path)
-          } else if (itemOrUri instanceof FileTreeItem) {
-            return !(bookmark.type === 'file' && bookmark.uri.path === itemOrUri.uri.path)
-          } else if (itemOrUri instanceof SelectionTreeItem) {
-            return !(bookmark.type === 'selection' && bookmark.uri.path === itemOrUri.uri.path && bookmark.selection.isEqual(itemOrUri.selection))
-          } else {
-            return !(bookmark.type === 'file' && bookmark.uri.path === itemOrUri.path)
+      let finalUpdatedBookmarks = config.getBookmarks()
+      let finalRemovedBookmarks: Bookmark[] = []
+      for (const itemToDelete of itemsToDelete) {
+        if (itemToDelete instanceof ListTreeItem) {
+          config.setArchivedLists(config.getArchivedLists().filter(list => list !== itemToDelete.list))
+          if (workspaceState.getCurrentList() === itemToDelete.list) {
+            workspaceState.setCurrentList(defaultCurrentList)
           }
         }
-      )
 
-      if (removedBookmarks.length === 0) return
+        const [updatedBookmarks, removedBookmarks] = filter(
+          finalUpdatedBookmarks,
+          (bookmark) => {
+            if (itemToDelete instanceof ListTreeItem) {
+              return !(bookmark.list === itemToDelete.list)
+            } else if (itemToDelete instanceof FolderTreeItem) {
+              return !(bookmark.type === 'folder' && bookmark.uri.path === itemToDelete.uri.path)
+            } else if (itemToDelete instanceof FileTreeItem) {
+              return !(bookmark.type === 'file' && bookmark.uri.path === itemToDelete.uri.path)
+            } else if (itemToDelete instanceof SelectionTreeItem) {
+              return !(bookmark.type === 'selection' && bookmark.uri.path === itemToDelete.uri.path && bookmark.selection.isEqual(itemToDelete.selection))
+            } else {
+              return !(bookmark.type === 'file' && bookmark.uri.path === itemToDelete.path)
+            }
+          }
+        )
 
-      // Save deleted bookmarks in memory to be able to revert the deletion
-      workspaceState.setUndoHistory([...workspaceState.getUndoHistory(), removedBookmarks].slice(0, UNDO_HISTORY_SIZE))
-      config.setBookmarks(bookmarks)
+        finalRemovedBookmarks.push(...removedBookmarks)
+        finalUpdatedBookmarks = updatedBookmarks
+      }
+
+      if (finalRemovedBookmarks.length === 0) return
+
+      // Save deleted bookmarks in workspace state to be able to revert the deletion
+      workspaceState.setUndoHistory([...workspaceState.getUndoHistory(), finalRemovedBookmarks].slice(0, UNDO_HISTORY_SIZE))
+      config.setBookmarks(finalUpdatedBookmarks)
 
       bookmarksTreeDataProvider.refresh()
       updateContextInBackground()
@@ -392,7 +411,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
     })
   )
 
-  // Reverts bookmarks deletion (stored in memory)
+  // Reverts bookmarks deletion (stored in workspace state)
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.bookmarks.undo', async () => {
       const bookmarksToRestore = workspaceState.getUndoHistory().at(-1)

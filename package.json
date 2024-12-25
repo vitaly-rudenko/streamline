@@ -432,12 +432,17 @@
         },
         {
           "command": "streamline.bookmarks.move",
-          "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == selection)",
-          "group": "info@1"
+          "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == virtualFile || viewItem == selection)",
+          "group": "info@2"
         },
         {
           "command": "streamline.bookmarks.delete",
-          "when": "view == bookmarks && (viewItem == file || viewItem == selection || viewItem == folder)",
+          "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == virtualFile || viewItem == selection)",
+          "group": "info@3"
+        },
+        {
+          "command": "streamline.bookmarks.delete",
+          "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == selection)",
           "group": "inline@2"
         },
         {
