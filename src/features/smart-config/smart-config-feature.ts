@@ -6,6 +6,7 @@ import { SmartConfigWorkspaceState } from './smart-config-workspace-state'
 import { Config, SmartConfigContext } from './common'
 import { unique } from '../../utils/unique'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
+import { getInspectKeyFromConfigurationTarget } from '../../config'
 
 // TODO: warn when rules are invalid
 
@@ -159,11 +160,7 @@ export function createSmartConfigFeature(input: {
     newValue: object | undefined,
     target: vscode.ConfigurationTarget
   ) {
-    const inspected = vscodeConfig.inspect(section)
-    const oldValue = target === vscode.ConfigurationTarget.Global ? inspected?.globalValue
-      : target === vscode.ConfigurationTarget.Workspace ? inspected?.workspaceValue
-      : inspected?.workspaceFolderValue
-
+    const oldValue = vscodeConfig.inspect(section)?.[getInspectKeyFromConfigurationTarget(target)]
     if (oldValue !== newValue) {
       try {
         await vscodeConfig.update(section, newValue, target)

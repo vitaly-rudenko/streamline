@@ -149,7 +149,10 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   // TODO: Does not belong here? Also we do not need to regenerate it every time
   private _generateExcludePattern() {
     const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
-    const excludeEntries = Object.entries({ ...searchExcludes, ...this.config.getCustomExcludes() })
+    const excludeEntries = Object.entries({
+      ...searchExcludes,
+      ...this.config.getUseExcludes() ? this.config.getCustomExcludes() : {},
+    })
 
     return excludeEntries.length > 0
       ? `{${excludeEntries.filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`

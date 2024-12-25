@@ -562,7 +562,7 @@
             "type": "object",
             "additionalProperties": true
           },
-          "description": "When configuration is invalid, it's stored here"
+          "description": "Backups of invalid configuration sections"
         },
         "streamline.disabledFeatures": {
           "type": "array",
@@ -586,26 +586,30 @@
           "additionalProperties": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "description": "Path to include in the scope"
+            },
+            "description": "Paths to include in the scope"
           },
-          "description": "Scopes"
+          "description": "Scopes definitions"
         },
         "streamline.scopedPaths.workspaceFoldersSnapshot": {
           "type": "array",
           "default": [],
           "items": {
-            "type": "string"
+            "type": "string",
+            "description": "Workspace folder path"
           },
-          "description": "Snapshot of Workspace Folders to safely restore after unscoped"
+          "description": "Snapshot of workspace folders to safely restore after scope is disabled"
         },
         "streamline.highlightedPaths.patterns": {
           "type": "array",
           "default": [],
           "items": {
-            "type": "string"
+            "type": "string",
+            "description": "Regular expression pattern"
           },
-          "description": "Highlighted paths"
+          "description": "Highlight paths in explorer view that match these regular expression patterns"
         },
         "streamline.currentPath.maxLabelLength": {
           "type": "number",
@@ -620,17 +624,17 @@
         "streamline.relatedFiles.useExcludes": {
           "type": "boolean",
           "default": true,
-          "description": "Use excludes in related files view"
+          "description": "Enable custom exclude patterns from 'streamline.relatedFiles.exclude' configuration section"
         },
         "streamline.relatedFiles.useStricterQuickOpenQuery": {
           "type": "boolean",
           "default": false,
-          "description": "Keep hyphens or underscores in basename when using 'Quick Open Related Files' command"
+          "description": "Keep hyphens or underscores in the basename when using 'Quick Open Related File...' command"
         },
         "streamline.relatedFiles.useGlobalSearch": {
           "type": "boolean",
           "default": false,
-          "description": "Search related files across all workspace folders"
+          "description": "Enable searching for related files across all workspace folders"
         },
         "streamline.relatedFiles.exclude": {
           "type": "object",
@@ -638,7 +642,7 @@
           "additionalProperties": {
             "type": "boolean"
           },
-          "description": "Custom exclude patterns for related files view"
+          "description": "Custom exclude patterns for Related Files view (in the same format as 'files.exclude')"
         },
         "streamline.relatedFiles.excludedSuffixes": {
           "type": "array",
@@ -650,7 +654,7 @@
             "test",
             "e2e-spec"
           ],
-          "description": "Basename suffixes to exclude from search (e.g. 'test' and 'spec')"
+          "description": "Basename suffixes to exclude from related files search (e.g. 'test' and 'spec')"
         },
         "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {
           "type": "array",
@@ -658,7 +662,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Hide these workspace folders in related files view when Global Search is enabled"
+          "description": "Hide these workspace folders in Related Files view when global search is enabled"
         },
         "streamline.relatedFiles.maxLabelLength": {
           "type": "number",
@@ -676,12 +680,12 @@
           "items": {
             "type": "string"
           },
-          "description": "Archived lists"
+          "description": "Archived bookmarks lists' names"
         },
         "streamline.bookmarks.serializedBookmarks": {
           "type": "array",
           "default": [],
-          "description": "Serialized bookmarks"
+          "description": "Serialized bookmarks (avoid modifying this directly)"
         },
         "streamline.smartConfig.defaults": {
           "type": "object",
@@ -695,17 +699,18 @@
           "additionalProperties": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Configuration preset, can be used in rule definitions"
+            "description": "Configuration preset to use in 'rules[].apply' list"
           },
-          "description": "Configuration presets to choose from in \"rules[].apply\" list"
+          "description": "Configuration presets to use in 'rules[].apply' list"
         },
         "streamline.smartConfig.toggles": {
           "type": "array",
           "default": [],
           "items": {
-            "type": "string"
+            "type": "string",
+            "description": "Custom toggle name (will appear in the status bar)"
           },
-          "description": "Custom toggles that can be used in \"rules[].when[].toggle\" conditions (will appear in the status bar)"
+          "description": "Custom toggles to use in 'rules[].when[].toggle' conditions (will appear in the status bar)"
         },
         "streamline.smartConfig.rules": {
           "type": "array",

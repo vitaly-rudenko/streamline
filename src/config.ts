@@ -23,7 +23,12 @@ function getEffectiveTarget(config: vscode.WorkspaceConfiguration, section: stri
 }
 
 /** Update config section in the place where it's currently set, otherwise use default target */
-export async function updateEffectiveConfig<T>(config: vscode.WorkspaceConfiguration, defaultTarget: vscode.ConfigurationTarget, section: string, generateValue: (existsInNonDefaultTarget: boolean) => T | undefined) {
+export async function updateEffectiveConfig<T>(
+  config: vscode.WorkspaceConfiguration,
+  defaultTarget: vscode.ConfigurationTarget,
+  section: string,
+  generateValue: (existsInNonDefaultTarget: boolean) => T | undefined
+) {
   const effectiveTarget = getEffectiveTarget(config, section)
   const target = effectiveTarget ?? defaultTarget
   const existsInNonDefaultTarget = effectiveTarget !== undefined && effectiveTarget !== defaultTarget
@@ -35,28 +40,35 @@ export async function updateEffectiveConfig<T>(config: vscode.WorkspaceConfigura
 export const initialConfig = getConfig()
 
 // If configuration section is invalid, the extension will store a backup of the invalid configuration section with the error
-let invalidConfigurationBackups = initialConfig.get<unknown[]>('invalidConfigurationBackups', [])
+let configErrorQueue = Promise.resolve()
 function handleConfigError(section: string, value: unknown, error: any, target?: vscode.ConfigurationTarget) {
   console.warn('Failed to parse configuration section', section, 'due to', error)
-
-  invalidConfigurationBackups = [
-    ...invalidConfigurationBackups,
-    { timestamp: new Date().toISOString(), [section]: value, error }
-  ].slice(0, 25)
-
-  getConfig().update('invalidConfigurationBackups', invalidConfigurationBackups, target)
-    .then(() => {}, (err) => console.error('Could not save a backup of invalid configuration section', section, err))
-
   vscode.window.showWarningMessage(`Failed to parse configuration section "${section}"`).then(() => {}, () => {})
+
+  // Save backup of invalid configuration, sequentially to avoid overwriting other backups that are being saved at the same time
+  configErrorQueue = configErrorQueue.then(async () => {
+    const config = getConfig()
+    const invalidConfigurationBackups = target
+      ? config.inspect<unknown[]>('invalidConfigurationBackups')?.[getInspectKeyFromConfigurationTarget(target)]
+      : config.get<unknown[]>('invalidConfigurationBackups')
+
+    await config.update('invalidConfigurationBackups', [
+      { timestamp: new Date().toISOString(), section, value, error: { ...error, message: error.message } },
+      ...invalidConfigurationBackups ?? [],
+    ].slice(0, 50), target)
+  })
+}
+
+/** To be used with `config.inspect()`, for example: `config.inspect()[getInspectKeyFromConfigurationTarget(target)]` */
+export function getInspectKeyFromConfigurationTarget(target: vscode.ConfigurationTarget) {
+  if (target === vscode.ConfigurationTarget.Global) return 'globalValue'
+  if (target === vscode.ConfigurationTarget.Workspace) return 'workspaceValue'
+  if (target === vscode.ConfigurationTarget.WorkspaceFolder) return 'workspaceFolderValue'
+  throw new Error(`Invalid configuration target: ${target}`)
 }
 
 /** Get configuration section value and validate it against the schema */
-export function safeConfigGet<T>(
-  config: vscode.WorkspaceConfiguration,
-  section: string,
-  defaultValue: T,
-  schema: ZodSchema<T>
-) {
+export function safeConfigGet<T>(config: vscode.WorkspaceConfiguration, section: string, defaultValue: T, schema: ZodSchema<T>) {
   const value = config.get(section, defaultValue)
 
   try {
@@ -80,17 +92,17 @@ export function safeConfigInspect<T>(
 
   const parsedGlobalValue = schema.optional().safeParse(globalValue)
   if (!parsedGlobalValue.success) {
-    handleConfigError(section, value, parsedGlobalValue.error, vscode.ConfigurationTarget.Global)
+    handleConfigError(section, globalValue, parsedGlobalValue.error, vscode.ConfigurationTarget.Global)
   }
 
   const parsedWorkspaceValue = schema.optional().safeParse(workspaceValue)
   if (!parsedWorkspaceValue.success) {
-    handleConfigError(section, value, parsedWorkspaceValue.error, vscode.ConfigurationTarget.Workspace)
+    handleConfigError(section, workspaceValue, parsedWorkspaceValue.error, vscode.ConfigurationTarget.Workspace)
   }
 
   const parsedWorkspaceFolderValue = schema.optional().safeParse(workspaceFolderValue)
   if (!parsedWorkspaceFolderValue.success) {
-    handleConfigError(section, value, parsedWorkspaceFolderValue.error, vscode.ConfigurationTarget.WorkspaceFolder)
+    handleConfigError(section, workspaceFolderValue, parsedWorkspaceFolderValue.error, vscode.ConfigurationTarget.WorkspaceFolder)
   }
 
   return {
