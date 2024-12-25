@@ -45,14 +45,15 @@ export function createScopedPathsFeature(input: {
   const workspaceState = new ScopedPathsWorkspaceState(context.workspaceState)
 
   const cache = new ScopedPathsCache(config, workspaceState)
-  config.onChange = () => cache.update()
-  workspaceState.onChange = () => cache.update()
+  config.onChange = workspaceState.onChange = () => {
+    cache.update()
+    onChange()
+  }
 
   const directoryReader = new CachedDirectoryReader()
 
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
-    onChange()
     updateStatusBarItems()
     updateContextInBackground()
     updateExcludesInBackground()
@@ -247,7 +248,6 @@ export function createScopedPathsFeature(input: {
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.enableScope', async () => {
       workspaceState.setEnabled(true)
-      onChange()
 
       updateStatusBarItems()
       updateContextInBackground()
@@ -260,7 +260,6 @@ export function createScopedPathsFeature(input: {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.disableScope', async () => {
       workspaceState.setEnabled(false)
-      onChange()
 
       updateStatusBarItems()
       updateContextInBackground()
@@ -281,7 +280,6 @@ export function createScopedPathsFeature(input: {
 
       workspaceState.setCurrentScope(`${QUICK_SCOPE_PREFIX}${paths[0]}`)
       workspaceState.setEnabled(true)
-      onChange()
 
       updateStatusBarItems()
       updateContextInBackground()
@@ -308,7 +306,6 @@ export function createScopedPathsFeature(input: {
           ...scopedPathsToAdd,
         ])
       })
-      onChange()
 
       updateContextInBackground()
       updateExcludesInBackground()
@@ -331,7 +328,6 @@ export function createScopedPathsFeature(input: {
         ...config.getScopesObject(),
         [workspaceState.getCurrentScope()]: config.getScopesObject()[workspaceState.getCurrentScope()].filter(path => !scopedPathsToDelete.has(path)),
       })
-      onChange()
 
       updateContextInBackground()
       updateExcludesInBackground()
@@ -357,7 +353,6 @@ export function createScopedPathsFeature(input: {
           ...excludedPathsToAdd,
         ])
       })
-      onChange()
 
       updateContextInBackground()
       updateExcludesInBackground()
@@ -380,7 +375,6 @@ export function createScopedPathsFeature(input: {
         ...config.getScopesObject(),
         [workspaceState.getCurrentScope()]: config.getScopesObject()[workspaceState.getCurrentScope()].filter(path => !excludedPathsToDelete.has(path)),
       })
-      onChange()
 
       updateContextInBackground()
       updateExcludesInBackground()
@@ -410,7 +404,6 @@ export function createScopedPathsFeature(input: {
         if (!selectedScope) return
       }
       workspaceState.setCurrentScope(selectedScope)
-      onChange()
 
       updateStatusBarItems()
       updateExcludesInBackground()
@@ -427,7 +420,6 @@ export function createScopedPathsFeature(input: {
       }
 
       config.setScopesObject({ ...config.getScopesObject(), [workspaceState.getCurrentScope()]: [] })
-      onChange()
 
       updateContextInBackground()
       updateExcludesInBackground()
