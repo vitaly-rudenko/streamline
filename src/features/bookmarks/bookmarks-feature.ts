@@ -442,8 +442,15 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('streamline.bookmarks')) {
+        if (!config.isSavingInBackground) {
+          scheduleConfigLoad()
+        }
+      }
+    }),
     vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
-    // Update bookmarks when corresponding files are renamed
+    // Update bookmarks when corresponding files are renamed or moved
     vscode.workspace.onDidRenameFiles((event) => {
       const oldPathNewUriMap = new Map(event.files.map(file => [file.oldUri.path, file.newUri]))
 
@@ -458,13 +465,6 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
       bookmarksTreeDataProvider.refresh()
       config.saveInBackground()
     }),
-    vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration('streamline.bookmarks')) {
-        if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
-        }
-      }
-    })
   )
 
   updateContextInBackground()
