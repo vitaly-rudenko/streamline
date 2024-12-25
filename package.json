@@ -726,7 +726,6 @@
             "properties": {
               "apply": {
                 "type": "array",
-                "minLength": 1,
                 "description": "Config presets to apply when a condition triggers in the rule",
                 "items": {
                   "type": "string"
@@ -734,7 +733,6 @@
               },
               "when": {
                 "type": "array",
-                "minLength": 1,
                 "description": "List of conditions for applying config presets - if at least one condition matches, specified config presets will be applied",
                 "items": {
                   "type": "object",
