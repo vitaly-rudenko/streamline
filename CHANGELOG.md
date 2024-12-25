@@ -11,6 +11,7 @@
 ### Bookmarks
 
 - Bulk move and bulk deletion is now supported in the Bookmarks view
+- Bookmarked files now have badges in the Explorer view
 
 ## 0.30
 
