@@ -5,8 +5,9 @@ import { createRelatedFilesFeature } from './features/related-files/related-file
 import { uriToPath } from './utils/uri'
 import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 import { createCurrentPathFeature } from './features/current-path/current-path-feature'
-import { initialConfig } from './config'
+import { initialConfig, safeConfigGet } from './config'
 import { createSmartConfigFeature } from './features/smart-config/smart-config-feature'
+import z from 'zod'
 
 type Feature =
 	| 'bookmarks'
@@ -19,7 +20,7 @@ type Feature =
 export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
 
-	const disabledFeatures = initialConfig.get<Feature[]>('disabledFeatures', [])
+  const disabledFeatures = safeConfigGet(initialConfig, 'disabledFeatures', [], z.array(z.string()))
 	const isFeatureEnabled = (feature: Feature) => !disabledFeatures.includes(feature)
 
 	const highlightedPathsFeature = isFeatureEnabled('highlightedPaths')
