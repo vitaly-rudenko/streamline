@@ -436,19 +436,14 @@
           "group": "info@2"
         },
         {
-          "command": "streamline.bookmarks.delete",
-          "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == virtualFile || viewItem == selection)",
+          "command": "streamline.bookmarks.addFile",
+          "when": "view == bookmarks && viewItem == virtualFile",
           "group": "info@3"
         },
         {
           "command": "streamline.bookmarks.delete",
-          "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == selection)",
-          "group": "inline@2"
-        },
-        {
-          "command": "streamline.bookmarks.addFile",
-          "when": "view == bookmarks && viewItem == virtualFile",
-          "group": "inline@2"
+          "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == virtualFile || viewItem == selection)",
+          "group": "info@3"
         },
         {
           "command": "streamline.bookmarks.setListAsCurrent",

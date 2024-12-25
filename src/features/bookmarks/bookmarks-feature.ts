@@ -10,14 +10,19 @@ import { getTargetItemsForCommand } from './toolkit/get-target-items-for-command
 
 const UNDO_HISTORY_SIZE = 50
 
-export function createBookmarksFeature(input: { context: vscode.ExtensionContext }) {
-  const { context } = input
+export function createBookmarksFeature(input: {
+  context: vscode.ExtensionContext
+  onChange: () => unknown
+}) {
+  const { context, onChange } = input
 
   const config = new BookmarksConfig()
   const workspaceState = new BookmarksWorkspaceState(context.workspaceState)
   const cache = new BookmarksCache(config, workspaceState)
-  config.onChange = () => cache.update()
-  workspaceState.onChange = () => cache.update()
+  config.onChange = workspaceState.onChange = () => {
+    cache.update()
+    onChange()
+  }
 
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(cache, config, workspaceState)
   const bookmarksTreeView = vscode.window.createTreeView('bookmarks', {
@@ -468,4 +473,10 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   )
 
   updateContextInBackground()
+
+  return {
+    isPathBookmarkedInCurrentBookmarksList(path: string) {
+      return cache.getCachedBookmarkedPathsInCurrentBookmarksListSet().has(path)
+    }
+  }
 }
