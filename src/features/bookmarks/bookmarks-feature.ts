@@ -21,7 +21,7 @@ export function createBookmarksFeature(input: { context: vscode.ExtensionContext
   workspaceState.onChange = () => cache.update()
 
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(cache, config, workspaceState)
-  const bookmarksTreeView = vscode.window.createTreeView('bookmarks', {
+  const bookmarksTreeView = vscode.window.createTreeView('streamline.bookmarks.view', {
     treeDataProvider: bookmarksTreeDataProvider,
     showCollapseAll: true,
   })

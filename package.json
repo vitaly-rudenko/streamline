@@ -58,22 +58,40 @@
     "lru-cache": "^10.2.2"
   },
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "super-search",
+          "title": "Super search",
+          "icon": "$(search-fuzzy)"
+        }
+      ]
+    },
     "views": {
       "explorer": [
         {
-          "id": "relatedFiles",
+          "id": "streamline.relatedFiles.view",
           "name": "Related files",
           "contextualTitle": "Related files",
           "visibility": "collapsed",
           "icon": "$(sparkle)"
         },
         {
-          "id": "bookmarks",
+          "id": "streamline.bookmarks.view",
           "name": "Bookmarks",
           "contextualTitle": "Bookmarks",
           "visibility": "collapsed",
           "icon": "$(bookmark)"
         }
+      ],
+      "super-search": [
+        {
+					"id": "streamline.superSearch.view",
+					"name": "Builder",
+					"type": "webview",
+          "visibility": "visible",
+          "icon": "$(search-fuzzy)"
+				}
       ]
     },
     "commands": [

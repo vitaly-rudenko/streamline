@@ -30,7 +30,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     }
   }
 
-	context.subscriptions.push(vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider))
+	context.subscriptions.push(vscode.window.registerTreeDataProvider('streamline.relatedFiles.view', relatedFilesTreeDataProvider))
 
   // Open "Quick Open" modal with pre-filled search query for the related files of currently opened file
   context.subscriptions.push(

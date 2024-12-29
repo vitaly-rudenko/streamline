@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import { extractWords } from './extract-words'
 import { PatternOptions, patterns, PatternType } from './patterns'
+import { SuperSearchViewProvider } from './super-search-view-provider';
 
 // TODO: feature: search presets
 // TODO: feature: find current file name (e.g. imports, usage, definition, etc)
@@ -8,6 +9,9 @@ import { PatternOptions, patterns, PatternType } from './patterns'
 
 export function createSuperSearchFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
+
+	const superSearchViewProvider = new SuperSearchViewProvider(context.extensionUri)
+	context.subscriptions.push(vscode.window.registerWebviewViewProvider('streamline.superSearch.view', superSearchViewProvider))
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.superSearch.quickOpen', async () => {
