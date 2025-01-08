@@ -1,6 +1,5 @@
 import { getConfig, initialConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
-import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { unique } from '../../utils/unique'
 import { FeatureConfig } from '../feature-config'
 import { Config, Rule } from './common'
