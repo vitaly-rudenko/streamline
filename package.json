@@ -58,15 +58,6 @@
     "lru-cache": "^10.2.2"
   },
   "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "super-search",
-          "title": "Super search",
-          "icon": "$(search-fuzzy)"
-        }
-      ]
-    },
     "views": {
       "explorer": [
         {
@@ -83,18 +74,13 @@
           "visibility": "collapsed",
           "icon": "$(bookmark)"
         }
-      ],
-      "super-search": [
-        {
-					"id": "streamline.superSearch.view",
-					"name": "Builder",
-					"type": "webview",
-          "visibility": "visible",
-          "icon": "$(search-fuzzy)"
-				}
       ]
     },
     "commands": [
+      {
+        "command": "streamline.superSearch.findSimilarMatches",
+        "title": "Find similar matches"
+      },
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
         "title": "Change Current Scope...",

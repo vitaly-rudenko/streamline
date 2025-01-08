@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { patterns } from '../../../features/super-search/patterns'
+import { patterns } from './patterns'
 
 const words = ['foo', 'bar', 'baz']
 const escapableWords = ['function', 'foo.bar()']
@@ -29,8 +29,8 @@ function testPattern(pattern: string, input: string) {
   return new RegExp(pattern, 'ig').test(input)
 }
 
-suite('patterns', () => {
-  test('findInAllNamingConventions()', () => {
+describe('patterns', () => {
+  it('findInAllNamingConventions()', () => {
     const pattern = patterns.findInAllNamingConventions(words)
 
     assert.deepEqual(input.match(new RegExp(pattern, 'ig')), [
@@ -47,7 +47,7 @@ suite('patterns', () => {
     assert.ok(!testPattern(escapedPattern, 'function-foo.bar[]'))
   })
 
-  test('findLinesWithAllWordsInProvidedOrder()', () => {
+  it('findLinesWithAllWordsInProvidedOrder()', () => {
     const pattern = patterns.findLinesWithAllWordsInProvidedOrder(words)
 
     assert.deepEqual(input.match(new RegExp(pattern, 'ig')), [
@@ -72,7 +72,7 @@ suite('patterns', () => {
     assert.ok(!testPattern(escapedPattern, 'function foo.bar[]'))
   })
 
-  test('findLinesWithAllWordsInAnyOrder()', () => {
+  it('findLinesWithAllWordsInAnyOrder()', () => {
     const pattern = patterns.findLinesWithAllWordsInProvidedOrder(words)
 
     assert.deepEqual(input.match(new RegExp(pattern, 'ig')), [
@@ -97,7 +97,7 @@ suite('patterns', () => {
     assert.ok(!testPattern(escapedPattern, 'function foo.bar[]'))
   })
 
-  test('findFilesWithAllWordsInProvidedOrder()', () => {
+  it('findFilesWithAllWordsInProvidedOrder()', () => {
     const pattern = patterns.findFilesWithAllWordsInProvidedOrder(words)
 
     assert.ok(testPattern(pattern, input))
@@ -121,7 +121,7 @@ suite('patterns', () => {
     assert.ok(!testPattern(escapedPattern, 'function foo.bar[]'))
   })
 
-  test('findFilesWithAllWordsInAnyOrder()', () => {
+  it('findFilesWithAllWordsInAnyOrder()', () => {
     const pattern = patterns.findFilesWithAllWordsInAnyOrder(words)
 
     assert.ok(testPattern(pattern, input))
