@@ -1,6 +1,7 @@
 import { ConfigurationTarget } from 'vscode'
-import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
+import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
+import z from 'zod'
 
 const defaultMaxLabelLength = 60
 const defaultCollapsedIndicator = '⸱⸱⸱'
@@ -15,8 +16,8 @@ export class CurrentPathConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const maxLabelLength = config.get<number>('currentPath.maxLabelLength', defaultMaxLabelLength)
-    const collapsedIndicator = config.get<string>('currentPath.collapsedIndicator', defaultCollapsedIndicator)
+    const maxLabelLength = safeConfigGet(config, 'currentPath.maxLabelLength', defaultMaxLabelLength, z.number().nonnegative())
+    const collapsedIndicator = safeConfigGet(config, 'currentPath.collapsedIndicator', defaultCollapsedIndicator, z.string())
 
     let hasChanged = false
 

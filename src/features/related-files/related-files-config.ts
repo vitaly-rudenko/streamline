@@ -1,8 +1,9 @@
 import { ConfigurationTarget } from 'vscode'
-import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
+import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { FeatureConfig } from '../feature-config'
+import z from 'zod'
 
 const defaultUseExcludes = true
 const defaultUseStricterQuickOpenQuery = false
@@ -27,14 +28,14 @@ export class RelatedFilesConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const customExcludes = config.get<Record<string, unknown>>('relatedFiles.exclude', {})
-    const useExcludes = config.get<boolean>('relatedFiles.useExcludes', defaultUseExcludes)
-    const useStricterQuickOpenQuery = config.get<boolean>('relatedFiles.useStricterQuickOpenQuery', defaultUseStricterQuickOpenQuery)
-    const useGlobalSearch = config.get<boolean>('relatedFiles.useGlobalSearch', defaultUseGlobalSearch)
-    const hiddenWorkspaceFoldersInGlobalSearch = config.get<string[]>('relatedFiles.hiddenWorkspaceFoldersInGlobalSearch', [])
-    const maxLabelLength = config.get<number>('relatedFiles.maxLabelLength', defaultMaxLabelLength)
-    const collapsedIndicator = config.get<string>('relatedFiles.collapsedIndicator', defaultCollapsedIndicator)
-    const excludedSuffixes = config.get<string[]>('relatedFiles.excludedSuffixes', defaultExcludedSuffixes)
+    const customExcludes = safeConfigGet(config, 'relatedFiles.exclude', {}, z.record(z.unknown()))
+    const useExcludes = safeConfigGet(config, 'relatedFiles.useExcludes', defaultUseExcludes, z.boolean())
+    const useStricterQuickOpenQuery = safeConfigGet(config, 'relatedFiles.useStricterQuickOpenQuery', defaultUseStricterQuickOpenQuery, z.boolean())
+    const useGlobalSearch = safeConfigGet(config, 'relatedFiles.useGlobalSearch', defaultUseGlobalSearch, z.boolean())
+    const hiddenWorkspaceFoldersInGlobalSearch = safeConfigGet(config, 'relatedFiles.hiddenWorkspaceFoldersInGlobalSearch', [], z.array(z.string()))
+    const maxLabelLength = safeConfigGet(config, 'relatedFiles.maxLabelLength', defaultMaxLabelLength, z.number().nonnegative())
+    const collapsedIndicator = safeConfigGet(config, 'relatedFiles.collapsedIndicator', defaultCollapsedIndicator, z.string())
+    const excludedSuffixes = safeConfigGet(config, 'relatedFiles.excludedSuffixes', defaultExcludedSuffixes, z.array(z.string()))
 
     let hasChanged = false
 

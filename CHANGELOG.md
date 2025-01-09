@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.40
+
+### General
+
+- All configuration sections are now validated, and if configuration section is invalid, its backup will be saved into `streamline.invalidConfigurationBackups`
+  > This ensures that extension works correctly while keeping your configuration safe in case of mistakes
+- Improved documentation for most configuration sections
+
+### Bookmarks
+
+- Bulk move and bulk deletion is now supported in the Bookmarks view
+- Bookmarked files now have badges in the Explorer view
+
 ## 0.30
 
 ### Bookmarks

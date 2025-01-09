@@ -1,7 +1,8 @@
 import { ConfigurationTarget } from 'vscode'
-import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
+import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { FeatureConfig } from '../feature-config'
+import z from 'zod'
 
 export class HighlightedPathsConfig extends FeatureConfig {
   private _patterns: string[] = []
@@ -14,7 +15,7 @@ export class HighlightedPathsConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const patterns = config.get<string[]>('highlightedPaths.patterns', [])
+    const patterns = safeConfigGet(config, 'highlightedPaths.patterns', [], z.array(z.string()))
 
     let hasChanged = false
 

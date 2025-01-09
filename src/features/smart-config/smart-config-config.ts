@@ -1,8 +1,9 @@
-import { getConfig, initialConfig } from '../../config'
+import z from 'zod'
+import { getConfig, initialConfig, safeConfigInspect } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { unique } from '../../utils/unique'
 import { FeatureConfig } from '../feature-config'
-import { Config, Rule } from './common'
+import { Config, Rule, ruleSchema } from './common'
 
 type Inspected<T> = {
   globalValue?: T
@@ -22,14 +23,13 @@ export class SmartConfigConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const inspectedDefaults = config.inspect<Config>('smartConfig.defaults')
-    const inspectedConfigs = config.inspect<Record<string, Config>>('smartConfig.configs')
-    const inspectedToggles = config.inspect<string[]>('smartConfig.toggles')
-    const inspectedRules = config.inspect<Rule[]>('smartConfig.rules')
+    const inspectedDefaults = safeConfigInspect(config, 'smartConfig.defaults', z.record(z.unknown()))
+    const inspectedConfigs = safeConfigInspect(config, 'smartConfig.configs', z.record(z.string(), z.record(z.unknown())))
+    const inspectedToggles = safeConfigInspect(config, 'smartConfig.toggles', z.array(z.string()))
+    const inspectedRules = safeConfigInspect(config, 'smartConfig.rules', z.array(ruleSchema))
 
     // Arrays are overridden by VS Code, so we merge them instead
     const mergedToggles: string[] = unique([
-      ...inspectedToggles?.defaultValue ?? [],
       ...inspectedToggles?.globalValue ?? [],
       ...inspectedToggles?.workspaceValue ?? [],
       ...inspectedToggles?.workspaceFolderValue ?? [],
@@ -37,7 +37,6 @@ export class SmartConfigConfig extends FeatureConfig {
 
     // Arrays are overridden by VS Code, so we merge them instead
     const mergedRules: Rule[] = [
-      ...inspectedRules?.defaultValue ?? [],
       ...inspectedRules?.globalValue ?? [],
       ...inspectedRules?.workspaceValue ?? [],
       ...inspectedRules?.workspaceFolderValue ?? [],

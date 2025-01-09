@@ -1,6 +1,9 @@
+import z from "zod"
+
 export type Config = Record<string, unknown>
 
-type ColorThemeKindSlug = 'dark' | 'light' | 'high-contrast' | 'high-contrast-light'
+const colorThemeKindSlugSchema = z.enum(['dark', 'light', 'high-contrast', 'high-contrast-light'])
+type ColorThemeKindSlug = z.infer<typeof colorThemeKindSlugSchema>
 
 export type Condition =
  | { basename: string }
@@ -12,10 +15,23 @@ export type Condition =
  | { scopeEnabled: boolean }
  | { scope: string } // Shorthand for { scopeSelected: 'scope' } && { scopeEnabled: true }
 
-export type Rule = {
-  apply: string[]
-  when: Condition[]
-}
+export const ruleSchema = z.object({
+  apply: z.array(z.string()),
+  when: z.array(
+    z.union([
+      z.object({ basename: z.string() }),
+      z.object({ path: z.string() }),
+      z.object({ toggle: z.string() }),
+      z.object({ colorThemeKind: colorThemeKindSlugSchema }),
+      z.object({ languageId: z.string() }),
+      z.object({ scopeSelected: z.string() }),
+      z.object({ scopeEnabled: z.boolean() }),
+      z.object({ scope: z.string() }),
+    ])
+  )
+})
+
+export type Rule = z.infer<typeof ruleSchema>
 
 export type SmartConfigContext = {
   languageId?: string | undefined

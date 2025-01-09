@@ -14,10 +14,6 @@ export function createHighlightedPathsFeature(input: {
     onChange()
   }, 500)
 
-  function isPathHighlighted(path: string): boolean {
-    return config.getCachedCombinedPatternRegExp()?.test(path) === true
-  }
-
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.highlightedPaths')) {
@@ -28,5 +24,9 @@ export function createHighlightedPathsFeature(input: {
     }),
   )
 
-  return { isPathHighlighted }
+  return {
+    isPathHighlighted(path: string): boolean {
+      return config.getCachedCombinedPatternRegExp()?.test(path) === true
+    }
+  }
 }

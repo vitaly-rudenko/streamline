@@ -5,10 +5,10 @@ export function deserializeBookmark(serializedBookmark: SerializedBookmark): Boo
   return {
     uri: vscode.Uri.file(serializedBookmark.uri),
     list: serializedBookmark.list,
-    note: serializedBookmark.note,
+    ...serializedBookmark.note && { note: serializedBookmark.note },
     ...serializedBookmark.type === 'selection' ? {
       type: serializedBookmark.type,
-      value: serializedBookmark.value,
+      value: serializedBookmark.value || '',
       selection: parseSelection(serializedBookmark.selection),
     } : {
       type: serializedBookmark.type,
