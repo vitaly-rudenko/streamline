@@ -193,6 +193,7 @@ export function createSmartConfigFeature(input: {
     // Context to match rules against relies on currently active document and color theme
     vscode.window.onDidChangeActiveTextEditor(() => scheduleRefresh()),
     vscode.window.onDidChangeActiveColorTheme(() => scheduleRefresh()),
+    vscode.window.onDidChangeWindowState(() => scheduleRefresh()),
   )
 
   scheduleRefresh()

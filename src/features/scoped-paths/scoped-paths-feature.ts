@@ -79,7 +79,7 @@ export function createScopedPathsFeature(input: {
 
     return scopedWorkspaceFolderNames.length > 0
       ? currentWorkspaceFoldersSnapshot.filter(wf => scopedWorkspaceFolderNames.includes(wf.name))
-      : currentWorkspaceFoldersSnapshot // Do not hide workspace folders if none are currently scoped
+      : currentWorkspaceFoldersSnapshot // Avoid removing all workspace folders if none are scoped
   }
 
   /** Stores timestamp of latest workspace folders change by the extension, used for cooldown */
@@ -124,8 +124,8 @@ export function createScopedPathsFeature(input: {
 
       const workspaceConfig = vscode.workspace.getConfiguration('files', null)
 
-      if (workspaceState.getEnabled()) {
-        const scopedAndExcludedPaths = cache.getCachedCurrentlyScopedAndExcludedPaths()
+      const scopedAndExcludedPaths = cache.getCachedCurrentlyScopedAndExcludedPaths()
+      if (workspaceState.getEnabled() && scopedAndExcludedPaths.length > 0 /* avoid unnecessarily setting excludes when there is nothing to exclude */) {
         const excludedPaths = await generateExcludedPathsFromScopedAndExcludedPaths(
           scopedAndExcludedPaths,
           directoryReader,
@@ -167,6 +167,12 @@ export function createScopedPathsFeature(input: {
   /** Create / update snapshot of 'current' workspace folders to be able to restore from it when unscoped */
   async function saveCurrentWorkspaceFoldersSnapshot() {
     if (!vscode.workspace.workspaceFolders) return // Do nothing when no workspace is opened
+
+    // if not already saved, avoid unnecessarily saving snapshot if not scoped or if there's only one workspace folder
+    if (!getConfig().inspect('scopedPaths.workspaceFoldersSnapshot')?.workspaceValue) {
+      if (!workspaceState.getEnabled() && !isScopedPathsEffectivelyEnabled()) return
+      if (vscode.workspace.workspaceFolders.length <= 1) return
+    }
 
     let currentWorkspaceFolders: vscode.WorkspaceFolder[]
 
@@ -211,7 +217,11 @@ export function createScopedPathsFeature(input: {
 
   function getCurrentWorkspaceFoldersSnapshot(): vscode.WorkspaceFolder[] {
     const inspectedSerializedWorkspaceFolders = safeConfigInspect(getConfig(), 'scopedPaths.workspaceFoldersSnapshot', z.array(z.string()))
-    return (inspectedSerializedWorkspaceFolders?.workspaceValue ?? [])
+    if (!inspectedSerializedWorkspaceFolders?.workspaceValue) {
+      return [...vscode.workspace.workspaceFolders ?? []]
+    }
+
+    return inspectedSerializedWorkspaceFolders.workspaceValue
       .map((serializedWorkspaceFolder, index) => {
         if (serializedWorkspaceFolder.includes(':')) {
           const [path, ...nameParts] = serializedWorkspaceFolder.split(':')
