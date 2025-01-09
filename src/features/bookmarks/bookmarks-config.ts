@@ -1,10 +1,11 @@
 import * as vscode from 'vscode'
-import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
-import type { Bookmark, SerializedBookmark } from './common'
+import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
+import { serializedBookmarkSchema, type Bookmark, type SerializedBookmark } from './common'
 import { FeatureConfig } from '../feature-config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { serializeBookmark } from './toolkit/serialize-bookmark'
 import { deserializeBookmark } from './toolkit/deserialize-bookmark'
+import z from 'zod'
 
 export class BookmarksConfig extends FeatureConfig {
   public onChange?: Function
@@ -19,18 +20,16 @@ export class BookmarksConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const archivedLists = config.get<string[]>('bookmarks.archivedLists', [])
-    const serializedBookmarks = config.get<SerializedBookmark[]>('bookmarks.serializedBookmarks', [])
+    const archivedLists = safeConfigGet(config, 'bookmarks.archivedLists', [], z.array(z.string()))
+    const serializedBookmarks = safeConfigGet(config, 'bookmarks.serializedBookmarks', [], z.array(serializedBookmarkSchema))
 
     let hasChanged = false
 
-    if (!areArraysShallowEqual(this._archivedLists, archivedLists)) {
+    if (
+      !areArraysShallowEqual(this._archivedLists, archivedLists)
+      || JSON.stringify(this._serializedBookmarks) !== JSON.stringify(serializedBookmarks)
+    ) {
       this._archivedLists = archivedLists
-
-      hasChanged = true
-    }
-
-    if (JSON.stringify(this._serializedBookmarks) !== JSON.stringify(serializedBookmarks)) {
       this._serializedBookmarks = serializedBookmarks
       this._bookmarks = serializedBookmarks.map((serializedBookmark) => deserializeBookmark(serializedBookmark))
 

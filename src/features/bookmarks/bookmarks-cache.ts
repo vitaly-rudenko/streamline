@@ -7,6 +7,7 @@ export class BookmarksCache {
   private _cachedSortedUnarchivedLists: string[] = []
   private _cachedSortedArchivedLists: string[] = []
   private _cachedBookmarkedFilePathsSet: Set<string> = new Set()
+  private _cachedBookmarkedPathsInCurrentBookmarksListSet: Set<string> = new Set()
 
   constructor(
     private readonly config: BookmarksConfig,
@@ -20,6 +21,7 @@ export class BookmarksCache {
     this._cachedSortedUnarchivedLists = this._cachedUnsortedLists.filter((list) => !this.config.getArchivedLists().includes(list)).sort()
     this._cachedSortedArchivedLists = [...this.config.getArchivedLists()].sort()
     this._cachedBookmarkedFilePathsSet = new Set(this.config.getBookmarks().filter(b => b.type === 'file').map(b => b.uri.path))
+    this._cachedBookmarkedPathsInCurrentBookmarksListSet = new Set(this.config.getBookmarks().filter(b => b.list === this.workspaceState.getCurrentList()).map(b => b.uri.path))
   }
 
   getCachedSortedArchivedLists() {
@@ -36,5 +38,9 @@ export class BookmarksCache {
 
   getCachedBookmarkedFilePathsSet() {
     return this._cachedBookmarkedFilePathsSet
+  }
+
+  getCachedBookmarkedPathsInCurrentBookmarksListSet() {
+    return this._cachedBookmarkedPathsInCurrentBookmarksListSet
   }
 }

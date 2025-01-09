@@ -1,7 +1,8 @@
 import { ConfigurationTarget } from 'vscode'
-import { getConfig, initialConfig, updateEffectiveConfig } from '../../config'
+import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 import { isScopesObjectSerializable } from './toolkit/is-scopes-object-serializable'
+import z from 'zod'
 
 export class ScopedPathsConfig extends FeatureConfig {
   public onChange?: Function
@@ -14,7 +15,7 @@ export class ScopedPathsConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const scopesObject = config.get<Record<string, string[]>>('scopedPaths.scopes', {})
+    const scopesObject = safeConfigGet(config, 'scopedPaths.scopes', {}, z.record(z.string(), z.array(z.string())))
 
     let hasChanged = false
 

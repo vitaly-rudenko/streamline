@@ -38,7 +38,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
       uri ||= vscode.window.activeTextEditor?.document.uri
       if (!uri) return
 
-      const workspaceFolder = !config.getUseGlobalSearch() && isMultiRootWorkspace()
+      const workspaceFolder = isMultiRootWorkspace() && !config.getUseGlobalSearch()
         ? vscode.workspace.getWorkspaceFolder(uri)
         : undefined
 
