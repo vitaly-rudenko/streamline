@@ -6,6 +6,78 @@ import { escapeRegex } from '../../utils/escape-regex'
 export function createSuperSearchFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
+  async function promptToSearch(input: { title: string; searchString: string; matchCase: boolean }) {
+    const copySearchQuery = '$(copy) Copy search query'
+    const findInCurrentlyOpenedFile = '$(file) Find in currently opened file'
+    const findInAllOpenedFiles = '$(files) Find in all opened files'
+    const findInCurrentWorkspaceFolder = '$(file-directory) Find in current workspace folder'
+    const findInAllWorkspaceFolders = '$(file-submodule) Find in all workspace folders'
+
+    const result = await vscode.window.showQuickPick([
+      findInCurrentlyOpenedFile,
+      findInAllOpenedFiles,
+      findInCurrentWorkspaceFolder,
+      findInAllWorkspaceFolders,
+      copySearchQuery,
+    ], { title: input.title })
+
+    if (result === copySearchQuery) {
+      await vscode.env.clipboard.writeText(input.searchString)
+    } else if (result === findInCurrentlyOpenedFile) {
+      // TODO: buggy, sometimes opens with current selection instead of specified searchString
+      // await vscode.commands.executeCommand('editor.actions.findWithArgs', {
+      //   searchString,
+      //   isRegex: true,
+      //   isCaseSensitive: getMatchCase(),
+      // })
+
+      const currentlyOpenedFilePath = vscode.window.activeTextEditor?.document.uri.path
+      const currentlyOpenedFileRelativePath = currentlyOpenedFilePath ? vscode.workspace.asRelativePath(currentlyOpenedFilePath, true) : undefined
+      if (currentlyOpenedFileRelativePath) {
+        await vscode.commands.executeCommand('workbench.action.findInFiles', {
+          query: input.searchString,
+          isRegex: true,
+          isCaseSensitive: input.matchCase,
+          onlyOpenEditors: false,
+          showIncludesExcludes: true,
+          filesToInclude: currentlyOpenedFileRelativePath,
+        })
+      }
+    } else if (result === findInAllOpenedFiles) {
+      await vscode.commands.executeCommand('workbench.action.findInFiles', {
+        query: input.searchString,
+        isRegex: true,
+        isCaseSensitive: input.matchCase,
+        onlyOpenEditors: true,
+        showIncludesExcludes: true,
+        filesToInclude: '',
+      })
+    } else if (result === findInCurrentWorkspaceFolder) {
+      const currentlyOpenedFilePath = vscode.window.activeTextEditor?.document.uri.path
+      const currentlyOpenedFileRelativePath = currentlyOpenedFilePath ? vscode.workspace.asRelativePath(currentlyOpenedFilePath, true) : undefined
+      if (currentlyOpenedFileRelativePath && currentlyOpenedFileRelativePath !== currentlyOpenedFilePath) {
+        const currentWorkspaceFolder = currentlyOpenedFileRelativePath.split('/')[0]
+        await vscode.commands.executeCommand('workbench.action.findInFiles', {
+          query: input.searchString,
+          isRegex: true,
+          isCaseSensitive: input.matchCase,
+          onlyOpenEditors: false,
+          showIncludesExcludes: true,
+          filesToInclude: `./${currentWorkspaceFolder}`,
+        })
+      }
+    } else if (result === findInAllWorkspaceFolders) {
+      await vscode.commands.executeCommand('workbench.action.findInFiles', {
+        query: input.searchString,
+        isRegex: true,
+        isCaseSensitive: input.matchCase,
+        onlyOpenEditors: false,
+        showIncludesExcludes: true,
+        filesToInclude: '',
+      })
+    }
+  }
+
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.superSearch.findSimilarMatches', async () => {
       const quickPick = vscode.window.createQuickPick()
@@ -26,7 +98,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
         matchWholeWordItem,
         escapeRegexItem,
       ]
-      quickPick.selectedItems = [allowHyphensItem, allowUnderscoresItem, escapeRegexItem]
+      quickPick.selectedItems = [allowHyphensItem, allowUnderscoresItem, matchWholeWordItem, escapeRegexItem]
 
       if (vscode.window.activeTextEditor) {
         if (vscode.window.activeTextEditor.selection.isSingleLine) {
@@ -113,78 +185,11 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
           escapeRegex: getEscapeRegex(),
         })
 
-        const copySearchQuery = '$(copy) Copy search query'
-        const findInCurrentlyOpenedFile = '$(file) Find in currently opened file'
-        const findInAllOpenedFiles = '$(files) Find in all opened files'
-        const findInCurrentWorkspaceFolder = '$(file-directory) Find in current workspace folder'
-        const findInAllWorkspaceFolders = '$(file-submodule) Find in all workspace folders'
-
-        const result = await vscode.window.showQuickPick([
-          findInCurrentlyOpenedFile,
-          findInAllOpenedFiles,
-          findInCurrentWorkspaceFolder,
-          findInAllWorkspaceFolders,
-          copySearchQuery,
-        ], { title: regex })
-
-        // TODO: toggle escaping regex
-        // TODO: escape whitespace to allow typing it as a character
-
-        if (result === copySearchQuery) {
-          await vscode.env.clipboard.writeText(searchString)
-        } else if (result === findInCurrentlyOpenedFile) {
-          // TODO: buggy, sometimes opens with current selection instead of specified searchString
-          // await vscode.commands.executeCommand('editor.actions.findWithArgs', {
-          //   searchString,
-          //   isRegex: true,
-          //   isCaseSensitive: getMatchCase(),
-          // })
-
-          const currentlyOpenedFilePath = vscode.window.activeTextEditor?.document.uri.path
-          const currentlyOpenedFileRelativePath = currentlyOpenedFilePath ? vscode.workspace.asRelativePath(currentlyOpenedFilePath, true) : undefined
-          if (currentlyOpenedFileRelativePath) {
-            await vscode.commands.executeCommand('workbench.action.findInFiles', {
-              query: searchString,
-              isRegex: true,
-              isCaseSensitive: getMatchCase(),
-              onlyOpenEditors: false,
-              showIncludesExcludes: true,
-              filesToInclude: currentlyOpenedFileRelativePath,
-            })
-          }
-        } else if (result === findInAllOpenedFiles) {
-          await vscode.commands.executeCommand('workbench.action.findInFiles', {
-            query: searchString,
-            isRegex: true,
-            isCaseSensitive: getMatchCase(),
-            onlyOpenEditors: true,
-            showIncludesExcludes: true,
-            filesToInclude: '',
-          })
-        } else if (result === findInCurrentWorkspaceFolder) {
-          const currentlyOpenedFilePath = vscode.window.activeTextEditor?.document.uri.path
-          const currentlyOpenedFileRelativePath = currentlyOpenedFilePath ? vscode.workspace.asRelativePath(currentlyOpenedFilePath, true) : undefined
-          if (currentlyOpenedFileRelativePath && currentlyOpenedFileRelativePath !== currentlyOpenedFilePath) {
-            const currentWorkspaceFolder = currentlyOpenedFileRelativePath.split('/')[0]
-            await vscode.commands.executeCommand('workbench.action.findInFiles', {
-              query: searchString,
-              isRegex: true,
-              isCaseSensitive: getMatchCase(),
-              onlyOpenEditors: false,
-              showIncludesExcludes: true,
-              filesToInclude: `./${currentWorkspaceFolder}`,
-            })
-          }
-        } else if (result === findInAllWorkspaceFolders) {
-          await vscode.commands.executeCommand('workbench.action.findInFiles', {
-            query: searchString,
-            isRegex: true,
-            isCaseSensitive: getMatchCase(),
-            onlyOpenEditors: false,
-            showIncludesExcludes: true,
-            filesToInclude: '',
-          })
-        }
+        await promptToSearch({
+          searchString,
+          title: regex,
+          matchCase: getMatchCase(),
+        })
       })
 
       quickPick.show()
@@ -210,7 +215,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
         matchWholeWordItem,
         escapeRegexItem,
       ]
-      quickPick.selectedItems = [escapeRegexItem]
+      quickPick.selectedItems = [matchWholeWordItem, escapeRegexItem]
 
       function getOnSameLine() {
         return quickPick.selectedItems.some((item) => item.description === onSameLineItem.description)
@@ -291,19 +296,11 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
           escapeRegex: getEscapeRegex(),
         })
 
-        const copySearchQuery = '$(copy) Copy search query'
-        const findInCurrentlyOpenedFile = '$(file) Find in currently opened file'
-        const findInAllOpenedFiles = '$(files) Find in all opened files'
-        const findInCurrentWorkspaceFolder = '$(file-directory) Find in current workspace folder'
-        const findInAllWorkspaceFolders = '$(file-submodule) Find in all workspace folders'
-
-        const result = await vscode.window.showQuickPick([
-          findInCurrentlyOpenedFile,
-          findInAllOpenedFiles,
-          findInCurrentWorkspaceFolder,
-          findInAllWorkspaceFolders,
-          copySearchQuery,
-        ], { title: regex })
+        await promptToSearch({
+          searchString,
+          title: regex,
+          matchCase: getMatchCase(),
+        })
       })
 
       quickPick.show()
