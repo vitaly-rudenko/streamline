@@ -78,6 +78,25 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
     }
   }
 
+  function generateSimilarMatchesRegex(input: {
+    value: string
+    allowHyphens: boolean
+    allowUnderscores: boolean
+    allowWhitespace: boolean
+    matchCase: boolean
+    matchWholeWord: boolean
+    escapeRegex: boolean
+  }) {
+    // TODO: allow escaping whitespace
+    const words = (input.value.includes(' ') ? input.value.split(' ') : extractWords(input.value)).map((word) => input.escapeRegex ? escapeRegex(word) : word)
+    const split = [input.allowHyphens && '-', input.allowUnderscores && '_', input.allowWhitespace && '\\s'].filter(Boolean).join('')
+
+    return {
+      regex: `/${input.matchWholeWord ? '\\b' : ''}${words.join(split ? `[${split}]*` : '')}${input.matchWholeWord ? '\\b' : ''}/${input.matchCase ? '' : 'i'}`,
+      searchString: `${input.matchWholeWord ? '\\b' : ''}${words.join(split ? `[${split}]*` : '')}${input.matchWholeWord ? '\\b' : ''}`,
+    }
+  }
+
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.superSearch.findSimilarMatches', async () => {
       const quickPick = vscode.window.createQuickPick()
@@ -130,25 +149,6 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
         return quickPick.selectedItems.some((item) => item.description === escapeRegexItem.description)
       }
 
-      function generateRegex(input: {
-        value: string
-        allowHyphens: boolean
-        allowUnderscores: boolean
-        allowWhitespace: boolean
-        matchCase: boolean
-        matchWholeWord: boolean
-        escapeRegex: boolean
-      }) {
-        // TODO: allow escaping whitespace
-        const words = (input.value.includes(' ') ? input.value.split(' ') : extractWords(input.value)).map((word) => input.escapeRegex ? escapeRegex(word) : word)
-        const split = [input.allowHyphens && '-', input.allowUnderscores && '_', input.allowWhitespace && '\\s'].filter(Boolean).join('')
-
-        return {
-          regex: `/${input.matchWholeWord ? '\\b' : ''}${words.join(split ? `[${split}]*` : '')}${input.matchWholeWord ? '\\b' : ''}/${input.matchCase ? '' : 'i'}`,
-          searchString: `${input.matchWholeWord ? '\\b' : ''}${words.join(split ? `[${split}]*` : '')}${input.matchWholeWord ? '\\b' : ''}`,
-        }
-      }
-
       function refresh() {
         quickPick.placeholder = 'Example: \'getEnabledFeatures()\' or \'get enabled features\''
 
@@ -157,7 +157,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
           return
         }
 
-        const { regex } = generateRegex({
+        const { regex } = generateSimilarMatchesRegex({
           value: quickPick.value,
           allowHyphens: getAllowHyphens(),
           allowUnderscores: getAllowUnderscores(),
@@ -175,7 +175,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
       quickPick.onDidAccept(async () => {
         quickPick.dispose()
 
-        const { regex, searchString } = generateRegex({
+        const { regex, searchString } = generateSimilarMatchesRegex({
           value: quickPick.value,
           allowHyphens: getAllowHyphens(),
           allowUnderscores: getAllowUnderscores(),
@@ -204,6 +204,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
 
       const onSameLineItem = { label: '$(circle-filled)', description: 'Words must be on the same line', alwaysShow: true }
       const inProvidedOrderItem = { label: '$(circle-filled)', description: 'Words must appear in the provided order', alwaysShow: true }
+      const matchAllNamingConventions = { label: '$(circle-filled)', description: 'Match words in all naming conventions', alwaysShow: true }
       const matchCaseItem = { label: '$(case-sensitive)', alwaysShow: true, description: 'Match case (case sensitive)' }
       const matchWholeWordItem = { label: '$(whole-word)', alwaysShow: true, description: 'Match whole word' }
       const escapeRegexItem = { label: '$(regex)', description: 'Escape input for regular expression', alwaysShow: true }
@@ -211,6 +212,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
       quickPick.items = [
         onSameLineItem,
         inProvidedOrderItem,
+        matchAllNamingConventions,
         matchCaseItem,
         matchWholeWordItem,
         escapeRegexItem,
@@ -223,6 +225,10 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
 
       function getInProvidedOrder() {
         return quickPick.selectedItems.some((item) => item.description === inProvidedOrderItem.description)
+      }
+
+      function getMatchAllNamingConventions() {
+        return quickPick.selectedItems.some((item) => item.description === matchAllNamingConventions.description)
       }
 
       function getMatchCase() {
@@ -242,19 +248,34 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
         value: string
         onSameLine: boolean
         inProvidedOrder: boolean
+        matchAllNamingConventions: boolean
         matchCase: boolean
         matchWholeWord: boolean
         escapeRegex: boolean
       }) {
         // Allow escaping whitespace
         const words = input.value.split(' ')
+          .map(word => input.escapeRegex ? escapeRegex(word) : word)
+          .map(word => input.matchWholeWord ? `\\b${word}\\b` : word)
+          .map(word => input.matchAllNamingConventions
+              ? generateSimilarMatchesRegex({
+                value: word,
+                allowHyphens: true,
+                allowUnderscores: true,
+                allowWhitespace: false,
+                matchCase: false,
+                matchWholeWord: false,
+                escapeRegex: false,
+              }).searchString
+              : word)
+
         const searchString = input.onSameLine
           ? input.inProvidedOrder
-            ? patterns.findLinesWithAllWordsInProvidedOrder(words, input)
-            : patterns.findLinesWithAllWordsInAnyOrder(words, input)
+            ? patterns.findLinesWithAllWordsInProvidedOrder(words)
+            : patterns.findLinesWithAllWordsInAnyOrder(words)
           : input.inProvidedOrder
-            ? patterns.findFilesWithAllWordsInProvidedOrder(words, input)
-            : patterns.findFilesWithAllWordsInAnyOrder(words, input)
+            ? patterns.findFilesWithAllWordsInProvidedOrder(words)
+            : patterns.findFilesWithAllWordsInAnyOrder(words)
 
         return {
           regex: `/${searchString}/${input.matchCase ? '' : 'i'}`,
@@ -274,6 +295,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
           value: quickPick.value,
           onSameLine: getOnSameLine(),
           inProvidedOrder: getInProvidedOrder(),
+          matchAllNamingConventions: getMatchAllNamingConventions(),
           matchCase: getMatchCase(),
           matchWholeWord: getMatchWholeWord(),
           escapeRegex: getEscapeRegex(),
@@ -291,6 +313,7 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
           value: quickPick.value,
           onSameLine: getOnSameLine(),
           inProvidedOrder: getInProvidedOrder(),
+          matchAllNamingConventions: getMatchAllNamingConventions(),
           matchCase: getMatchCase(),
           matchWholeWord: getMatchWholeWord(),
           escapeRegex: getEscapeRegex(),
