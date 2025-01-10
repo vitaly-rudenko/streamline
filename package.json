@@ -82,6 +82,10 @@
         "title": "Find similar matches"
       },
       {
+        "command": "streamline.superSearch.findWords",
+        "title": "Find words"
+      },
+      {
         "command": "streamline.scopedPaths.changeCurrentScope",
         "title": "Change Current Scope...",
         "icon": "$(chevron-down)"

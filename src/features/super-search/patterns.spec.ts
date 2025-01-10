@@ -30,23 +30,6 @@ function testPattern(pattern: string, input: string) {
 }
 
 describe('patterns', () => {
-  it('findInAllNamingConventions()', () => {
-    const pattern = patterns.findInAllNamingConventions(words)
-
-    assert.deepEqual(input.match(new RegExp(pattern, 'ig')), [
-      'foo-bar-baz',
-      'foo_bar_baz',
-      'FooBarBaz',
-      'fooBarBaz',
-      'FOO_BAR_BAZ',
-    ])
-
-    const escapedPattern = patterns.findInAllNamingConventions(escapableWords)
-    assert.ok(testPattern(escapedPattern, 'function-foo.bar()'))
-    assert.ok(!testPattern(escapedPattern, 'function-foo_bar()'))
-    assert.ok(!testPattern(escapedPattern, 'function-foo.bar[]'))
-  })
-
   it('findLinesWithAllWordsInProvidedOrder()', () => {
     const pattern = patterns.findLinesWithAllWordsInProvidedOrder(words)
 

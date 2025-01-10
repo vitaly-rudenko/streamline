@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { extractWords } from './extract-words'
-import { PatternOptions, patterns, PatternType } from './patterns'
+import { patterns } from './patterns'
 import { escapeRegex } from '../../utils/escape-regex'
 
 export function createSuperSearchFeature(input: { context: vscode.ExtensionContext }) {
@@ -11,13 +11,12 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
       const quickPick = vscode.window.createQuickPick()
       quickPick.canSelectMany = true
 
-      const allowHyphensItem = { label: '-', description: 'Allow hyphens (snake-case)', alwaysShow: true }
-      const allowUnderscoresItem = { label: '_', description: 'Allow underscores (kebab_case)', alwaysShow: true }
+      const allowHyphensItem = { label: '$(circle-filled)', description: 'Allow hyphens (snake-case)', alwaysShow: true }
+      const allowUnderscoresItem = { label: '$(circle-filled)', description: 'Allow underscores (kebab_case)', alwaysShow: true }
       const allowWhitespaceItem = { label: '$(whitespace)', alwaysShow: true, description: 'Allow whitespace' }
-      const matchCaseItem = { label: '$(case-sensitive)', alwaysShow: true, description: 'Match case' }
+      const matchCaseItem = { label: '$(case-sensitive)', alwaysShow: true, description: 'Match case (case sensitive)' }
       const matchWholeWordItem = { label: '$(whole-word)', alwaysShow: true, description: 'Match whole word' }
-      const escapeRegexItem = { label: '$(regex)', description: 'Escape input', alwaysShow: true }
-      const useCommaDelimiterItem = { label: '$(edit)', description: 'Use comma to separate words', alwaysShow: true }
+      const escapeRegexItem = { label: '$(regex)', description: 'Escape input for regular expression', alwaysShow: true }
 
       quickPick.items = [
         allowHyphensItem,
@@ -26,7 +25,6 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
         matchCaseItem,
         matchWholeWordItem,
         escapeRegexItem,
-        useCommaDelimiterItem,
       ]
       quickPick.selectedItems = [allowHyphensItem, allowUnderscoresItem, escapeRegexItem]
 
@@ -37,31 +35,27 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
       }
 
       function getAllowHyphens() {
-        return quickPick.selectedItems.some((item) => item.label === allowHyphensItem.label)
+        return quickPick.selectedItems.some((item) => item.description === allowHyphensItem.description)
       }
 
       function getAllowUnderscores() {
-        return quickPick.selectedItems.some((item) => item.label === allowUnderscoresItem.label)
+        return quickPick.selectedItems.some((item) => item.description === allowUnderscoresItem.description)
       }
 
       function getAllowWhitespace() {
-        return quickPick.selectedItems.some((item) => item.label === allowWhitespaceItem.label)
+        return quickPick.selectedItems.some((item) => item.description === allowWhitespaceItem.description)
       }
 
       function getMatchCase() {
-        return quickPick.selectedItems.some((item) => item.label === matchCaseItem.label)
+        return quickPick.selectedItems.some((item) => item.description === matchCaseItem.description)
       }
 
       function getMatchWholeWord() {
-        return quickPick.selectedItems.some((item) => item.label === matchWholeWordItem.label)
+        return quickPick.selectedItems.some((item) => item.description === matchWholeWordItem.description)
       }
 
       function getEscapeRegex() {
-        return quickPick.selectedItems.some((item) => item.label === escapeRegexItem.label)
-      }
-
-      function getUseCommaDelimiter() {
-        return quickPick.selectedItems.some((item) => item.label === useCommaDelimiterItem.label)
+        return quickPick.selectedItems.some((item) => item.description === escapeRegexItem.description)
       }
 
       function generateRegex(input: {
@@ -72,22 +66,19 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
         matchCase: boolean
         matchWholeWord: boolean
         escapeRegex: boolean
-        useCommaDelimiter: boolean
       }) {
-        const delimiter = input.useCommaDelimiter ? ',' : ' '
-        const words = (input.value.includes(delimiter) ? input.value.split(delimiter) : extractWords(input.value)).map((word) => input.escapeRegex ? escapeRegex(word) : word)
+        // TODO: allow escaping whitespace
+        const words = (input.value.includes(' ') ? input.value.split(' ') : extractWords(input.value)).map((word) => input.escapeRegex ? escapeRegex(word) : word)
         const split = [input.allowHyphens && '-', input.allowUnderscores && '_', input.allowWhitespace && '\\s'].filter(Boolean).join('')
 
         return {
-          regex: `/${input.matchWholeWord ? '\\b' : ''}${words.join(split ? `[${split}]?` : '')}${input.matchWholeWord ? '\\b' : ''}/${input.matchCase ? '' : 'i'}`,
-          searchString: `${input.matchWholeWord ? '\\b' : ''}${words.join(split ? `[${split}]?` : '')}${input.matchWholeWord ? '\\b' : ''}`,
+          regex: `/${input.matchWholeWord ? '\\b' : ''}${words.join(split ? `[${split}]*` : '')}${input.matchWholeWord ? '\\b' : ''}/${input.matchCase ? '' : 'i'}`,
+          searchString: `${input.matchWholeWord ? '\\b' : ''}${words.join(split ? `[${split}]*` : '')}${input.matchWholeWord ? '\\b' : ''}`,
         }
       }
 
       function refresh() {
-        quickPick.placeholder = getUseCommaDelimiter()
-          ? 'Example: \'getEnabledFeatures()\' or \'get,enabled,features\''
-          : 'Example: \'getEnabledFeatures()\' or \'get enabled features\''
+        quickPick.placeholder = 'Example: \'getEnabledFeatures()\' or \'get enabled features\''
 
         if (!quickPick.value.trim()) {
           quickPick.title = 'Start typing...'
@@ -102,7 +93,6 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
           matchCase: getMatchCase(),
           matchWholeWord: getMatchWholeWord(),
           escapeRegex: getEscapeRegex(),
-          useCommaDelimiter: getUseCommaDelimiter(),
         })
 
         quickPick.title = regex
@@ -111,6 +101,8 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
       quickPick.onDidChangeSelection(() => refresh())
       quickPick.onDidChangeValue(() => refresh())
       quickPick.onDidAccept(async () => {
+        quickPick.dispose()
+
         const { regex, searchString } = generateRegex({
           value: quickPick.value,
           allowHyphens: getAllowHyphens(),
@@ -119,7 +111,6 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
           matchCase: getMatchCase(),
           matchWholeWord: getMatchWholeWord(),
           escapeRegex: getEscapeRegex(),
-          useCommaDelimiter: getUseCommaDelimiter(),
         })
 
         const copySearchQuery = '$(copy) Copy search query'
@@ -194,8 +185,6 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
             filesToInclude: '',
           })
         }
-
-        quickPick.dispose()
       })
 
       quickPick.show()
@@ -204,97 +193,121 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.superSearch.quickOpen', async () => {
-      const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { patternType: PatternType }>()
-      quickPick.matchOnDescription = true
+    vscode.commands.registerCommand('streamline.superSearch.findWords', async () => {
+      const quickPick = vscode.window.createQuickPick()
+      quickPick.canSelectMany = true
 
-      const wholeWordButton = { iconPath: new vscode.ThemeIcon('whole-word') }
+      const onSameLineItem = { label: '$(circle-filled)', description: 'Words must be on the same line', alwaysShow: true }
+      const inProvidedOrderItem = { label: '$(circle-filled)', description: 'Words must appear in the provided order', alwaysShow: true }
+      const matchCaseItem = { label: '$(case-sensitive)', alwaysShow: true, description: 'Match case (case sensitive)' }
+      const matchWholeWordItem = { label: '$(whole-word)', alwaysShow: true, description: 'Match whole word' }
+      const escapeRegexItem = { label: '$(regex)', description: 'Escape input for regular expression', alwaysShow: true }
 
-      quickPick.onDidChangeValue((input) => {
-        const words = input.includes(' ')
-          ? input.split(' ').filter(Boolean)
-          : extractWords(input)
+      quickPick.items = [
+        onSameLineItem,
+        inProvidedOrderItem,
+        matchCaseItem,
+        matchWholeWordItem,
+        escapeRegexItem,
+      ]
+      quickPick.selectedItems = [escapeRegexItem]
 
-        if (words.length === 0) {
-          quickPick.items = []
+      function getOnSameLine() {
+        return quickPick.selectedItems.some((item) => item.description === onSameLineItem.description)
+      }
+
+      function getInProvidedOrder() {
+        return quickPick.selectedItems.some((item) => item.description === inProvidedOrderItem.description)
+      }
+
+      function getMatchCase() {
+        return quickPick.selectedItems.some((item) => item.description === matchCaseItem.description)
+      }
+
+      function getMatchWholeWord() {
+        return quickPick.selectedItems.some((item) => item.description === matchWholeWordItem.description)
+      }
+
+      function getEscapeRegex() {
+        return quickPick.selectedItems.some((item) => item.description === escapeRegexItem.description)
+      }
+
+      // TODO: allow matching words in any naming convention
+      function generateRegex(input: {
+        value: string
+        onSameLine: boolean
+        inProvidedOrder: boolean
+        matchCase: boolean
+        matchWholeWord: boolean
+        escapeRegex: boolean
+      }) {
+        // Allow escaping whitespace
+        const words = input.value.split(' ')
+        const searchString = input.onSameLine
+          ? input.inProvidedOrder
+            ? patterns.findLinesWithAllWordsInProvidedOrder(words, input)
+            : patterns.findLinesWithAllWordsInAnyOrder(words, input)
+          : input.inProvidedOrder
+            ? patterns.findFilesWithAllWordsInProvidedOrder(words, input)
+            : patterns.findFilesWithAllWordsInAnyOrder(words, input)
+
+        return {
+          regex: `/${searchString}/${input.matchCase ? '' : 'i'}`,
+          searchString,
+        }
+      }
+
+      function refresh() {
+        quickPick.placeholder = 'Example: \'cats dogs\''
+
+        if (!quickPick.value.trim()) {
+          quickPick.title = 'Start typing...'
           return
         }
 
-        quickPick.items = [
-          {
-            patternType: 'findInAllNamingConventions',
-            detail: patterns.findInAllNamingConventions(words),
-            label: 'Search by different naming conventions',
-            alwaysShow: true,
-            iconPath: new vscode.ThemeIcon('case-sensitive'),
-          },
-          {
-            patternType: 'findLinesWithAllWordsInProvidedOrder',
-            detail: patterns.findLinesWithAllWordsInProvidedOrder(words),
-            label: 'Find lines containing all words in provided order',
-            alwaysShow: true,
-            iconPath: new vscode.ThemeIcon('selection'),
-            buttons: [wholeWordButton],
-          },
-          {
-            patternType: 'findLinesWithAllWordsInAnyOrder',
-            detail: patterns.findLinesWithAllWordsInAnyOrder(words),
-            label: 'Find lines containing all words in any order',
-            alwaysShow: true,
-            iconPath: new vscode.ThemeIcon('selection'),
-            buttons: [wholeWordButton],
-          },
-          {
-            patternType: 'findFilesWithAllWordsInProvidedOrder',
-            detail: patterns.findFilesWithAllWordsInProvidedOrder(words),
-            label: 'Find files containing all words in provided order',
-            alwaysShow: true,
-            iconPath: new vscode.ThemeIcon('files'),
-            buttons: [wholeWordButton],
-          },
-          {
-            patternType: 'findFilesWithAllWordsInAnyOrder',
-            detail: patterns.findFilesWithAllWordsInAnyOrder(words),
-            label: 'Find files containing all words in any order',
-            alwaysShow: true,
-            iconPath: new vscode.ThemeIcon('files'),
-            buttons: [wholeWordButton],
-          }
-        ]
-      })
-
-      quickPick.onDidTriggerItemButton(async (event) => {
-        if (event.button === wholeWordButton) {
-          await triggerSearch(event.item.patternType, { wholeWord: true })
-        }
-      })
-
-      quickPick.onDidAccept(async () => {
-        const item = quickPick.activeItems[0]
-        if (!item) return
-
-        await triggerSearch(item.patternType, { wholeWord: false })
-      })
-
-      async function triggerSearch(patternType: PatternType, options: PatternOptions) {
-        const words = quickPick.value.includes(' ')
-          ? quickPick.value.split(' ').filter(Boolean)
-          : extractWords(quickPick.value)
-        if (words.length === 0) return
-
-        const pattern = patterns[patternType](words, options)
-
-        await vscode.commands.executeCommand('workbench.action.findInFiles', {
-            query: pattern,
-            isRegex: true,
-            triggerSearch: true,
-            matchWholeWord: false,
-            isCaseSensitive: false,
+        const { regex } = generateRegex({
+          value: quickPick.value,
+          onSameLine: getOnSameLine(),
+          inProvidedOrder: getInProvidedOrder(),
+          matchCase: getMatchCase(),
+          matchWholeWord: getMatchWholeWord(),
+          escapeRegex: getEscapeRegex(),
         })
+
+        quickPick.title = regex
       }
 
-      quickPick.items = []
+      quickPick.onDidChangeSelection(() => refresh())
+      quickPick.onDidChangeValue(() => refresh())
+      quickPick.onDidAccept(async () => {
+        quickPick.dispose()
+
+        const { regex, searchString } = generateRegex({
+          value: quickPick.value,
+          onSameLine: getOnSameLine(),
+          inProvidedOrder: getInProvidedOrder(),
+          matchCase: getMatchCase(),
+          matchWholeWord: getMatchWholeWord(),
+          escapeRegex: getEscapeRegex(),
+        })
+
+        const copySearchQuery = '$(copy) Copy search query'
+        const findInCurrentlyOpenedFile = '$(file) Find in currently opened file'
+        const findInAllOpenedFiles = '$(files) Find in all opened files'
+        const findInCurrentWorkspaceFolder = '$(file-directory) Find in current workspace folder'
+        const findInAllWorkspaceFolders = '$(file-submodule) Find in all workspace folders'
+
+        const result = await vscode.window.showQuickPick([
+          findInCurrentlyOpenedFile,
+          findInAllOpenedFiles,
+          findInCurrentWorkspaceFolder,
+          findInAllWorkspaceFolders,
+          copySearchQuery,
+        ], { title: regex })
+      })
+
       quickPick.show()
+      refresh()
     })
   )
 }
