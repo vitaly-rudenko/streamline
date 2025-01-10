@@ -25,7 +25,7 @@ export function createBookmarksFeature(input: {
   }
 
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(cache, config, workspaceState)
-  const bookmarksTreeView = vscode.window.createTreeView('streamline.bookmarks.view', {
+  const bookmarksTreeView = vscode.window.createTreeView('bookmarks', {
     treeDataProvider: bookmarksTreeDataProvider,
     showCollapseAll: true,
     canSelectMany: true,

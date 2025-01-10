@@ -61,14 +61,14 @@
     "views": {
       "explorer": [
         {
-          "id": "streamline.relatedFiles.view",
+          "id": "relatedFiles",
           "name": "Related files",
           "contextualTitle": "Related files",
           "visibility": "collapsed",
           "icon": "$(sparkle)"
         },
         {
-          "id": "streamline.bookmarks.view",
+          "id": "bookmarks",
           "name": "Bookmarks",
           "contextualTitle": "Bookmarks",
           "visibility": "collapsed",
