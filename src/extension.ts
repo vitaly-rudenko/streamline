@@ -1,3 +1,4 @@
+import z from 'zod'
 import * as vscode from 'vscode'
 import { createHighlightedPathsFeature } from './features/highlighted-paths/highlighted-paths-feature'
 import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-feature'
@@ -7,7 +8,7 @@ import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 import { createCurrentPathFeature } from './features/current-path/current-path-feature'
 import { initialConfig, safeConfigGet } from './config'
 import { createSmartConfigFeature } from './features/smart-config/smart-config-feature'
-import z from 'zod'
+import { createSuperSearchFeature } from './features/super-search/super-search-feature'
 
 type Feature =
 	| 'bookmarks'
@@ -16,6 +17,7 @@ type Feature =
 	| 'relatedFiles'
 	| 'scopedPaths'
   | 'smartConfig'
+  | 'superSearch'
 
 export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
@@ -59,6 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
+  if (isFeatureEnabled('superSearch')) createSuperSearchFeature({ context })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')

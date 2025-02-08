@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.0",
+  "version": "0.40.902",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -77,6 +77,14 @@
       ]
     },
     "commands": [
+      {
+        "command": "streamline.superSearch.findSimilarMatches",
+        "title": "Find similar matches"
+      },
+      {
+        "command": "streamline.superSearch.findWords",
+        "title": "Find words"
+      },
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
         "title": "Change Current Scope...",
@@ -264,6 +272,11 @@
       {
         "command": "streamline.smartConfig.toggle",
         "title": "Toggle"
+      },
+      {
+        "command": "streamline.superSearch.quickOpen",
+        "title": "Quick Open Super Search",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
@@ -573,7 +586,8 @@
               "highlightedPaths",
               "relatedFiles",
               "scopedPaths",
-              "smartConfig"
+              "smartConfig",
+              "superSearch"
             ]
           },
           "default": [],

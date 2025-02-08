@@ -135,6 +135,8 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
     }),
     // Reload "Related files" panel when currently opened file changes
     vscode.window.onDidChangeActiveTextEditor(() => scheduleRefresh()),
+    // Refresh when window state changes (e.g. focused, minimized)
+    vscode.window.onDidChangeWindowState(() => scheduleRefresh()),
     // Clear files cache when files are created/deleted/renamed
     vscode.workspace.onDidCreateFiles(() => scheduleClearCacheAndRefresh()),
     vscode.workspace.onDidDeleteFiles(() => scheduleClearCacheAndRefresh()),
