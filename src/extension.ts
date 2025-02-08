@@ -9,6 +9,7 @@ import { createCurrentPathFeature } from './features/current-path/current-path-f
 import { initialConfig, safeConfigGet } from './config'
 import { createSmartConfigFeature } from './features/smart-config/smart-config-feature'
 import { createSuperSearchFeature } from './features/super-search/super-search-feature'
+import { createQuickReplFeature } from './features/quick-repl/quick-repl-feature'
 
 type Feature =
 	| 'bookmarks'
@@ -18,6 +19,7 @@ type Feature =
 	| 'scopedPaths'
   | 'smartConfig'
   | 'superSearch'
+  | 'quickRepl'
 
 export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
@@ -62,6 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
   if (isFeatureEnabled('superSearch')) createSuperSearchFeature({ context })
+  if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')

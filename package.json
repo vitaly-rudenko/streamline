@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.902",
+  "version": "0.40.903",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -73,6 +73,13 @@
           "contextualTitle": "Bookmarks",
           "visibility": "collapsed",
           "icon": "$(bookmark)"
+        },
+        {
+          "id": "quickRepl",
+          "name": "QuickRepl",
+          "contextualTitle": "QuickRepl",
+          "visibility": "collapsed",
+          "icon": "$(code)"
         }
       ]
     },
@@ -277,6 +284,21 @@
         "command": "streamline.superSearch.quickOpen",
         "title": "Quick Open Super Search",
         "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.quickRepl.runFile",
+        "title": "Run file",
+        "icon": "$(play)"
+      },
+      {
+        "command": "streamline.quickRepl.revealFileInOS",
+        "title": "Reveal File in OS",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.quickRepl.delete",
+        "title": "Delete",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
@@ -492,6 +514,21 @@
           "command": "streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch",
           "when": "view == relatedFiles && viewItem == workspaceFolder",
           "group": "info@1"
+        },
+        {
+          "command": "streamline.quickRepl.revealFileInOS",
+          "when": "view == quickRepl && (viewItem == file || viewItem == folder)",
+          "group": "inline@1"
+        },
+        {
+          "command": "streamline.quickRepl.runFile",
+          "when": "view == quickRepl && viewItem == file",
+          "group": "inline@2"
+        },
+        {
+          "command": "streamline.quickRepl.delete",
+          "when": "view == quickRepl && (viewItem == file || viewItem == folder)",
+          "group": "info@1"
         }
       ],
       "explorer/context": [
@@ -544,24 +581,29 @@
         },
         {
           "command": "streamline.bookmarks.addNoteToList",
-          "group": "1_context@3"
+          "group": "1_context@4"
         }
       ],
       "editor/title": [
         {
+          "command": "streamline.quickRepl.runFile",
+          "when": "resourceScheme == file && streamline.quickRepl.isCurrentFileRunnable",
+          "group": "navigation@1"
+        },
+        {
           "command": "streamline.relatedFiles.quickOpen",
           "when": "resourceScheme == file",
-          "group": "navigation@1"
+          "group": "navigation@2"
         },
         {
           "command": "streamline.bookmarks.addFile",
           "when": "resourceScheme == file && !streamline.bookmarks.activeTextEditorBookmarked",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "streamline.bookmarks.deleteFile",
           "when": "resourceScheme == file && streamline.bookmarks.activeTextEditorBookmarked",
-          "group": "navigation@2"
+          "group": "navigation@3"
         }
       ]
     },
