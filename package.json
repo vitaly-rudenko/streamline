@@ -291,6 +291,11 @@
         "icon": "$(play)"
       },
       {
+        "command": "streamline.quickRepl.revealReplsInOS",
+        "title": "Reveal Repls in OS",
+        "icon": "$(eye)"
+      },
+      {
         "command": "streamline.quickRepl.revealFileInOS",
         "title": "Reveal File in OS",
         "icon": "$(eye)"
@@ -299,6 +304,21 @@
         "command": "streamline.quickRepl.delete",
         "title": "Delete",
         "icon": "$(trash)"
+      },
+      {
+        "command": "streamline.quickRepl.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "streamline.quickRepl.openFolderInTerminal",
+        "title": "Open Folder in Terminal",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "streamline.quickRepl.copyAbsolutePath",
+        "title": "Copy Absolute Path",
+        "icon": "$(copy)"
       }
     ],
     "menus": {
@@ -452,6 +472,16 @@
           "command": "streamline.bookmarks.addList",
           "group": "navigation@3",
           "when": "view == bookmarks"
+        },
+        {
+          "command": "streamline.quickRepl.revealReplsInOS",
+          "group": "navigation@1",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.quickRepl.refresh",
+          "group": "navigation@2",
+          "when": "view == quickRepl"
         }
       ],
       "view/item/context": [
@@ -516,19 +546,29 @@
           "group": "info@1"
         },
         {
-          "command": "streamline.quickRepl.revealFileInOS",
-          "when": "view == quickRepl && (viewItem == file || viewItem == folder)",
-          "group": "inline@1"
+          "command": "streamline.quickRepl.openFolderInTerminal",
+          "when": "view == quickRepl && viewItem == folder",
+          "group": "inline@2"
         },
         {
           "command": "streamline.quickRepl.runFile",
           "when": "view == quickRepl && viewItem == file",
-          "group": "inline@2"
+          "group": "inline@3"
+        },
+        {
+          "command": "streamline.quickRepl.copyAbsolutePath",
+          "when": "view == quickRepl && (viewItem == file || viewItem == folder)",
+          "group": "info@1"
+        },
+        {
+          "command": "streamline.quickRepl.revealFileInOS",
+          "when": "view == quickRepl && (viewItem == file || viewItem == folder)",
+          "group": "info@2"
         },
         {
           "command": "streamline.quickRepl.delete",
           "when": "view == quickRepl && (viewItem == file || viewItem == folder)",
-          "group": "info@1"
+          "group": "info@3"
         }
       ],
       "explorer/context": [

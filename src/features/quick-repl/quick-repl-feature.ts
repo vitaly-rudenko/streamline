@@ -5,8 +5,8 @@ import { FileTreeItem, FolderTreeItem, QuickReplTreeDataProvider } from './quick
 
 // TODO: Configurable "main" folder
 // TODO: "Supported" extensions and configurable commands for each extension / folder
-// TODO: Reveal in Finder
 // TODO: Move between folders / drag-n-drop?
+// TODO: Open in a new VS Code window
 
 export function createQuickReplFeature(input: {
   context: vscode.ExtensionContext
@@ -87,22 +87,39 @@ export function createQuickReplFeature(input: {
       const filename = pathParts.pop()
       const directoryPath = pathParts.join('/')
 
+      // TODO: consistent and non-annoying way of reusing terminals
+      //       perhaps by their current cwd and if there's no process running at the moment
       const terminalName = `QuickRepl: ${filename}`
       const terminal = vscode.window.terminals.find(t => t.name === terminalName)
-        ?? await vscode.window.createTerminal({
+        ?? vscode.window.createTerminal({
           name: terminalName,
           iconPath: new vscode.ThemeIcon('play'),
           cwd: vscode.Uri.file(directoryPath),
         })
 
-      await terminal.show()
-      await terminal.sendText(`node ${filename}`)
+      terminal.show()
+      terminal.sendText(`node ${filename}`)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.quickRepl.revealReplsInOS', async () => {
+      const home = os.homedir()
+      const replsUri = vscode.Uri.file(`${home}/.streamline/quick-repl/repls`)
+
+      await vscode.commands.executeCommand('revealFileInOS', replsUri)
     })
   )
 
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.revealFileInOS', async (treeItem: FileTreeItem | FolderTreeItem) => {
       await vscode.commands.executeCommand('revealFileInOS', treeItem.uri)
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.quickRepl.copyAbsolutePath', async (treeItem: FileTreeItem | FolderTreeItem) => {
+      await vscode.env.clipboard.writeText(treeItem.uri.fsPath)
     })
   )
 
@@ -114,6 +131,24 @@ export function createQuickReplFeature(input: {
       })
 
       quickReplTreeDataProvider.refresh()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.quickRepl.refresh', async () => {
+      quickReplTreeDataProvider.refresh()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.quickRepl.openFolderInTerminal', async (folderTreeItem: FolderTreeItem) => {
+      // TODO: reuse existing terminal (find a way to reliably find such terminals)
+      const terminal = vscode.window.createTerminal({
+        iconPath: new vscode.ThemeIcon('play'),
+        cwd: folderTreeItem.uri,
+      })
+
+      terminal.show()
     })
   )
 

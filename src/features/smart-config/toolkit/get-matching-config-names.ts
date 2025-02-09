@@ -1,6 +1,8 @@
 import { basename } from 'path'
 import { Rule, Condition, SmartConfigContext } from '../common'
 
+// TODO: Add support for glob
+
 /** Matches rules against the provided context, at least one condition must match per rule */
 export function getMatchingConfigNames(ctx: SmartConfigContext, rules: Rule[]): string[] {
   const configNames: string[] = []
