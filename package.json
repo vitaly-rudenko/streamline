@@ -272,6 +272,11 @@
         "icon": "$(cloud-download)"
       },
       {
+        "command": "streamline.bookmarks.quickOpen",
+        "title": "Quick Open Bookmark from Current List",
+        "icon": "$(bookmark)"
+      },
+      {
         "command": "streamline.currentPath.copy",
         "title": "Copy Current Path",
         "icon": "$(copy)"

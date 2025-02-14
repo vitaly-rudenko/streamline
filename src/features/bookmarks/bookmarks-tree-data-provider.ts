@@ -228,7 +228,7 @@ function trimTextLength(text: string, maxLength: number) {
   return text
 }
 
-function formatSelectionValue(selection: vscode.Selection, value: string) {
+export function formatSelectionValue(selection: vscode.Selection, value: string) {
   return selection.isSingleLine
     ? `${selection.start.line + 1}: ${stripIndents(value)}`
     : `${selection.start.line + 1}-${selection.end.line + 1}: ${stripIndents(value)}`

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
+import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, formatSelectionValue, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
 import { BookmarksConfig } from './bookmarks-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { filter } from '../../utils/filter'
@@ -7,8 +7,12 @@ import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
 import { Bookmark, defaultCurrentList } from './common'
 import { getTargetItemsForCommand } from './toolkit/get-target-items-for-command'
+import { formatPaths } from '../../utils/format-paths'
 
 const UNDO_HISTORY_SIZE = 50
+
+// TODO: Deleting "virtual" file should suggest user to delete all selections inside of it (with confirmation)
+// TODO: optimize & cache new functionality
 
 export function createBookmarksFeature(input: {
   context: vscode.ExtensionContext
@@ -452,6 +456,82 @@ export function createBookmarksFeature(input: {
       })
 
       await vscode.window.showTextDocument(document)
+    })
+  )
+
+  // Quickly open bookmark from the current bookmarks list
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.bookmarks.quickOpen', async () => {
+      const currentList = workspaceState.getCurrentList()
+
+      const bookmarks = config.getBookmarks()
+        .filter(bookmark => bookmark.list === currentList)
+        .filter(bookmark => bookmark.type === 'file' || bookmark.type === 'selection')
+        .sort((a, b) => a.type === 'selection' && b.type === 'selection'
+          ? a.selection.start.line - b.selection.start.line
+          : 0)
+        .sort((a, b) => a.type === b.type ? 0 : a.type === 'file' ? -1 : 1)
+        .sort((a, b) => a.uri.path.localeCompare(b.uri.path))
+
+      if (bookmarks.length === 0) {
+        await vscode.window.showInformationMessage(`You don't have bookmarks in "${currentList}" list yet`)
+        return
+      }
+
+      const uris = bookmarks.map(bookmark => bookmark.uri)
+      const formattedPaths = formatPaths(uris.map(uri => uri.path))
+
+      const selected = await vscode.window.showQuickPick(
+        bookmarks.flatMap((bookmark, i) => {
+          const label = formattedPaths.get(bookmark.uri.path)!
+          const results: (vscode.QuickPickItem & { bookmark: Bookmark })[] = []
+
+          if (
+            (i === 0 || bookmarks[i - 1].uri.path !== bookmark.uri.path)
+            && !bookmarks.some(b => b.type === 'file' && b.uri.path === bookmark.uri.path)
+          ) {
+            results.push({
+              label,
+              description: vscode.workspace.asRelativePath(bookmark.uri.path),
+              iconPath: new vscode.ThemeIcon('file'),
+              bookmark: {
+                type: 'file',
+                list: bookmark.list,
+                uri: bookmark.uri,
+              },
+            })
+          }
+
+          if (bookmark.type === 'selection') {
+            const preview = formatSelectionValue(bookmark.selection, bookmark.value)
+
+            results.push({
+              label: `$(${bookmark.note ? 'note' : 'selection'}) ${bookmark.note ? bookmark.note : preview}`,
+              description: bookmark.note ? preview : undefined,
+              bookmark,
+              iconPath: new vscode.ThemeIcon('indent'),
+            })
+          } else {
+            results.push({
+              label,
+              description: vscode.workspace.asRelativePath(bookmark.uri.path),
+              iconPath: new vscode.ThemeIcon('file'),
+              bookmark,
+            })
+          }
+
+          return results
+        })
+      )
+      if (!selected) return
+
+      await vscode.commands.executeCommand(
+        'vscode.open',
+        selected.bookmark.uri,
+        selected.bookmark.type === 'selection'
+          ? { selection: selected.bookmark.selection }
+          : undefined,
+      )
     })
   )
 
