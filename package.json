@@ -204,7 +204,7 @@
       },
       {
         "command": "streamline.bookmarks.delete",
-        "title": "Delete",
+        "title": "Delete Bookmark",
         "icon": "$(star-full)"
       },
       {
@@ -599,11 +599,18 @@
         },
         {
           "command": "streamline.bookmarks.add",
-          "group": "2_workspace@1"
+          "group": "2_workspace@1",
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.bookmarks.bookmarkedPaths"
+        },
+        {
+          "command": "streamline.bookmarks.delete",
+          "group": "2_workspace@1",
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath in streamline.bookmarks.bookmarkedPaths"
         },
         {
           "command": "streamline.bookmarks.addToList",
-          "group": "2_workspace@2"
+          "group": "2_workspace@2",
+          "when": "activeViewlet == 'workbench.view.explorer'"
         }
       ],
       "editor/context": [
@@ -627,7 +634,7 @@
       "editor/title": [
         {
           "command": "streamline.quickRepl.runFile",
-          "when": "resourceScheme == file && streamline.quickRepl.isCurrentFileRunnable",
+          "when": "streamline.quickRepl.isCurrentFileRunnable",
           "group": "navigation@1"
         },
         {

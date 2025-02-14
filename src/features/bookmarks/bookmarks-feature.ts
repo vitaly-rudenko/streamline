@@ -43,8 +43,13 @@ export function createBookmarksFeature(input: {
         ? cache.getCachedBookmarkedFilePathsSet().has(activeTextEditorUri.path)
         : false
 
+      const bookmarkedPaths = config.getBookmarks()
+        .filter(bookmark => bookmark.list === workspaceState.getCurrentList())
+        .map(bookmark => bookmark.uri.path)
+
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.activeTextEditorBookmarked', isActiveTextEditorBookmarked)
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isUndoHistoryEmpty', workspaceState.getUndoHistory().length === 0)
+      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.bookmarkedPaths', bookmarkedPaths satisfies string[])
     } catch (error) {
       console.warn('[Bookmarks] Could not update context', error)
     }
@@ -244,6 +249,7 @@ export function createBookmarksFeature(input: {
 
       workspaceState.setCurrentList(selectedList)
       bookmarksTreeDataProvider.refresh()
+      updateContextInBackground()
       await workspaceState.save()
     })
   )
@@ -255,6 +261,7 @@ export function createBookmarksFeature(input: {
 
       workspaceState.setCurrentList(item?.list)
       bookmarksTreeDataProvider.refresh()
+      updateContextInBackground()
       await workspaceState.save()
     })
   )
