@@ -372,6 +372,8 @@ export function createBookmarksFeature(input: {
         .filter(item => !(item instanceof FileTreeItem) || item.contextValue !== 'virtualFile')
       if (itemsToDelete.length === 0) return
 
+      const currentList = workspaceState.getCurrentList()
+
       let finalUpdatedBookmarks = config.getBookmarks()
       let finalRemovedBookmarks: Bookmark[] = []
       for (const itemToDelete of itemsToDelete) {
@@ -388,13 +390,13 @@ export function createBookmarksFeature(input: {
             if (itemToDelete instanceof ListTreeItem) {
               return !(bookmark.list === itemToDelete.list)
             } else if (itemToDelete instanceof FolderTreeItem) {
-              return !(bookmark.type === 'folder' && bookmark.uri.path === itemToDelete.uri.path)
+              return !(bookmark.type === 'folder' && bookmark.list === itemToDelete.list && bookmark.uri.path === itemToDelete.uri.path)
             } else if (itemToDelete instanceof FileTreeItem) {
-              return !(bookmark.type === 'file' && bookmark.uri.path === itemToDelete.uri.path)
+              return !(bookmark.type === 'file' && bookmark.list === itemToDelete.list && bookmark.uri.path === itemToDelete.uri.path)
             } else if (itemToDelete instanceof SelectionTreeItem) {
-              return !(bookmark.type === 'selection' && bookmark.uri.path === itemToDelete.uri.path && bookmark.selection.isEqual(itemToDelete.selection))
+              return !(bookmark.type === 'selection' && bookmark.list === itemToDelete.list && bookmark.uri.path === itemToDelete.uri.path && bookmark.selection.isEqual(itemToDelete.selection))
             } else {
-              return !(bookmark.type === 'file' && bookmark.uri.path === itemToDelete.path)
+              return !(bookmark.type === 'file' && bookmark.list === currentList && bookmark.uri.path === itemToDelete.path)
             }
           }
         )
