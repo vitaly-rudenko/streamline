@@ -83,8 +83,8 @@
         },
         {
           "id": "navigator",
-          "name": "Navigator [BETA]",
-          "contextualTitle": "Navigator [BETA]",
+          "name": "Navigator",
+          "contextualTitle": "Navigator",
           "visibility": "collapsed",
           "icon": "$(history)"
         }
