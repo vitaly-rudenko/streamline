@@ -3,6 +3,9 @@ import { formatPaths } from '../../utils/format-paths'
 import { NavigatorWorkspaceState } from './navigator-workspace-state'
 import { NavigatorRecord } from './common'
 
+const activeThemeIcon = new vscode.ThemeIcon('circle-filled')
+const inactiveThemeIcon = new vscode.ThemeIcon('circle-outline')
+
 export class NavigatorTreeDataProvider implements vscode.TreeDataProvider<NavigatorRecordItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
@@ -26,16 +29,8 @@ export class NavigatorTreeDataProvider implements vscode.TreeDataProvider<Naviga
     const navigatorRecords = this.workspaceState.getNavigatorRecords()
     const formattedPaths = formatPaths(navigatorRecords.map(record => record.uri.path))
 
-    const activeThemeIcon = new vscode.ThemeIcon('circle-filled')
-    const inactiveThemeIcon = new vscode.ThemeIcon('circle-outline')
-
     return navigatorRecords
-      .map((record, i) => new NavigatorRecordItem(
-        formattedPaths.get(record.uri.path)!,
-        i <= index ? activeThemeIcon : inactiveThemeIcon,
-        record,
-        i,
-      ))
+      .map((record, i) => new NavigatorRecordItem(formattedPaths.get(record.uri.path)!, i <= index, record, i))
       .reverse()
   }
 }
@@ -43,14 +38,15 @@ export class NavigatorTreeDataProvider implements vscode.TreeDataProvider<Naviga
 export class NavigatorRecordItem extends vscode.TreeItem {
   constructor(
     label: string,
-    icon: vscode.ThemeIcon,
+    public readonly isActive: boolean,
     public readonly navigatorRecord: NavigatorRecord,
     public readonly index: number,
   ) {
     super(label)
     this.description = `${navigatorRecord.selection.start.line + 1}: ${navigatorRecord.value}`
+    this.tooltip = vscode.workspace.asRelativePath(navigatorRecord.uri.path)
     this.contextValue = 'record'
-    this.iconPath = icon
+    this.iconPath = isActive ? activeThemeIcon : inactiveThemeIcon
     this.command = {
       command: 'streamline.navigator.jumpToRecord',
       arguments: [{ index }],

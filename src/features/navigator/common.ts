@@ -14,7 +14,3 @@ export const serializedNavigatorRecordSchema = z.object({
 })
 
 export type SerializedNavigatorRecord = z.infer<typeof serializedNavigatorRecordSchema>
-
-export function areNavigatorRecordsEqual(navigatorRecord1: NavigatorRecord, navigatorRecord2: NavigatorRecord) {
-  return navigatorRecord1.uri.path === navigatorRecord2.uri.path
-}

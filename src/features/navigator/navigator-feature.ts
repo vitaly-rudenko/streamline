@@ -2,10 +2,12 @@ import * as vscode from 'vscode'
 import { NavigatorTreeDataProvider } from './navigator-tree-data-provider'
 import { formatPaths } from '../../utils/format-paths'
 import { NavigatorWorkspaceState } from './navigator-workspace-state'
-import { areNavigatorRecordsEqual } from './common'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 
 const MAX_NAVIGATOR_RECORDS_COUNT = 100
+
+const activeThemeIcon = new vscode.ThemeIcon('circle-filled')
+const inactiveThemeIcon = new vscode.ThemeIcon('circle-outline')
 
 export function createNavigatorFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
@@ -17,49 +19,42 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
 
   const debouncedStoreNavigatorRecord = createDebouncedFunction(() => storeNavigatorRecord(), 100)
 
+  // Create and store new navigation record or replace existing one
+  // Has to be wrapped in try/catch to avoid crashing the editor
   async function storeNavigatorRecord() {
-    const newNavigatorRecord = createNavigatorRecord()
-    if (!newNavigatorRecord) return
+    try {
+      const newNavigatorRecord = createNavigatorRecord()
+      if (!newNavigatorRecord) return
 
-    const currentNavigatorRecord = workspaceState.getNavigatorRecordAt(workspaceState.getIndex())
-    if (currentNavigatorRecord && areNavigatorRecordsEqual(newNavigatorRecord, currentNavigatorRecord)) {
-      workspaceState.replaceNavigationRecordAt(workspaceState.getIndex(), newNavigatorRecord)
+      // Reuse existing record if possible (e.g. replace current record or by going backward or forward)
+      for (const indexOffset of [0, -1, 1]) {
+        const index = workspaceState.getIndex() + indexOffset
+        const navigatorRecord = workspaceState.getNavigatorRecordAt(index)
 
-      navigatorTreeDataProvider.refresh()
-      await workspaceState.save()
-      return
-    }
+        if (navigatorRecord && newNavigatorRecord.uri.path === navigatorRecord.uri.path) {
+          workspaceState.replaceNavigationRecordAt(index, newNavigatorRecord)
+          workspaceState.setIndex(index)
 
-    const prevNavigatorRecord = workspaceState.getNavigatorRecordAt(workspaceState.getIndex() - 1)
-    if (prevNavigatorRecord && areNavigatorRecordsEqual(newNavigatorRecord, prevNavigatorRecord)) {
-      workspaceState.setIndex(workspaceState.getIndex() - 1)
-      workspaceState.replaceNavigationRecordAt(workspaceState.getIndex(), newNavigatorRecord)
+          navigatorTreeDataProvider.refresh()
+          await workspaceState.save()
+          return
+        }
+      }
 
-      navigatorTreeDataProvider.refresh()
-      await workspaceState.save()
-      return
-    }
-
-    const nextNavigatorRecord = workspaceState.getNavigatorRecordAt(workspaceState.getIndex() + 1)
-    if (nextNavigatorRecord && areNavigatorRecordsEqual(newNavigatorRecord, nextNavigatorRecord)) {
+      // Push record to the end of the list (top of the stack)
       workspaceState.setIndex(workspaceState.getIndex() + 1)
-      workspaceState.replaceNavigationRecordAt(workspaceState.getIndex(), newNavigatorRecord)
+      workspaceState.setNavigatorRecords([
+        ...workspaceState.getNavigatorRecords()
+          .slice(0, workspaceState.getIndex()) // discard child records
+          .slice(-MAX_NAVIGATOR_RECORDS_COUNT),
+        newNavigatorRecord,
+      ])
 
       navigatorTreeDataProvider.refresh()
       await workspaceState.save()
-      return
+    } catch (error) {
+      console.warn('[Navigator] Could not store record', error)
     }
-
-    workspaceState.setIndex(workspaceState.getIndex() + 1)
-    workspaceState.setNavigatorRecords([
-      ...workspaceState.getNavigatorRecords()
-        .slice(0, workspaceState.getIndex()) // discard child records
-        .slice(-MAX_NAVIGATOR_RECORDS_COUNT),
-      newNavigatorRecord,
-    ])
-
-    navigatorTreeDataProvider.refresh()
-    await workspaceState.save()
   }
 
   function createNavigatorRecord() {
@@ -75,6 +70,7 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
     return record
   }
 
+  // Jumps to existing record by index without modifying the history, and opens it in the editor
   async function jumpToRecord(i: number) {
     if (workspaceState.getIndex() === i) return
 
@@ -88,6 +84,7 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
     await vscode.commands.executeCommand('vscode.open', record.uri, { selection: record.selection })
   }
 
+  // Go back in the history without modifying it
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.navigator.goBack', async () => {
       if (workspaceState.getIndex() > 0) {
@@ -96,6 +93,7 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
     }),
   )
 
+  // Go forward in the history without modifying it
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.navigator.goForward', async () => {
       if (workspaceState.getIndex() < workspaceState.getNavigatorRecords().length - 1) {
@@ -104,6 +102,7 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
     }),
   )
 
+  // Clear all records except for the current one
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.navigator.clearRecords', async () => {
       workspaceState.setIndex(-1)
@@ -114,7 +113,7 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
     }),
   )
 
-  // Alternative Navigator records access via Quick Open modal
+  // Alternative access to Navigator records via Quick Open modal
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.navigator.quickOpen', async () => {
       if (workspaceState.getNavigatorRecords().length === 0) return
@@ -123,16 +122,13 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
       const navigatorRecords = workspaceState.getNavigatorRecords()
       const formattedPaths = formatPaths(navigatorRecords.map(record => record.uri.path))
 
-      const activeThemeIcon = new vscode.ThemeIcon('circle-filled')
-      const inactiveThemeIcon = new vscode.ThemeIcon('circle-outline')
-
       const selected = await vscode.window.showQuickPick(
         navigatorRecords
           .map((record, i) => ({
             label: formattedPaths.get(record.uri.path)!,
             description: `${record.selection.start.line + 1}: ${record.value}`,
-            index: i,
             iconPath: i <= index ? activeThemeIcon : inactiveThemeIcon,
+            index: i,
           }))
           .reverse()
       )
@@ -142,7 +138,7 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
     }),
   )
 
-  // Used internally by the view
+  // Used internally by the view when clicking on a record
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.navigator.jumpToRecord', async (input?: { index?: number }) => {
       if (typeof input?.index === 'number') {
@@ -151,6 +147,7 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
     })
   )
 
+  // Refreshes the navigator view
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.navigator.refresh', async () => {
       navigatorTreeDataProvider.refresh()
