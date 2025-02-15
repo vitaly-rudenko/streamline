@@ -76,10 +76,17 @@
         },
         {
           "id": "quickRepl",
-          "name": "QuickRepl",
-          "contextualTitle": "QuickRepl",
+          "name": "[BETA] QuickRepl",
+          "contextualTitle": "[BETA] QuickRepl",
           "visibility": "collapsed",
           "icon": "$(code)"
+        },
+        {
+          "id": "navigator",
+          "name": "[BETA] Navigator",
+          "contextualTitle": "[BETA] Navigator",
+          "visibility": "collapsed",
+          "icon": "$(history)"
         }
       ]
     },
@@ -324,6 +331,41 @@
         "command": "streamline.quickRepl.copyAbsolutePath",
         "title": "Copy Absolute Path",
         "icon": "$(copy)"
+      },
+      {
+        "command": "streamline.navigator.prevSelection",
+        "title": "Prev selection in Navigator",
+        "icon": "$(chevron-left)"
+      },
+      {
+        "command": "streamline.navigator.prevFile",
+        "title": "Prev file in Navigator",
+        "icon": "$(triangle-left)"
+      },
+      {
+        "command": "streamline.navigator.nextSelection",
+        "title": "Next selection in Navigator",
+        "icon": "$(chevron-right)"
+      },
+      {
+        "command": "streamline.navigator.nextFile",
+        "title": "Next file in Navigator",
+        "icon": "$(triangle-right)"
+      },
+      {
+        "command": "streamline.navigator.clear",
+        "title": "Clear Navigator records",
+        "icon": "$(reset)"
+      },
+      {
+        "command": "streamline.navigator.quickOpen",
+        "title": "Quick open Navigator record",
+        "icon": "$(reset)"
+      },
+      {
+        "command": "streamline.navigator.goToIndex",
+        "title": "Go to...",
+        "icon": "$(compass)"
       }
     ],
     "menus": {
@@ -487,6 +529,26 @@
           "command": "streamline.quickRepl.refresh",
           "group": "navigation@2",
           "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.navigator.prevFile",
+          "group": "navigation@1",
+          "when": "view == navigator"
+        },
+        {
+          "command": "streamline.navigator.prevSelection",
+          "group": "navigation@2",
+          "when": "view == navigator"
+        },
+        {
+          "command": "streamline.navigator.nextSelection",
+          "group": "navigation@3",
+          "when": "view == navigator"
+        },
+        {
+          "command": "streamline.navigator.nextFile",
+          "group": "navigation@4",
+          "when": "view == navigator"
         }
       ],
       "view/item/context": [
@@ -656,6 +718,22 @@
           "command": "streamline.bookmarks.deleteFile",
           "when": "resourceScheme == file && streamline.bookmarks.activeTextEditorBookmarked",
           "group": "navigation@3"
+        },
+        {
+          "command": "streamline.navigator.prevFile",
+          "group": "navigation@4"
+        },
+        {
+          "command": "streamline.navigator.prevSelection",
+          "group": "navigation@5"
+        },
+        {
+          "command": "streamline.navigator.nextSelection",
+          "group": "navigation@6"
+        },
+        {
+          "command": "streamline.navigator.nextFile",
+          "group": "navigation@7"
         }
       ]
     },
