@@ -84,8 +84,8 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
       const activeTextEditor = vscode.window.activeTextEditor
       if (!activeTextEditor) return
 
-      // Save relative path when possible (copy-what-you-see)
-      const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path)
+      // Save relative path when possible (but without workspace folder)
+      const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path, false)
       await vscode.env.clipboard.writeText(path)
 
       const copiedMessage = '⸱⸱⸱ copied!'
