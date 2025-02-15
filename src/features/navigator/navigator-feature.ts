@@ -19,7 +19,8 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
   const navigatorTreeDataProvider = new NavigatorTreeDataProvider(workspaceState)
   context.subscriptions.push(vscode.window.registerTreeDataProvider('navigator', navigatorTreeDataProvider))
 
-  const debouncedStoreNavigatorRecord = createDebouncedFunction(() => storeNavigatorRecord(), 100)
+  const fasterDebouncedStoreNavigatorRecord = createDebouncedFunction(() => storeNavigatorRecord(), 100)
+  const slowerDebouncedStoreNavigatorRecord = createDebouncedFunction(() => storeNavigatorRecord(), 500)
 
   // Create and store new navigation record or replace existing one
   // Has to be wrapped in try/catch to avoid crashing the editor
@@ -165,9 +166,10 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
         }
       }
     }),
-    vscode.window.onDidChangeTextEditorSelection(() => debouncedStoreNavigatorRecord()),
+    // Delay is slower to avoid unnecessary refreshes
+    vscode.window.onDidChangeTextEditorSelection(() => slowerDebouncedStoreNavigatorRecord()),
     // Note: delay IS REQUIRED here, without it the selection is always 0:0-0:0 initially
-    vscode.window.onDidChangeActiveTextEditor(() => debouncedStoreNavigatorRecord())
+    vscode.window.onDidChangeActiveTextEditor(() => fasterDebouncedStoreNavigatorRecord())
   )
 
   storeNavigatorRecord()

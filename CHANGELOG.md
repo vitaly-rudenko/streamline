@@ -16,6 +16,10 @@
 
 - Default key bind for "Quick Open Related File..." is now "Alt+P"
 
+### Current Path
+
+- Now copies path without workspace folder prefix
+
 ## 0.40
 
 ### General
