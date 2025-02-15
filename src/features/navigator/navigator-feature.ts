@@ -3,6 +3,7 @@ import { NavigatorTreeDataProvider } from './navigator-tree-data-provider'
 import { formatPaths } from '../../utils/format-paths'
 import { NavigatorWorkspaceState } from './navigator-workspace-state'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
+import { NavigatorConfig } from './navigator-config'
 
 const MAX_NAVIGATOR_RECORDS_COUNT = 100
 
@@ -12,6 +13,7 @@ const inactiveThemeIcon = new vscode.ThemeIcon('circle-outline')
 export function createNavigatorFeature(input: { context: vscode.ExtensionContext }) {
   const { context } = input
 
+  const config = new NavigatorConfig()
   const workspaceState = new NavigatorWorkspaceState(context.workspaceState)
 
   const navigatorTreeDataProvider = new NavigatorTreeDataProvider(workspaceState)
@@ -27,7 +29,7 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
       if (!newNavigatorRecord) return
 
       // Reuse existing record if possible (e.g. replace current record or by going backward or forward)
-      for (const indexOffset of [0, -1, 1]) {
+      for (const indexOffset of generateIndexOffsets(config.getReuseRecordsOffset())) {
         const index = workspaceState.getIndex() + indexOffset
         const navigatorRecord = workspaceState.getNavigatorRecordAt(index)
 
@@ -156,10 +158,27 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
   )
 
   context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('streamline.navigator')) {
+        if (!config.isSavingInBackground) {
+          config.load()
+        }
+      }
+    }),
     vscode.window.onDidChangeTextEditorSelection(() => debouncedStoreNavigatorRecord()),
     // Note: delay IS REQUIRED here, without it the selection is always 0:0-0:0 initially
     vscode.window.onDidChangeActiveTextEditor(() => debouncedStoreNavigatorRecord())
   )
 
   storeNavigatorRecord()
+}
+
+function generateIndexOffsets(maxOffset: number) {
+  const indexOffsets = [0]
+
+  for (let i = 1; i <= maxOffset; i++) {
+    indexOffsets.push(i, -i)
+  }
+
+  return indexOffsets
 }

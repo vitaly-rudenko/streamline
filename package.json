@@ -771,7 +771,8 @@
               "relatedFiles",
               "scopedPaths",
               "smartConfig",
-              "superSearch"
+              "superSearch",
+              "navigator"
             ]
           },
           "default": [],
@@ -971,6 +972,11 @@
               }
             }
           }
+        },
+        "streamline.navigator.reuseRecordsOffset": {
+          "type": "number",
+          "default": 1,
+          "description": "Reuse existing record within this offset by going backward or forward instead of creating a new record (set to 0 to always create new records)"
         }
       }
     }
