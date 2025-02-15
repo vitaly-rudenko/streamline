@@ -76,15 +76,15 @@
         },
         {
           "id": "quickRepl",
-          "name": "[BETA] QuickRepl",
-          "contextualTitle": "[BETA] QuickRepl",
+          "name": "QuickRepl [BETA]",
+          "contextualTitle": "QuickRepl [BETA]",
           "visibility": "collapsed",
           "icon": "$(code)"
         },
         {
           "id": "navigator",
-          "name": "[BETA] Navigator",
-          "contextualTitle": "[BETA] Navigator",
+          "name": "Navigator [BETA]",
+          "contextualTitle": "Navigator [BETA]",
           "visibility": "collapsed",
           "icon": "$(history)"
         }

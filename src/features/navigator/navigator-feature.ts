@@ -130,7 +130,8 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
     if (
       currentRecord &&
       currentRecord.uri.path === vscode.window.activeTextEditor?.document.uri.path &&
-      Math.abs(currentRecord.selection.start.line - vscode.window.activeTextEditor.selection.start.line) <= 25
+      // if less than 5 lines from current selection, replace current selection
+      Math.abs(currentRecord.selection.start.line - vscode.window.activeTextEditor.selection.start.line) <= 5
     ) {
       const record = createRecord()
       if (record) {
