@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { z, ZodSchema } from 'zod'
+import { ZodSchema } from 'zod'
 
 /** Get current extension configuration */
 export function getConfig() {

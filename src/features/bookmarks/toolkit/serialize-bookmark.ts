@@ -1,3 +1,4 @@
+import type { Selection } from 'vscode'
 import { Bookmark, SerializedBookmark } from '../common'
 
 export function serializeBookmark(bookmark: Bookmark): SerializedBookmark {
@@ -8,9 +9,14 @@ export function serializeBookmark(bookmark: Bookmark): SerializedBookmark {
     ...bookmark.type === 'selection' ? {
       type: bookmark.type,
       value: bookmark.value,
-      selection: `${bookmark.selection.anchor.line}:${bookmark.selection.anchor.character}-${bookmark.selection.active.line}:${bookmark.selection.active.character}`
+      selection: serializeSelection(bookmark.selection)
     } : {
       type: bookmark.type,
     }
   }
+}
+
+// TODO: extract into common module
+export function serializeSelection(selection: Selection): string {
+  return `${selection.anchor.line}:${selection.anchor.character}-${selection.active.line}:${selection.active.character}`
 }

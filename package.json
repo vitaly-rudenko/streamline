@@ -333,39 +333,51 @@
         "icon": "$(copy)"
       },
       {
-        "command": "streamline.navigator.prevSelection",
-        "title": "Prev selection in Navigator",
-        "icon": "$(chevron-left)"
+        "command": "streamline.navigator.goBack",
+        "title": "Go Back in Navigator",
+        "icon": "$(arrow-left)"
       },
       {
-        "command": "streamline.navigator.prevFile",
-        "title": "Prev file in Navigator",
-        "icon": "$(triangle-left)"
+        "command": "streamline.navigator.goForward",
+        "title": "Go Forward in Navigator",
+        "icon": "$(arrow-right)"
       },
       {
-        "command": "streamline.navigator.nextSelection",
-        "title": "Next selection in Navigator",
-        "icon": "$(chevron-right)"
+        "command": "streamline.navigator.clearRecords",
+        "title": "Clear Navigator Records",
+        "icon": "$(clear-all)"
       },
       {
-        "command": "streamline.navigator.nextFile",
-        "title": "Next file in Navigator",
-        "icon": "$(triangle-right)"
-      },
-      {
-        "command": "streamline.navigator.clear",
-        "title": "Clear Navigator records",
-        "icon": "$(reset)"
+        "command": "streamline.navigator.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
       },
       {
         "command": "streamline.navigator.quickOpen",
-        "title": "Quick open Navigator record",
+        "title": "Quick Open Navigator Record",
         "icon": "$(reset)"
       },
       {
-        "command": "streamline.navigator.goToIndex",
-        "title": "Go to...",
+        "command": "streamline.navigator.jumpToRecord",
+        "title": "Internal: Jump to Record",
         "icon": "$(compass)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "streamline.relatedFiles.quickOpen",
+        "key": "alt+p",
+        "when": "resourceScheme == file"
+      },
+      {
+        "command": "streamline.navigator.goBack",
+        "key": "ctrl+[",
+        "when": "resourceScheme == file"
+      },
+      {
+        "command": "streamline.navigator.goForward",
+        "key": "ctrl+]",
+        "when": "resourceScheme == file"
       }
     ],
     "menus": {
@@ -457,6 +469,14 @@
         {
           "command": "streamline.smartConfig.toggle",
           "when": "false"
+        },
+        {
+          "command": "streamline.navigator.refresh",
+          "when": "false"
+        },
+        {
+          "command": "streamline.navigator.jumpToRecord",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -531,22 +551,22 @@
           "when": "view == quickRepl"
         },
         {
-          "command": "streamline.navigator.prevFile",
+          "command": "streamline.navigator.refresh",
           "group": "navigation@1",
           "when": "view == navigator"
         },
         {
-          "command": "streamline.navigator.prevSelection",
+          "command": "streamline.navigator.clearRecords",
           "group": "navigation@2",
           "when": "view == navigator"
         },
         {
-          "command": "streamline.navigator.nextSelection",
+          "command": "streamline.navigator.goBack",
           "group": "navigation@3",
           "when": "view == navigator"
         },
         {
-          "command": "streamline.navigator.nextFile",
+          "command": "streamline.navigator.goForward",
           "group": "navigation@4",
           "when": "view == navigator"
         }
@@ -720,20 +740,12 @@
           "group": "navigation@3"
         },
         {
-          "command": "streamline.navigator.prevFile",
+          "command": "streamline.navigator.goBack",
           "group": "navigation@4"
         },
         {
-          "command": "streamline.navigator.prevSelection",
+          "command": "streamline.navigator.goForward",
           "group": "navigation@5"
-        },
-        {
-          "command": "streamline.navigator.nextSelection",
-          "group": "navigation@6"
-        },
-        {
-          "command": "streamline.navigator.nextFile",
-          "group": "navigation@7"
         }
       ]
     },
