@@ -1,5 +1,21 @@
 # Change Log
 
+## 0.50
+
+### New feature: Navigator
+
+- Stores your navigation history between files
+- Use the view or "Quick Open Navigator Record" command to jump between files
+- Default key binds: "Ctrl+[" and "Ctrl+]" to go backward or forward in Navigator
+
+### Bookmarks
+
+- Added "Quick Open Bookmark from Current List" command as alternative to the view
+
+### Related Files
+
+- Default key bind for "Quick Open Related File..." is now "Alt+P"
+
 ## 0.40
 
 ### General
