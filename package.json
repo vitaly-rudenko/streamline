@@ -931,43 +931,21 @@
               },
               "when": {
                 "type": "array",
-                "description": "List of conditions for applying config presets - if at least one condition matches, specified config presets will be applied",
+                "description": "Syntax for 'when': https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "basename": {
-                      "description": "Regular expression for basename of the currently active document",
-                      "type": "string"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": true
                     },
-                    "path": {
-                      "description": "Regular expression for absolute path of the currently active document",
-                      "type": "string"
-                    },
-                    "toggle": {
-                      "description": "Triggers when custom toggle is currently enabled",
-                      "type": "string"
-                    },
-                    "colorThemeKind": {
-                      "description": "Triggers when current theme is light/dark",
-                      "type": "string"
-                    },
-                    "languageId": {
-                      "description": "Triggers for specific language of the currently active document",
-                      "type": "string"
-                    },
-                    "scopeSelected": {
-                      "description": "Triggers when a Scope is selected (regardless of being enabled/disabled)",
-                      "type": "string"
-                    },
-                    "scopeEnabled": {
-                      "description": "Triggers when a Scope is enabled (regardless of which one is selected)",
-                      "type": "boolean"
-                    },
-                    "scope": {
-                      "description": "Triggers when a specific Scope is selected AND enabled",
-                      "type": "string"
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
                     }
-                  }
+                  ]
                 }
               }
             }
@@ -977,6 +955,100 @@
           "type": "number",
           "default": 1,
           "description": "Reuse existing record within this offset by going backward or forward instead of creating a new record (set to 0 to always create new records)"
+        },
+        "streamline.quickRepl.replsPath": {
+          "type": "string",
+          "default": "~/.streamline/quick-repl/repls",
+          "description": "Path to store REPLs in (referenced as #replsPath)"
+        },
+        "streamline.quickRepl.templates": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "type",
+              "path"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "file",
+                  "directory"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "template": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "Content for the template"
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "Path to template file"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "streamline.quickRepls.commands": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "cwd",
+              "command"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "cwd": {
+                "type": "string"
+              },
+              "command": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "when": {
+                "description": "Syntax for 'when': https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                ]
+              }
+            }
+          }
         }
       }
     }
