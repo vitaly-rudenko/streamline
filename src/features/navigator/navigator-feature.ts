@@ -84,7 +84,7 @@ export function createNavigatorFeature(input: { context: vscode.ExtensionContext
     navigatorTreeDataProvider.refresh()
     await workspaceState.save()
 
-    await vscode.commands.executeCommand('vscode.open', record.uri, { selection: record.selection })
+    await vscode.window.showTextDocument(record.uri, { selection: record.selection })
   }
 
   // Go back in the history without modifying it

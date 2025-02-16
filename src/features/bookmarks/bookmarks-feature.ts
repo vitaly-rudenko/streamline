@@ -525,12 +525,13 @@ export function createBookmarksFeature(input: {
       )
       if (!selected) return
 
-      await vscode.commands.executeCommand(
-        'vscode.open',
+      await vscode.window.showTextDocument(
         selected.bookmark.uri,
-        selected.bookmark.type === 'selection'
-          ? { selection: selected.bookmark.selection }
-          : undefined,
+        {
+          ...selected.bookmark.type === 'selection' && {
+            selection: selected.bookmark.selection,
+          },
+        }
       )
     })
   )
