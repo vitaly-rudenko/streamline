@@ -30,22 +30,32 @@ export function activate(context: vscode.ExtensionContext) {
   const disabledFeatures = safeConfigGet(initialConfig, 'disabledFeatures', [], z.array(z.string()))
 	const isFeatureEnabled = (feature: Feature) => !disabledFeatures.includes(feature)
 
-  function generateConditionContextForActiveTextEditor(): ConditionContext {
+  function generateConditionContext(
+    input: vscode.TextEditor | { path: string; fileType: vscode.FileType } | undefined
+  ): ConditionContext {
     return {
-      languageId: vscode.window.activeTextEditor?.document.languageId,
-      path: vscode.window.activeTextEditor?.document.uri.path,
       toggles: smartConfigFeature?.getEnabledToggles() ?? [],
+      scopeSelected: scopedPathsFeature?.getCurrentScope(),
+      scopeEnabled: scopedPathsFeature?.isScopeEnabled() ?? false,
       colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
         : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
         : 'high-contrast-light',
-      scopeSelected: scopedPathsFeature?.getCurrentScope(),
-      scopeEnabled: scopedPathsFeature?.isScopeEnabled() ?? false,
-      untitled: vscode.window.activeTextEditor?.document.isUntitled,
-      fileType: 'file',
-      selection: vscode.window.activeTextEditor
-        ? !vscode.window.activeTextEditor.selection.isEmpty
-        : undefined,
+
+      ...(input && 'document' in input) ? {
+        languageId: input.document.languageId,
+        path: input.document.uri.path,
+        untitled: input.document.isUntitled,
+        fileType: 'file',
+        selection: vscode.window.activeTextEditor
+          ? !vscode.window.activeTextEditor.selection.isEmpty
+          : undefined,
+      } : (input && 'path' in input) ? {
+        path: input.path,
+        fileType: input.fileType === vscode.FileType.File ? 'file'
+          : input.fileType === vscode.FileType.Directory ? 'directory'
+          : undefined,
+      } : {}
     }
   }
 
@@ -59,7 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
   const smartConfigFeature = isFeatureEnabled('smartConfig')
     ? createSmartConfigFeature({
       context,
-      generateConditionContextForActiveTextEditor: () => generateConditionContextForActiveTextEditor(),
+      generateConditionContext,
     })
     : undefined
 
@@ -83,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
   if (isFeatureEnabled('superSearch')) createSuperSearchFeature({ context })
-  if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, generateConditionContextForActiveTextEditor })
+  if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, generateConditionContext })
   if (isFeatureEnabled('navigator')) createNavigatorFeature({ context })
 
   if (scopedPathsFeature || highlightedPathsFeature) {

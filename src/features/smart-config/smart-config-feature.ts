@@ -7,13 +7,13 @@ import { Config } from './common'
 import { unique } from '../../utils/unique'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getInspectKeyFromConfigurationTarget } from '../../config'
-import { ConditionContext } from '../../common/when'
+import { GenerateConditionContext } from '../../generate-condition-context'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
-  generateConditionContextForActiveTextEditor: () => ConditionContext
+  generateConditionContext: GenerateConditionContext,
 }) {
-  const { context, generateConditionContextForActiveTextEditor } = input
+  const { context, generateConditionContext } = input
 
   const config = new SmartConfigConfig()
   const workspaceState = new SmartConfigWorkspaceState(context.workspaceState)
@@ -80,7 +80,7 @@ export function createSmartConfigFeature(input: {
 
   /** Applies matching configs for each configuration target */
   async function applyMatchingConfigsInBackground() {
-    const conditionContext = generateConditionContextForActiveTextEditor()
+    const conditionContext = generateConditionContext(vscode.window.activeTextEditor)
     const matchingConfigNames = getMatchingConfigNames(conditionContext, config.getMergedRules())
 
     if (areArraysShallowEqual(cachedMatchingConfigNames, matchingConfigNames)) return
