@@ -3,6 +3,7 @@ import { whenSchema } from '../../common/when'
 
 export const templateSchema = z.object({
   name: z.string(),
+  description: z.string().optional(),
 }).and(
   z.discriminatedUnion('type', [
     z.object({
@@ -36,9 +37,16 @@ export type Template = z.infer<typeof templateSchema>
 
 export const commandSchema = z.object({
   name: z.string(),
+  description: z.string().optional(),
   cwd: z.string(),
   command: z.union([z.string(), z.array(z.string())]),
   when: whenSchema.optional(),
 })
 
 export type Command = z.infer<typeof commandSchema>
+
+export class QuickReplNotSetUpError extends Error {
+  constructor() {
+    super('Quick Repl is not set up')
+  }
+}

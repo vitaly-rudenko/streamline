@@ -1,112 +1,86 @@
-import { Command, Template } from "./common"
+import { Command, Template } from './common'
 
 
-const setupReplsPath = '~/.streamline/quick-repl/repls'
+export const setupReplsPath = '~/.streamline/quick-repl/repls'
 
-type SetupTemplate = {
-  description: string
-  template: Template
-}
-
-const setupTemplates: SetupTemplate[] = [
+export const setupTemplates: Template[] = [
   {
+    name: 'JavaScript Script',
     description: 'Opens an Untitled JavaScript file with predefined script template',
+    type: 'snippet',
+    languageId: 'javascript',
     template: {
-      name: 'JavaScript Script',
-      type: 'snippet',
-      languageId: 'javascript',
-      template: {
-        content: [
-          'import * as fs from "fs"',
-          'import * as path from "path"',
-          '',
-          ''
-        ]
-      }
+      content: [
+        'console.log(\'Hello, World!\');',
+        ''
+      ]
     }
   },
   {
+    name: 'JavaScript File',
     description: 'Creates an empty JavaScript file',
-    template: {
-      name: 'JavaScript File',
-      type: 'file',
-      defaultPath: '$replsPath/playground/$datetime_$randomNoun.mjs',
-    }
+    type: 'file',
+    defaultPath: '$replsPath/playground/$datetime_$randomNoun.mjs',
   },
   {
+    name: 'JavaScript Project',
     description: 'Creates a JavaScript project from a template directory, and then opens src/app.js file',
+    type: 'directory',
+    defaultPath: '$replsPath/projects/$datetime_$randomNoun',
     template: {
-      name: 'JavaScript Project',
-      type: 'directory',
-      defaultPath: '$replsPath/projects/$datetime_$randomNoun',
-      template: {
-        path: '$replsPath/templates/javascript-project',
-        fileToOpen: 'src/app.js',
-      },
-    }
+      path: '$replsPath/templates/javascript-project',
+      fileToOpen: 'src/app.js',
+    },
   },
 ]
 
-type SetupCommand = {
-  description: string
-  command: Command
-}
-
-const setupCommands: SetupCommand[] = [
+export const setupCommands: Command[] = [
   {
+    name: 'Run Selection (JavaScript)',
     description: 'Runs the selected JavaScript code with Node.js',
-    command: {
-      name: 'Run Selection (JavaScript)',
-      cwd: '$replsPath',
-      command: [
-        'node << \'QUICKREPL\'',
-        '$fileSelection',
-        'QUICKREPL'
-      ],
-      when: [
-        [{ selection: true }, { languageId: 'typescript' }],
-        [{ selection: true }, { languageId: 'javascript' }]
-      ],
-    }
+    cwd: '$replsPath',
+    command: [
+      'node << \'QUICKREPL\'',
+      '$contextSelection',
+      'QUICKREPL'
+    ],
+    when: [
+      [{ selection: true }, { languageId: 'typescript' }],
+      [{ selection: true }, { languageId: 'javascript' }]
+    ],
   },
   {
+    name: 'Run Script (JavaScript)',
     description: 'Runs the Untitled JavaScript file with Node.js',
-    command: {
-      name: 'Run Script (JavaScript)',
-      cwd: '$replsPath',
-      command: [
-        'node << \'QUICKREPL\'',
-        '$fileContent',
-        'QUICKREPL'
-      ],
-      when: [
-        [{ untitled: true }, { languageId: 'typescript' }],
-        [{ untitled: true }, { languageId: 'javascript' }]
-      ],
-    }
+    cwd: '$replsPath',
+    command: [
+      'node << \'QUICKREPL\'',
+      '$contextContent',
+      'QUICKREPL'
+    ],
+    when: [
+      [{ untitled: true }, { languageId: 'typescript' }],
+      [{ untitled: true }, { languageId: 'javascript' }]
+    ],
   },
   {
+    name: 'Run File (JavaScript)',
     description: 'Runs the JavaScript file with Node.js',
-    command: {
-      name: 'Run File (JavaScript)',
-      cwd: '$fileDirectory',
-      command: 'node $fileBasename',
-      when: [
-        [{ untitled: false }, { languageId: 'javascript' }],
-        [{ basename: '\\.(c|m)?js$' }],
-      ],
-    }
+    cwd: '$contextParentPath',
+    command: 'node $contextBasename',
+    when: [
+      [{ untitled: false }, { languageId: 'javascript' }],
+      [{ basename: '\\.(c|m)?js$' }],
+    ],
   },
   {
+    name: 'Run Project (JavaScript)',
     description: 'Runs "npm start" when package.json or a directory is selected',
-    command: {
-      name: 'Run Project (JavaScript)',
-      cwd: '$fileDirectory',
-      command: 'npm start',
-      when: [
-        { basename: '^package\\.json$' },
-        { fileType: 'directory' }
-      ]
-    }
+    cwd: '$contextPath',
+    command: 'npm start',
+    when: [
+      { basename: '^package\\.json$' },
+      { fileType: 'directory' }
+    ]
   },
 ]

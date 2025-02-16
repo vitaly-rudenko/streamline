@@ -1,8 +1,7 @@
 import * as vscode from 'vscode'
 import { QuickReplConfig } from './quick-repl-config'
-import { testWhen } from '../../common/when'
 import { formatPath } from './utils'
-import { GenerateConditionContext } from '../../generate-condition-context'
+import { GenerateConditionContextInput } from '../../generate-condition-context'
 
 type TreeItem = FolderTreeItem | FileTreeItem | FailingFolderTreeItem
 
@@ -12,7 +11,7 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
   constructor(
     private readonly config: QuickReplConfig,
-    private readonly generateConditionContext: GenerateConditionContext
+    private readonly isRunnable: (input: GenerateConditionContextInput) => boolean,
   ) {}
 
   refresh(): void {
@@ -65,9 +64,7 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
       return files
         .map(([filename, fileType]) => {
           const fileUri = vscode.Uri.joinPath(directoryUri, filename)
-
-          const conditionContext = this.generateConditionContext({ path: fileUri.path, fileType })
-          const isRunnable = this.config.getCommands().some(command => !command.when || testWhen(conditionContext, command.when))
+          const isRunnable = this.isRunnable({ path: fileUri.path, fileType })
 
           return fileType === vscode.FileType.File
             ? new FileTreeItem(filename, isRunnable, fileUri)

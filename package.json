@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.906",
+  "version": "0.40.907",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -674,7 +674,7 @@
         },
         {
           "command": "streamline.quickRepl.create",
-          "when": "view == quickRepl && viewItem == folder",
+          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
           "group": "inline@2"
         },
         {
@@ -706,11 +706,6 @@
           "command": "streamline.quickRepl.delete",
           "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
           "group": "info@5"
-        },
-        {
-          "command": "streamline.quickRepl.setupReplsPath",
-          "when": "view == quickRepl && viewItem == missingFolder",
-          "group": "inline@1"
         }
       ],
       "explorer/context": [

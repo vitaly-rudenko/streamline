@@ -12,6 +12,7 @@ import { createSuperSearchFeature } from './features/super-search/super-search-f
 import { createQuickReplFeature } from './features/quick-repl/quick-repl-feature'
 import { createNavigatorFeature } from './features/navigator/navigator-feature'
 import { ConditionContext } from './common/when'
+import { GenerateConditionContextInput } from './generate-condition-context'
 
 type Feature =
 	| 'bookmarks'
@@ -30,9 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
   const disabledFeatures = safeConfigGet(initialConfig, 'disabledFeatures', [], z.array(z.string()))
 	const isFeatureEnabled = (feature: Feature) => !disabledFeatures.includes(feature)
 
-  function generateConditionContext(
-    input: vscode.TextEditor | { path: string; fileType: vscode.FileType } | undefined
-  ): ConditionContext {
+  function generateConditionContext(input: GenerateConditionContextInput): ConditionContext {
     return {
       toggles: smartConfigFeature?.getEnabledToggles() ?? [],
       scopeSelected: scopedPathsFeature?.getCurrentScope(),
