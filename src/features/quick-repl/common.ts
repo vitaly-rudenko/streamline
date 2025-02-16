@@ -3,17 +3,25 @@ import { whenSchema } from '../../common/when'
 
 export const templateSchema = z.object({
   name: z.string(),
-  type: z.enum(['file', 'directory']),
-  defaultPath: z.string(),
-  defaultName: z.string(),
-  template: z.union([
-    z.object({ content: z.string() }),
+  defaultPath: z.string().optional(),
+}).and(
+  z.discriminatedUnion('type', [
     z.object({
-      path: z.string(),
-      mainFilePath: z.string().optional(),
+      type: z.literal('file'),
+      template: z.union([
+        z.object({ content: z.union([z.string(), z.array(z.string())]) }),
+        z.object({ path: z.string() }),
+      ]).optional(),
     }),
-  ]).optional()
-})
+    z.object({
+      type: z.literal('directory'),
+      template: z.object({
+        path: z.string(),
+        fileToOpen: z.string().optional(),
+      }),
+    })
+  ])
+)
 
 export type Template = z.infer<typeof templateSchema>
 
