@@ -10,10 +10,11 @@ export const conditionSchema = z.union([
   z.object({ path: z.string() }),
   z.object({ toggle: z.string() }),
   z.object({ colorThemeKind: colorThemeKindSlugSchema }),
+  // https://code.visualstudio.com/docs/languages/identifiers
   z.object({ languageId: z.string() }),
   z.object({ scopeSelected: z.string() }),
   z.object({ scopeEnabled: z.boolean() }),
-  z.object({ scope: z.string() }), // Shorthand for { scopeSelected: 'scope' } && { scopeEnabled: true }
+  z.object({ scope: z.string() }), // Shorthand for [{ scopeSelected: 'scope' }, { scopeEnabled: true }]
 ])
 
 export type Condition = z.infer<typeof conditionSchema>
