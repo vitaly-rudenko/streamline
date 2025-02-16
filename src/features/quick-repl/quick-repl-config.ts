@@ -16,7 +16,7 @@ export class QuickReplConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const replsPath = safeConfigGet(config, 'quickRepl.replsPath', undefined, z.string())
+    const replsPath = safeConfigGet(config, 'quickRepl.replsPath', undefined, z.string().optional())
     const templates = safeConfigGet(config, 'quickRepl.templates', [], z.array(templateSchema))
     const commands = safeConfigGet(config, 'quickRepl.commands', [], z.array(commandSchema))
 

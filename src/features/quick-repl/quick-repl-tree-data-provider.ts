@@ -121,6 +121,18 @@ export class SetupTreeItem extends vscode.TreeItem {
     }
   }
 }
+// Placeholder for empty root folder
+export class EmptyReplsFolderTreeItem extends vscode.TreeItem {
+  constructor() {
+    super(
+      'Click "+" to create your first Quick Repl',
+      vscode.TreeItemCollapsibleState.None
+    )
+
+    this.iconPath = new vscode.ThemeIcon('rocket')
+    this.contextValue = 'emptyReplsFolder'
+  }
+}
 
 // Placeholder for folder that failed to read
 export class FailingFolderTreeItem extends vscode.TreeItem {
@@ -133,18 +145,5 @@ export class FailingFolderTreeItem extends vscode.TreeItem {
     this.tooltip = errorMessage
     this.iconPath = new vscode.ThemeIcon('error')
     this.contextValue = 'failingFolder'
-  }
-}
-
-// Placeholder for empty root folder
-export class EmptyReplsFolderTreeItem extends vscode.TreeItem {
-  constructor() {
-    super(
-      'Click "+" to create your first Quick Repl',
-      vscode.TreeItemCollapsibleState.None
-    )
-
-    this.iconPath = new vscode.ThemeIcon('question')
-    this.contextValue = 'emptyReplsFolder'
   }
 }

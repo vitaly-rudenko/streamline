@@ -184,42 +184,41 @@ export function createQuickReplFeature(input: {
   // For files and folders in the tree view
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.create', async (argument: unknown) => {
-      let uri: vscode.Uri | undefined
-      if (argument instanceof FolderTreeItem) {
-        uri = argument.uri
-      } else if (argument instanceof vscode.Uri) {
-        uri = argument
-      }
-      if (!uri) return
+      const parentUri = argument instanceof FolderTreeItem ? argument.uri
+        : argument instanceof vscode.Uri ? argument
+          : undefined
+      if (!parentUri) return
 
-      const selected = await vscode.window.showQuickPick(
-        [
-          { label: 'Create Quick Repl', iconPath: new vscode.ThemeIcon('file-code'), option: 'createQuickRepl' },
-          { label: 'Create File', iconPath: new vscode.ThemeIcon('new-file'), option: 'createFile' },
-          { label: 'Create Folder', iconPath: new vscode.ThemeIcon('new-folder'), option: 'createDirectory' },
-        ] as const
-      )
+      const selected = await vscode.window.showQuickPick([
+        { label: 'Create Quick Repl', iconPath: new vscode.ThemeIcon('file-code'), option: 'createQuickRepl' },
+        { label: 'Create File', iconPath: new vscode.ThemeIcon('new-file'), option: 'createFile' },
+        { label: 'Create Folder', iconPath: new vscode.ThemeIcon('new-folder'), option: 'createDirectory' },
+      ] as const)
       if (!selected) return
 
       const { option } = selected
 
       if (option === 'createQuickRepl') {
-        await startQuickReplWizard({ parentUri: uri })
-      } else if (option === 'createFile') {
+        await startQuickReplWizard({ parentUri: parentUri })
+      }
+
+      if (option === 'createFile') {
         const basename = await vscode.window.showInputBox({ title: 'Enter file name' })
         if (!basename) return
 
-        const fileUri = vscode.Uri.joinPath(uri, basename)
+        const fileUri = vscode.Uri.joinPath(parentUri, basename)
         await vscode.workspace.fs.writeFile(fileUri, new Uint8Array())
-        await vscode.window.showTextDocument(uri)
+        await vscode.window.showTextDocument(fileUri)
         // TODO: reveal file
 
         quickReplTreeDataProvider.refresh()
-      } else {
+      }
+
+      if (option === 'createDirectory') {
         const basename = await vscode.window.showInputBox({ title: 'Enter folder name' })
         if (!basename) return
 
-        const directoryUri = vscode.Uri.joinPath(uri, basename)
+        const directoryUri = vscode.Uri.joinPath(parentUri, basename)
         await vscode.workspace.fs.createDirectory(directoryUri)
         // TODO: reveal directory
 
