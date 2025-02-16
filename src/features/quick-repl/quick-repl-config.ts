@@ -10,7 +10,6 @@ const defaultTemplates: Template[] = [
     type: 'file',
     defaultPath: '$replsPath',
     defaultName: '$datetime_$randomNoun.mjs',
-    template: { content: 'console.log("Hello world!");\n' },
   },
   {
     name: 'JavaScript Project',

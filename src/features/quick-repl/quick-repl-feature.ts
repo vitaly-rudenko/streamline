@@ -23,6 +23,10 @@ export function createQuickReplFeature(input: {
     await updateContextInBackground()
   }, 500)
 
+  const debouncedUpdateContextInBackground = createDebouncedFunction(async () => {
+    await updateContextInBackground()
+  }, 500)
+
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, generateConditionContextForPath)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
     treeDataProvider: quickReplTreeDataProvider,
@@ -236,9 +240,9 @@ export function createQuickReplFeature(input: {
         const defaultName = replaceVariables(template.defaultName, generateVariables())
         basename = await vscode.window.showInputBox({
           title: template.type === 'file'
-            ? 'Enter file name'
-            : 'Enter directory name',
-          placeHolder: defaultName,
+          ? 'Enter file name'
+          : 'Enter directory name',
+          value: defaultName,
         })
 
         type = template.type
@@ -341,9 +345,10 @@ export function createQuickReplFeature(input: {
         }
       }
     }),
-    vscode.window.onDidChangeActiveTextEditor(() => {
-      updateContextInBackground()
-    }),
+    // TODO: Not very reliable, specifically when changing / auto-detecting file language
+    vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
+    vscode.window.onDidChangeTextEditorOptions(() => updateContextInBackground()),
+    vscode.workspace.onDidChangeTextDocument(() => debouncedUpdateContextInBackground()),
   )
 
   updateContextInBackground()
