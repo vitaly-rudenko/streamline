@@ -3,19 +3,17 @@ import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { SmartConfigConfig } from './smart-config-config'
 import { getMatchingConfigNames } from './toolkit/get-matching-config-names'
 import { SmartConfigWorkspaceState } from './smart-config-workspace-state'
-import { Config, SmartConfigContext } from './common'
+import { Config } from './common'
 import { unique } from '../../utils/unique'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getInspectKeyFromConfigurationTarget } from '../../config'
+import { ConditionContext } from '../../common/when'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
-  dependencies: {
-    getCurrentScope: () => string | undefined
-    isScopeEnabled: () => boolean
-  }
+  generateConditionContext: () => ConditionContext
 }) {
-  const { context, dependencies } = input
+  const { context, generateConditionContext } = input
 
   const config = new SmartConfigConfig()
   const workspaceState = new SmartConfigWorkspaceState(context.workspaceState)
@@ -43,21 +41,6 @@ export function createSmartConfigFeature(input: {
     cachedMergedToggles = []
     cachedEnabledToggles = []
     cachedMatchingConfigNames = []
-  }
-
-  /** Generates current context for rules to be matched against */
-  function generateSmartConfigContext(): SmartConfigContext {
-    return {
-      languageId: vscode.window.activeTextEditor?.document.languageId,
-      path: vscode.window.activeTextEditor?.document.uri.path,
-      toggles: workspaceState.getEnabledToggles(),
-      colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
-        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
-        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
-        : 'high-contrast-light',
-      scopeSelected: dependencies.getCurrentScope(),
-      scopeEnabled: dependencies.isScopeEnabled(),
-    }
   }
 
   // Creates toggle buttons in the status bar
@@ -92,7 +75,7 @@ export function createSmartConfigFeature(input: {
 
   /** Applies matching configs for each configuration target */
   async function applyMatchingConfigsInBackground() {
-    const ctx = generateSmartConfigContext()
+    const ctx = generateConditionContext()
     const matchingConfigNames = getMatchingConfigNames(ctx, config.getMergedRules())
 
     if (areArraysShallowEqual(cachedMatchingConfigNames, matchingConfigNames)) return
@@ -200,5 +183,6 @@ export function createSmartConfigFeature(input: {
 
   return {
     scheduleRefresh,
+    getEnabledToggles: () => workspaceState.getEnabledToggles(),
   }
 }

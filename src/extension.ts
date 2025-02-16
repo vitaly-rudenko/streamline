@@ -11,6 +11,7 @@ import { createSmartConfigFeature } from './features/smart-config/smart-config-f
 import { createSuperSearchFeature } from './features/super-search/super-search-feature'
 import { createQuickReplFeature } from './features/quick-repl/quick-repl-feature'
 import { createNavigatorFeature } from './features/navigator/navigator-feature'
+import { ConditionContext } from './common/when'
 
 type Feature =
 	| 'bookmarks'
@@ -29,6 +30,21 @@ export function activate(context: vscode.ExtensionContext) {
   const disabledFeatures = safeConfigGet(initialConfig, 'disabledFeatures', [], z.array(z.string()))
 	const isFeatureEnabled = (feature: Feature) => !disabledFeatures.includes(feature)
 
+  /** Generates current context for rules to be matched against */
+  function generateConditionContext(): ConditionContext {
+    return {
+      languageId: vscode.window.activeTextEditor?.document.languageId,
+      path: vscode.window.activeTextEditor?.document.uri.path,
+      toggles: smartConfigFeature?.getEnabledToggles() ?? [],
+      colorThemeKind: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark ? 'dark'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.HighContrast ? 'high-contrast'
+        : vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light ? 'light'
+        : 'high-contrast-light',
+      scopeSelected: scopedPathsFeature?.getCurrentScope(),
+      scopeEnabled: scopedPathsFeature?.isScopeEnabled() ?? false,
+    }
+  }
+
 	const highlightedPathsFeature = isFeatureEnabled('highlightedPaths')
 		? createHighlightedPathsFeature({
 			context,
@@ -39,10 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
   const smartConfigFeature = isFeatureEnabled('smartConfig')
     ? createSmartConfigFeature({
       context,
-      dependencies: {
-        getCurrentScope: () => scopedPathsFeature?.getCurrentScope(),
-        isScopeEnabled: () => scopedPathsFeature?.isScopeEnabled() ?? false,
-      }
+      generateConditionContext: () => generateConditionContext(),
     })
     : undefined
 
