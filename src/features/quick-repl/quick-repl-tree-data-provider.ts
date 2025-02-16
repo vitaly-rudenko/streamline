@@ -1,10 +1,10 @@
 import * as vscode from 'vscode'
-import * as os from 'os'
 import { QuickReplConfig } from './quick-repl-config'
-import { replaceHomeWithShorthand, replaceShorthandWithHomedir } from './quick-repl-feature'
-import { ConditionContext, testWhen } from '../../common/when'
+import { testWhen } from '../../common/when'
+import { formatPath } from './utils'
+import { GenerateConditionContext } from '../../generate-condition-context'
 
-type TreeItem = FolderTreeItem | FileTreeItem | MissingFolderTreeItem
+type TreeItem = FolderTreeItem | FileTreeItem | FailingFolderTreeItem
 
 export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -12,7 +12,7 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
   constructor(
     private readonly config: QuickReplConfig,
-    private readonly generateConditionContextForPath: (path: string) => ConditionContext
+    private readonly generateConditionContext: GenerateConditionContext
   ) {}
 
   refresh(): void {
@@ -27,7 +27,10 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
     let directoryUri: vscode.Uri | undefined
 
     if (element === undefined) {
-      directoryUri = vscode.Uri.file(replaceShorthandWithHomedir(this.config.getReplsPath()))
+      directoryUri = this.config.getDynamicReplsUri()
+      if (directoryUri === undefined) {
+        return [new SetupTreeItem()]
+      }
     }
 
     if (element instanceof FolderTreeItem) {
@@ -38,33 +41,37 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
       let files: [string, vscode.FileType][]
       try {
         files = await vscode.workspace.fs.readDirectory(directoryUri)
-      } catch (error) {
+      } catch (error: any) {
         console.warn('[QuickRepl] Could not read directory', directoryUri, error)
-        return [new MissingFolderTreeItem(directoryUri)]
+        return [new FailingFolderTreeItem(directoryUri, error.message)]
       }
 
+      // Placeholder for root folder if empty
       if (element === undefined && files.length === 0) {
-        return [new EmptyFolderTreeItem(directoryUri)]
+        return [new EmptyReplsFolderTreeItem()]
       }
 
-      // sort by name, folders first
-      files.sort((a, b) => {
-        if (a[1] === b[1]) return a[0].localeCompare(b[0])
-        return a[1] === vscode.FileType.Directory ? -1 : 1
-      })
+      files = files
+        // Exclude symlinks and unknown file types
+        .filter(([_, fileType]) => fileType === vscode.FileType.Directory || fileType === vscode.FileType.File)
+        // Exclude hidden files
+        .filter(([filename]) => !filename.startsWith('.'))
+        // Sort by name, folders first
+        .sort((a, b) => {
+          if (a[1] === b[1]) return a[0].localeCompare(b[0])
+          return a[1] === vscode.FileType.Directory ? -1 : 1
+        })
 
       return files
-        .filter(([_, fileType]) => fileType === vscode.FileType.Directory || fileType === vscode.FileType.File)
-        .filter(([filename]) => !filename.startsWith('.')) // Exclude hidden files
         .map(([filename, fileType]) => {
           const fileUri = vscode.Uri.joinPath(directoryUri, filename)
 
-          const conditionContext = this.generateConditionContextForPath(fileUri.path)
+          const conditionContext = this.generateConditionContext({ path: fileUri.path, fileType })
           const isRunnable = this.config.getCommands().some(command => !command.when || testWhen(conditionContext, command.when))
 
-          return fileType === vscode.FileType.Directory
-            ? new FolderTreeItem(filename, isRunnable, fileUri)
-            : new FileTreeItem(filename, isRunnable, fileUri)
+          return fileType === vscode.FileType.File
+            ? new FileTreeItem(filename, isRunnable, fileUri)
+            : new FolderTreeItem(filename, isRunnable, fileUri)
         })
     }
 
@@ -73,7 +80,7 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 }
 
 export class FolderTreeItem extends vscode.TreeItem {
-  constructor(label: string, public readonly isRunnable: boolean, public readonly uri: vscode.Uri) {
+  constructor(label: string, isRunnable: boolean, public readonly uri: vscode.Uri) {
     super(label, vscode.TreeItemCollapsibleState.Collapsed)
 
     this.iconPath = vscode.ThemeIcon.Folder
@@ -84,7 +91,7 @@ export class FolderTreeItem extends vscode.TreeItem {
 }
 
 export class FileTreeItem extends vscode.TreeItem {
-  constructor(label: string, public readonly isRunnable: boolean, public readonly uri: vscode.Uri) {
+  constructor(label: string, isRunnable: boolean, public readonly uri: vscode.Uri) {
     super(label, vscode.TreeItemCollapsibleState.None)
 
     this.iconPath = vscode.ThemeIcon.File
@@ -100,26 +107,47 @@ export class FileTreeItem extends vscode.TreeItem {
   }
 }
 
-export class MissingFolderTreeItem extends vscode.TreeItem {
-  constructor(uri: vscode.Uri) {
+// Prompt to setup Quick Repl
+export class SetupTreeItem extends vscode.TreeItem {
+  constructor() {
     super(
-      `Folder does not exist: ${replaceHomeWithShorthand(uri.path)}`,
+      'Click here to setup Quick Repl',
       vscode.TreeItemCollapsibleState.None
     )
 
-    this.iconPath = new vscode.ThemeIcon('error')
-    this.contextValue = 'missingFolder'
+    this.iconPath = new vscode.ThemeIcon('rocket')
+    this.contextValue = 'setup'
+
+    this.command = {
+      command: 'streamline.quickRepl.setup',
+      title: 'Setup Quick Repl',
+    }
   }
 }
 
-export class EmptyFolderTreeItem extends vscode.TreeItem {
-  constructor(uri: vscode.Uri) {
+// Placeholder for folder that failed to read
+export class FailingFolderTreeItem extends vscode.TreeItem {
+  constructor(uri: vscode.Uri, errorMessage: string) {
     super(
-      `Folder is empty: ${replaceHomeWithShorthand(uri.path)}`,
+      `Failed to read folder: ${formatPath(uri.path)}`,
       vscode.TreeItemCollapsibleState.None
     )
 
-    this.iconPath = new vscode.ThemeIcon('folder-opened')
-    this.contextValue = 'emptyFolder'
+    this.tooltip = errorMessage
+    this.iconPath = new vscode.ThemeIcon('error')
+    this.contextValue = 'failingFolder'
+  }
+}
+
+// Placeholder for empty root folder
+export class EmptyReplsFolderTreeItem extends vscode.TreeItem {
+  constructor() {
+    super(
+      'Click "+" to create your first Quick Repl',
+      vscode.TreeItemCollapsibleState.None
+    )
+
+    this.iconPath = new vscode.ThemeIcon('question')
+    this.contextValue = 'emptyReplsFolder'
   }
 }

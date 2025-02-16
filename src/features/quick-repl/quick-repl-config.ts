@@ -2,63 +2,13 @@ import z from 'zod'
 import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 import { Command, commandSchema, Template, templateSchema } from './common'
-import { Uri } from 'vscode'
+import { ConfigurationTarget, Uri } from 'vscode'
 import { replaceShorthandWithHomedir } from './quick-repl-feature'
 
-const defaultReplsPath = '~/.streamline/quick-repl/repls'
-const defaultTemplates: Template[] = [
-  {
-    name: 'JavaScript File',
-    type: 'file',
-    defaultPath: '$replsPath/playground',
-    defaultName: '$datetime_$randomNoun.mjs',
-  },
-  {
-    name: 'JavaScript Project',
-    type: 'directory',
-    defaultPath: '$replsPath/projects',
-    defaultName: '$datetime_$randomNoun',
-    template: {
-      path: '$replsPath/templates/javascript-project',
-      mainFilePath: 'app.js',
-    },
-  },
-]
-const defaultCommands: Command[] = [
-  {
-    name: 'Run JavaScript script',
-    cwd: '$replsPath',
-    command: [
-      'node << \'QUICKREPL\'',
-      '$fileContent',
-      'QUICKREPL'
-    ],
-    when: [
-      [{ untitled: true }, { languageId: 'typescript' }],
-      [{ untitled: true }, { languageId: 'javascript' }]
-    ],
-  },
-  {
-    name: 'Run JavaScript file',
-    cwd: '$fileDirectory',
-    command: 'node $fileBasename',
-    when: [
-      [{ untitled: false }, { languageId: 'javascript' }],
-      [{ basename: '\\.(c|m)?js$' }],
-    ],
-  },
-  {
-    name: 'Run JavaScript project',
-    cwd: '$fileDirectory',
-    command: 'npm start',
-    when: [{ basename: '^package\\.json$' }]
-  },
-]
-
 export class QuickReplConfig extends FeatureConfig {
-  private _replsPath: string = defaultReplsPath
-  private _templates: Template[] = defaultTemplates
-  private _commands: Command[] = defaultCommands
+  private _replsPath: string | undefined = undefined
+  private _templates: Template[] = []
+  private _commands: Command[] = []
 
   constructor() {
     super('QuickRepl')
@@ -66,11 +16,9 @@ export class QuickReplConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const replsPath = safeConfigGet(config, 'quickRepl.replsPath', defaultReplsPath, z.string())
-    const templates = safeConfigGet(config, 'quickRepl.templates', defaultTemplates, z.array(templateSchema))
-    const commands = safeConfigGet(config, 'quickRepl.commands', defaultCommands, z.array(commandSchema))
-
-    console.log({ replsPath, templates, defaultTemplates, commands })
+    const replsPath = safeConfigGet(config, 'quickRepl.replsPath', undefined, z.string())
+    const templates = safeConfigGet(config, 'quickRepl.templates', [], z.array(templateSchema))
+    const commands = safeConfigGet(config, 'quickRepl.commands', [], z.array(commandSchema))
 
     let hasChanged = false
 
@@ -96,21 +44,58 @@ export class QuickReplConfig extends FeatureConfig {
     return hasChanged
   }
 
-  async save() {}
+  async save() {
+    const config = getConfig()
+
+    await updateEffectiveConfig(
+      config,
+      ConfigurationTarget.Global,
+      'quickRepl.replsPath',
+      exists => (exists || this._replsPath !== undefined) ? this._replsPath : undefined
+    )
+
+    await updateEffectiveConfig(
+      config,
+      ConfigurationTarget.Global,
+      'quickRepl.templates',
+      exists => (exists || this._templates.length > 0) ? this._templates : undefined
+    )
+
+    await updateEffectiveConfig(
+      config,
+      ConfigurationTarget.Global,
+      'quickRepl.commands',
+      exists => (exists || this._commands.length > 0) ? this._commands : undefined
+    )
+  }
+
+  getDynamicReplsUri() {
+    return this._replsPath
+      ? Uri.file(replaceShorthandWithHomedir(this._replsPath))
+      : undefined
+  }
 
   getReplsPath() {
     return this._replsPath
   }
 
-  getReplsUri() {
-    return Uri.file(replaceShorthandWithHomedir(this._replsPath))
+  setReplsPath(value: string) {
+    this._replsPath = value
   }
 
   getTemplates() {
     return this._templates
   }
 
+  setTemplates(value: Template[]) {
+    this._templates = value
+  }
+
   getCommands() {
     return this._commands
+  }
+
+  setCommands(value: Command[]) {
+    this._commands = value
   }
 }
