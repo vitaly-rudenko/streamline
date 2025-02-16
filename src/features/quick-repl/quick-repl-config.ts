@@ -1,22 +1,27 @@
-import z, { defaultErrorMap } from 'zod'
+import z from 'zod'
 import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 import { Command, commandSchema, Template, templateSchema } from './common'
+import { Uri } from 'vscode'
+import { replaceShorthandWithHomedir } from './quick-repl-feature'
 
 const defaultReplsPath = '~/.streamline/quick-repl/repls'
 const defaultTemplates: Template[] = [
   {
     name: 'JavaScript File',
     type: 'file',
-    defaultPath: '$replsPath',
+    defaultPath: '$replsPath/playground',
     defaultName: '$datetime_$randomNoun.mjs',
   },
   {
     name: 'JavaScript Project',
     type: 'directory',
-    defaultPath: '$replsPath',
+    defaultPath: '$replsPath/projects',
     defaultName: '$datetime_$randomNoun',
-    template: { path: '$replsPath/templates/javascript-project' },
+    template: {
+      path: '$replsPath/templates/javascript-project',
+      mainFilePath: 'app.js',
+    },
   },
 ]
 const defaultCommands: Command[] = [
@@ -95,6 +100,10 @@ export class QuickReplConfig extends FeatureConfig {
 
   getReplsPath() {
     return this._replsPath
+  }
+
+  getReplsUri() {
+    return Uri.file(replaceShorthandWithHomedir(this._replsPath))
   }
 
   getTemplates() {

@@ -8,7 +8,10 @@ export const templateSchema = z.object({
   defaultName: z.string(),
   template: z.union([
     z.object({ content: z.string() }),
-    z.object({ path: z.string() }),
+    z.object({
+      path: z.string(),
+      mainFilePath: z.string().optional(),
+    }),
   ]).optional()
 })
 

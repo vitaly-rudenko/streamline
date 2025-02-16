@@ -343,6 +343,11 @@
         "icon": "$(copy)"
       },
       {
+        "command": "streamline.quickRepl.createQuickRepl",
+        "title": "Create Quick Repl...",
+        "icon": "$(plus)"
+      },
+      {
         "command": "streamline.quickRepl.create",
         "title": "Create...",
         "icon": "$(plus)"
@@ -1019,7 +1024,8 @@
             "required": [
               "name",
               "type",
-              "defaultPath"
+              "defaultPath",
+              "defaultName"
             ],
             "properties": {
               "name": {
@@ -1035,6 +1041,9 @@
               "defaultPath": {
                 "type": "string"
               },
+              "defaultName": {
+                "type": "string"
+              },
               "template": {
                 "type": "object",
                 "properties": {
@@ -1044,7 +1053,11 @@
                   },
                   "path": {
                     "type": "string",
-                    "description": "Path to template file"
+                    "description": "Path to template directory"
+                  },
+                  "mainFilePath": {
+                    "type": "string",
+                    "description": "If provided, this file will be opened after copying the template"
                   }
                 }
               }
