@@ -4,7 +4,8 @@ import { whenSchema } from '../../common/when'
 export const templateSchema = z.object({
   name: z.string(),
   type: z.enum(['file', 'directory']),
-  path: z.string(),
+  defaultPath: z.string(),
+  defaultName: z.string(),
   template: z.union([
     z.object({ content: z.string() }),
     z.object({ path: z.string() }),

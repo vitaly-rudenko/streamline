@@ -71,7 +71,9 @@ export function getInspectKeyFromConfigurationTarget(target: vscode.Configuratio
 
 /** Get configuration section value and validate it against the schema */
 export function safeConfigGet<T>(config: vscode.WorkspaceConfiguration, section: string, defaultValue: T, schema: ZodSchema<T>) {
-  const value = config.get(section, defaultValue)
+  const value = isConfigSectionSet(config, section)
+    ? config.get(section, defaultValue)
+    : defaultValue
 
   try {
     return schema.parse(value)
@@ -79,6 +81,16 @@ export function safeConfigGet<T>(config: vscode.WorkspaceConfiguration, section:
     handleConfigError(section, value, error, getEffectiveTarget(config, section))
     return defaultValue
   }
+}
+
+function isConfigSectionSet(config: vscode.WorkspaceConfiguration, section: string) {
+  const inspected = config.inspect(section)
+  return inspected?.globalLanguageValue
+      || inspected?.globalValue
+      || inspected?.workspaceFolderLanguageValue
+      || inspected?.workspaceFolderValue
+      || inspected?.workspaceLanguageValue
+      || inspected?.workspaceValue
 }
 
 /** Inspect configuration section value and validate it against the schema */

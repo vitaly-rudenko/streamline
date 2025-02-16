@@ -97,8 +97,6 @@ export function activate(context: vscode.ExtensionContext) {
         const isBookmarked = bookmarksFeature ? bookmarksFeature.isPathBookmarkedInCurrentBookmarksList(uri.path) : false
 
         if (isHighlighted || isParentOfScopedAndExcluded || isScoped || isExcluded || isBookmarked) {
-          console.log(path, { isScoped, isExcluded, isParentOfScopedAndExcluded, isHighlighted, isBookmarked })
-
           const badge = isScoped ? '•' : isExcluded ? '⨯' : isParentOfScopedAndExcluded ? '›' : undefined
           const prefix = isBookmarked ? '†' : undefined
 

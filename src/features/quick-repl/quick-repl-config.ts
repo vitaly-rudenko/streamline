@@ -2,19 +2,21 @@ import z, { defaultErrorMap } from 'zod'
 import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 import { Command, commandSchema, Template, templateSchema } from './common'
-import { ConfigurationTarget } from 'vscode'
 
-const defaultReplsPath = '~/.streamline/repls'
+const defaultReplsPath = '~/.streamline/quick-repl/repls'
 const defaultTemplates: Template[] = [
   {
     name: 'JavaScript File',
     type: 'file',
-    path: '$replsPath/$datetime_$randomNoun.mjs',
+    defaultPath: '$replsPath',
+    defaultName: '$datetime_$randomNoun.mjs',
+    template: { content: 'console.log("Hello world!");\n' },
   },
   {
     name: 'JavaScript Project',
     type: 'directory',
-    path: '$replsPath/$datetime_$randomNoun',
+    defaultPath: '$replsPath',
+    defaultName: '$datetime_$randomNoun',
     template: { path: '$replsPath/templates/javascript-project' },
   },
 ]
@@ -64,6 +66,8 @@ export class QuickReplConfig extends FeatureConfig {
     const templates = safeConfigGet(config, 'quickRepl.templates', defaultTemplates, z.array(templateSchema))
     const commands = safeConfigGet(config, 'quickRepl.commands', defaultCommands, z.array(commandSchema))
 
+    console.log({ replsPath, templates, defaultTemplates, commands })
+
     let hasChanged = false
 
     if (
@@ -88,32 +92,7 @@ export class QuickReplConfig extends FeatureConfig {
     return hasChanged
   }
 
-  async save() {
-    const config = getConfig()
-
-    await updateEffectiveConfig(
-      config,
-      ConfigurationTarget.Global,
-      'quickRepl.replsPath',
-      exists => (exists || this._replsPath !== defaultReplsPath) ? this._replsPath : undefined,
-    )
-
-    await updateEffectiveConfig(
-      config,
-      ConfigurationTarget.Global,
-      'quickRepl.templates',
-      exists => (exists || JSON.stringify(this._templates) !== JSON.stringify(defaultTemplates)) ? this._templates : undefined,
-    )
-
-    await updateEffectiveConfig(
-      config,
-      ConfigurationTarget.Global,
-      'quickRepl.commands',
-      exists => (exists || JSON.stringify(this._commands) !== JSON.stringify(defaultCommands)) ? this._commands : undefined,
-    )
-
-    console.debug('[QuickRepl] Config has been saved')
-  }
+  async save() {}
 
   getReplsPath() {
     return this._replsPath

@@ -76,8 +76,8 @@
         },
         {
           "id": "quickRepl",
-          "name": "QuickRepl [BETA]",
-          "contextualTitle": "QuickRepl [BETA]",
+          "name": "Quick Repl",
+          "contextualTitle": "Quick Repl",
           "visibility": "collapsed",
           "icon": "$(code)"
         },
@@ -298,19 +298,29 @@
         "icon": "$(eye)"
       },
       {
-        "command": "streamline.quickRepl.runFile",
-        "title": "Run file",
+        "command": "streamline.quickRepl.run",
+        "title": "Run Quick Repl",
         "icon": "$(play)"
       },
       {
         "command": "streamline.quickRepl.revealReplsInOS",
-        "title": "Reveal Repls in OS",
+        "title": "Reveal Quick Repls in OS",
         "icon": "$(eye)"
       },
       {
-        "command": "streamline.quickRepl.revealFileInOS",
-        "title": "Reveal File in OS",
+        "command": "streamline.quickRepl.openReplsInNewWindow",
+        "title": "Open Quick Repls in a New Window",
+        "icon": "$(empty-window)"
+      },
+      {
+        "command": "streamline.quickRepl.revealInOS",
+        "title": "Reveal in OS",
         "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.quickRepl.openInNewWindow",
+        "title": "Open in a New Window",
+        "icon": "$(empty-window)"
       },
       {
         "command": "streamline.quickRepl.delete",
@@ -331,6 +341,21 @@
         "command": "streamline.quickRepl.copyAbsolutePath",
         "title": "Copy Absolute Path",
         "icon": "$(copy)"
+      },
+      {
+        "command": "streamline.quickRepl.create",
+        "title": "Create...",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "streamline.quickRepl.createInRoot",
+        "title": "Create...",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "streamline.quickRepl.setupReplsPath",
+        "title": "Create Folder for Quick Repls",
+        "icon": "$(new-folder)"
       },
       {
         "command": "streamline.navigator.goBack",
@@ -541,13 +566,23 @@
           "when": "view == bookmarks"
         },
         {
-          "command": "streamline.quickRepl.revealReplsInOS",
+          "command": "streamline.quickRepl.createInRoot",
           "group": "navigation@1",
           "when": "view == quickRepl"
         },
         {
           "command": "streamline.quickRepl.refresh",
           "group": "navigation@2",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.quickRepl.revealReplsInOS",
+          "group": "info@1",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.quickRepl.openReplsInNewWindow",
+          "group": "info@2",
           "when": "view == quickRepl"
         },
         {
@@ -633,29 +668,44 @@
           "group": "info@1"
         },
         {
-          "command": "streamline.quickRepl.openFolderInTerminal",
+          "command": "streamline.quickRepl.create",
           "when": "view == quickRepl && viewItem == folder",
           "group": "inline@2"
         },
         {
-          "command": "streamline.quickRepl.runFile",
-          "when": "view == quickRepl && viewItem == file",
-          "group": "inline@3"
+          "command": "streamline.quickRepl.run",
+          "when": "view == quickRepl && (viewItem == runnableFile || viewItem == runnableFolder)",
+          "group": "inline@5"
         },
         {
           "command": "streamline.quickRepl.copyAbsolutePath",
-          "when": "view == quickRepl && (viewItem == file || viewItem == folder)",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
           "group": "info@1"
         },
         {
-          "command": "streamline.quickRepl.revealFileInOS",
-          "when": "view == quickRepl && (viewItem == file || viewItem == folder)",
+          "command": "streamline.quickRepl.openFolderInTerminal",
+          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
           "group": "info@2"
         },
         {
-          "command": "streamline.quickRepl.delete",
-          "when": "view == quickRepl && (viewItem == file || viewItem == folder)",
+          "command": "streamline.quickRepl.revealInOS",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
           "group": "info@3"
+        },
+        {
+          "command": "streamline.quickRepl.openInNewWindow",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "info@4"
+        },
+        {
+          "command": "streamline.quickRepl.delete",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "info@5"
+        },
+        {
+          "command": "streamline.quickRepl.setupReplsPath",
+          "when": "view == quickRepl && viewItem == missingFolder",
+          "group": "inline@1"
         }
       ],
       "explorer/context": [
@@ -720,8 +770,8 @@
       ],
       "editor/title": [
         {
-          "command": "streamline.quickRepl.runFile",
-          "when": "streamline.quickRepl.isCurrentFileRunnable",
+          "command": "streamline.quickRepl.run",
+          "when": "streamline.quickRepl.isActiveTextEditorRunnable",
           "group": "navigation@1"
         },
         {
@@ -959,7 +1009,7 @@
         "streamline.quickRepl.replsPath": {
           "type": "string",
           "default": "~/.streamline/quick-repl/repls",
-          "description": "Path to store REPLs in (referenced as #replsPath)"
+          "description": "Path for stored Quick Repls (can be referenced as $replsPath)"
         },
         "streamline.quickRepl.templates": {
           "type": "array",
@@ -969,7 +1019,7 @@
             "required": [
               "name",
               "type",
-              "path"
+              "defaultPath"
             ],
             "properties": {
               "name": {
@@ -982,7 +1032,7 @@
                   "directory"
                 ]
               },
-              "path": {
+              "defaultPath": {
                 "type": "string"
               },
               "template": {
