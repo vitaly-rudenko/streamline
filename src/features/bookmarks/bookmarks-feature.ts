@@ -406,8 +406,8 @@ export function createBookmarksFeature(input: {
               return !(bookmark.type === 'file' && bookmark.list === itemToDelete.list && bookmark.uri.path === itemToDelete.uri.path)
             } else if (itemToDelete instanceof SelectionTreeItem) {
               return !(bookmark.type === 'selection' && bookmark.list === itemToDelete.list && bookmark.uri.path === itemToDelete.uri.path && bookmark.selection.isEqual(itemToDelete.selection))
-            } else {
-              return !(bookmark.type === 'file' && bookmark.list === currentList && bookmark.uri.path === itemToDelete.path)
+            } else { // Uri
+              return !((bookmark.type === 'file' || bookmark.type === 'folder') && bookmark.list === currentList && bookmark.uri.path === itemToDelete.path)
             }
           }
         )
