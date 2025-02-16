@@ -42,6 +42,10 @@ export function activate(context: vscode.ExtensionContext) {
       scopeSelected: scopedPathsFeature?.getCurrentScope(),
       scopeEnabled: scopedPathsFeature?.isScopeEnabled() ?? false,
       untitled: vscode.window.activeTextEditor?.document.isUntitled,
+      fileType: 'file',
+      selection: vscode.window.activeTextEditor
+        ? !vscode.window.activeTextEditor.selection.isEmpty
+        : undefined,
     }
   }
 

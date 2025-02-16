@@ -15,6 +15,8 @@ export const conditionSchema = z.union([
   z.object({ scopeSelected: z.string() }),
   z.object({ scopeEnabled: z.boolean() }),
   z.object({ scope: z.string() }), // Shorthand for [{ scopeSelected: 'scope' }, { scopeEnabled: true }]
+  z.object({ fileType: z.enum(['file', 'directory']) }),
+  z.object({ selection: z.boolean() }),
 ])
 
 export type Condition = z.infer<typeof conditionSchema>
@@ -32,6 +34,8 @@ export type ConditionContext = {
   scopeSelected?: string | undefined
   scopeEnabled: boolean
   untitled?: boolean | undefined
+  fileType?: 'file' | 'directory' | undefined
+  selection?: boolean | undefined
 }
 
 export function testWhen(ctx: ConditionContext, when: When): boolean {
@@ -82,6 +86,14 @@ function testCondition(ctx: ConditionContext, condition: Condition): boolean {
 
   if ('scopeEnabled' in condition) {
     return ctx.scopeEnabled === condition.scopeEnabled
+  }
+
+  if ('fileType' in condition) {
+    return ctx.fileType === condition.fileType
+  }
+
+  if ('selection' in condition) {
+    return ctx.selection === condition.selection
   }
 
   return false

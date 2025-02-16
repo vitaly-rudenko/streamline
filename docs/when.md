@@ -24,6 +24,10 @@ type Condition = {
   scopeEnabled: boolean
   /** Shorthand for [{ scopeSelected: 'scope' }, { scopeEnabled: true }] */
   scope: string
+  /** Applicable in certain scenarios (e.g. Quick Repl View) */
+  fileType: 'file' | 'directory'
+  /** Whether file has a non-empty selection */
+  selection: boolean
 }
 ```
 

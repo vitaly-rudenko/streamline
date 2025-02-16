@@ -30,6 +30,11 @@ export function createSmartConfigFeature(input: {
     updateStatusBarItems()
   }, 100)
 
+  const scheduleSlowerRefresh = createDebouncedFunction(() => {
+    applyMatchingConfigsInBackground()
+    updateStatusBarItems()
+  }, 500)
+
   /** Stores currently created toggle buttons in the status bar to be able to update them */
   let toggleItems: vscode.StatusBarItem[] = []
 
@@ -177,6 +182,8 @@ export function createSmartConfigFeature(input: {
     vscode.window.onDidChangeActiveTextEditor(() => scheduleRefresh()),
     vscode.window.onDidChangeActiveColorTheme(() => scheduleRefresh()),
     vscode.window.onDidChangeWindowState(() => scheduleRefresh()),
+    // Slower refresh rate to avoid performance issues
+    vscode.window.onDidChangeTextEditorSelection(() => scheduleSlowerRefresh()),
   )
 
   scheduleRefresh()
