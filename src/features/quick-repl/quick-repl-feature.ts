@@ -2,16 +2,20 @@ import * as vscode from 'vscode'
 import * as os from 'os'
 import { nouns } from './nouns'
 import { FileTreeItem, FolderTreeItem, QuickReplTreeDataProvider } from './quick-repl-tree-data-provider'
+import { ConditionContext, testWhen } from '../../common/when'
+import { QuickReplConfig } from './quick-repl-config'
+import { basename, dirname } from 'path'
 
-// TODO: Configurable "main" folder
-// TODO: "Supported" extensions and configurable commands for each extension / folder
 // TODO: Move between folders / drag-n-drop?
 // TODO: Open in a new VS Code window
 
 export function createQuickReplFeature(input: {
   context: vscode.ExtensionContext
+  generateConditionContextForActiveTextEditor: () => ConditionContext
 }) {
-  const { context } = input
+  const { context, generateConditionContextForActiveTextEditor } = input
+
+  const config = new QuickReplConfig()
 
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider()
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
@@ -19,15 +23,27 @@ export function createQuickReplFeature(input: {
     showCollapseAll: true,
   })
 
+  function generateConditionContextForPath(path: string): ConditionContext {
+    return {
+      ...generateConditionContextForActiveTextEditor(),
+      path,
+      languageId: undefined,
+      untitled: false,
+    }
+  }
+
+  function isCurrentFileRunnable() {
+    const conditionContext = generateConditionContextForActiveTextEditor()
+    return config.getCommands()
+      .some(command => !command.when || testWhen(conditionContext, command.when))
+  }
+
   async function updateContextInBackground() {
     try {
-      const activeTextEditor = vscode.window.activeTextEditor
-      const home = os.homedir()
-
       await vscode.commands.executeCommand(
         'setContext',
         'streamline.quickRepl.isCurrentFileRunnable',
-        activeTextEditor && (activeTextEditor.document.isUntitled || activeTextEditor.document.uri.path.startsWith(`${home}/.streamline/quick-repl/repls/`))
+        vscode.window.activeTextEditor && isCurrentFileRunnable()
       )
     } catch (error) {
       console.warn('[QuickRepl] Could not update context', error)
@@ -37,68 +53,72 @@ export function createQuickReplFeature(input: {
   context.subscriptions.push(quickReplTreeView)
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.quickRepl.runFile', async (fileTreeItem: FileTreeItem | undefined) => {
-      let uri: vscode.Uri | undefined
-      if (fileTreeItem === undefined) {
-        let activeTextEditor = vscode.window.activeTextEditor
-        if (!activeTextEditor) return
+    vscode.commands.registerCommand('streamline.quickRepl.runFile', async (argument: unknown) => {
+      let conditionContext: ConditionContext
+      let fileContent: string
+      let uri: vscode.Uri
 
-        const home = os.homedir()
-
-        // Save untitled file
-        if (activeTextEditor.document.isUntitled) {
-          const directoryPath = `${home}/.streamline/quick-repl/repls/untitled`
-          const filename = `${new Date().toISOString().replaceAll(/(\d{2}\.\d+Z|\D)/g, '')}_${nouns[Math.floor(Math.random() * nouns.length)]}.mjs`
-          const fileUri = vscode.Uri.file(`${directoryPath}/${filename}`)
-
-          // Prevent saving into existing file if random name is not random enough
-          await vscode.workspace.fs.stat(fileUri)
-            .then(
-              () => { throw new Error('File already exists, please try again') },
-              () => { }, // file doesn't exist, all good
-            )
-
-          // TODO: allow user to pick folder for repls (setting)
-          await vscode.workspace.fs.createDirectory(vscode.Uri.file(directoryPath))
-
-          const data = new TextEncoder().encode(activeTextEditor.document.getText())
-          await vscode.workspace.fs.writeFile(fileUri, data)
-
-          await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor')
-
-          activeTextEditor = await vscode.window.showTextDocument(fileUri, { preview: false })
-
-          quickReplTreeDataProvider.refresh()
-        }
-
-        // Save dirty file
-        if (activeTextEditor.document.isDirty) {
-          await activeTextEditor.document.save()
-        }
-
-        uri = activeTextEditor.document.uri
-      } else if (fileTreeItem instanceof FileTreeItem) {
-        uri = fileTreeItem.uri
+      const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
+      if (
+        argument instanceof FileTreeItem
+        && (activeTextEditorUri && argument.uri.path !== activeTextEditorUri.path) // reuse existing editor if possible
+      ) {
+        uri = argument.uri
+        fileContent = (await vscode.workspace.fs.readFile(uri)).toString()
+        conditionContext = generateConditionContextForPath(uri.path)
+      } else if (vscode.window.activeTextEditor) {
+        uri = vscode.window.activeTextEditor.document.uri
+        fileContent = vscode.window.activeTextEditor.document.getText()
+        conditionContext = generateConditionContextForActiveTextEditor()
+      } else {
+        return
       }
 
-      if (!uri) return
+      const variables = {
+        replsPath: replaceShorthandWithHomedir(config.getReplsPath()),
+        datetime: new Date().toISOString().replaceAll(/(\d{2}\.\d+Z|\D)/g, ''),
+        randomNoun: nouns[Math.floor(Math.random() * nouns.length)],
+        filePath: uri.path,
+        fileBasename: basename(uri.path),
+        fileDirectory: dirname(uri.path),
+        fileContent,
+      }
 
-      const pathParts = uri.path.split('/')
-      const filename = pathParts.pop()
-      const directoryPath = pathParts.join('/')
+      const commands = config.getCommands().filter(command => !command.when || testWhen(conditionContext, command.when))
+      if (commands.length === 0) return
 
-      // TODO: consistent and non-annoying way of reusing terminals
-      //       perhaps by their current cwd and if there's no process running at the moment
-      const terminalName = `QuickRepl: ${filename}`
+      const selected = commands.length === 1
+        ? { command: commands[0] }
+        : await vscode.window.showQuickPick(
+          commands.map(command => ({
+            label: command.name,
+            command,
+          }))
+        )
+      if (!selected) return
+
+      const { command } = selected
+
+      const shortPath = uri.path.startsWith(variables.replsPath)
+        ? uri.path.slice(variables.replsPath.length + 1)
+        : replaceHomeWithShorthand(uri.path)
+      const terminalName = `QuickRepl: ${shortPath}`
       const terminal = vscode.window.terminals.find(t => t.name === terminalName)
         ?? vscode.window.createTerminal({
           name: terminalName,
           iconPath: new vscode.ThemeIcon('play'),
-          cwd: vscode.Uri.file(directoryPath),
+          cwd: replaceShorthandWithHomedir(replaceVariables(command.cwd, variables)),
         })
 
       terminal.show()
-      terminal.sendText(`node ${filename}`)
+      terminal.sendText(
+        replaceVariables(
+          typeof command.command === 'string'
+            ? command.command
+            : command.command.join('\n'),
+          variables
+        )
+      )
     })
   )
 
@@ -159,4 +179,22 @@ export function createQuickReplFeature(input: {
   )
 
   updateContextInBackground()
+}
+
+function replaceShorthandWithHomedir(path: string) {
+  return path.replace(/^~\//, `${os.homedir()}/`)
+}
+
+function replaceHomeWithShorthand(path: string) {
+  return path.startsWith(os.homedir() + '/')
+    ? `~/${path.slice(os.homedir().length + 1)}`
+    : path
+}
+
+function replaceVariables(input: string, variables: Record<string, string>) {
+  let result = input
+  for (const [variable, value] of Object.entries(variables)) {
+    result = result.replaceAll(`$${variable}`, value)
+  }
+  return result
 }

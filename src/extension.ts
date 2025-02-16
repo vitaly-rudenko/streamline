@@ -30,8 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
   const disabledFeatures = safeConfigGet(initialConfig, 'disabledFeatures', [], z.array(z.string()))
 	const isFeatureEnabled = (feature: Feature) => !disabledFeatures.includes(feature)
 
-  /** Generates current context for rules to be matched against */
-  function generateConditionContext(): ConditionContext {
+  function generateConditionContextForActiveTextEditor(): ConditionContext {
     return {
       languageId: vscode.window.activeTextEditor?.document.languageId,
       path: vscode.window.activeTextEditor?.document.uri.path,
@@ -56,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
   const smartConfigFeature = isFeatureEnabled('smartConfig')
     ? createSmartConfigFeature({
       context,
-      generateConditionContext: () => generateConditionContext(),
+      generateConditionContextForActiveTextEditor: () => generateConditionContextForActiveTextEditor(),
     })
     : undefined
 
@@ -80,7 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
   if (isFeatureEnabled('superSearch')) createSuperSearchFeature({ context })
-  if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context })
+  if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, generateConditionContextForActiveTextEditor })
   if (isFeatureEnabled('navigator')) createNavigatorFeature({ context })
 
   if (scopedPathsFeature || highlightedPathsFeature) {

@@ -1,8 +1,8 @@
-import z, { defaultErrorMap } from 'zod';
-import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config';
-import { FeatureConfig } from '../feature-config';
-import { Command, commandSchema, Template, templateSchema } from './common';
-import { ConfigurationTarget } from 'vscode';
+import z, { defaultErrorMap } from 'zod'
+import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
+import { FeatureConfig } from '../feature-config'
+import { Command, commandSchema, Template, templateSchema } from './common'
+import { ConfigurationTarget } from 'vscode'
 
 const defaultReplsPath = '~/.streamline/repls'
 const defaultTemplates: Template[] = [
@@ -27,7 +27,10 @@ const defaultCommands: Command[] = [
       '$fileContent',
       'QUICKREPL'
     ],
-    when: [[{ untitled: true }, { languageId: 'javascript' }]],
+    when: [
+      [{ untitled: true }, { languageId: 'typescript' }],
+      [{ untitled: true }, { languageId: 'javascript' }]
+    ],
   },
   {
     name: 'Run JavaScript file',

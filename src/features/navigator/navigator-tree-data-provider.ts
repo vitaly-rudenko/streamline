@@ -45,8 +45,8 @@ export class NavigatorRecordItem extends vscode.TreeItem {
     super(label)
     this.description = `${navigatorRecord.selection.start.line + 1}: ${navigatorRecord.value}`
     this.tooltip = vscode.workspace.asRelativePath(navigatorRecord.uri.path)
-    this.contextValue = 'record'
     this.iconPath = isActive ? activeThemeIcon : inactiveThemeIcon
+    this.contextValue = 'record'
     this.command = {
       command: 'streamline.navigator.jumpToRecord',
       arguments: [{ index }],

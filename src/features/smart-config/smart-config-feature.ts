@@ -11,9 +11,9 @@ import { ConditionContext } from '../../common/when'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
-  generateConditionContext: () => ConditionContext
+  generateConditionContextForActiveTextEditor: () => ConditionContext
 }) {
-  const { context, generateConditionContext } = input
+  const { context, generateConditionContextForActiveTextEditor } = input
 
   const config = new SmartConfigConfig()
   const workspaceState = new SmartConfigWorkspaceState(context.workspaceState)
@@ -75,8 +75,8 @@ export function createSmartConfigFeature(input: {
 
   /** Applies matching configs for each configuration target */
   async function applyMatchingConfigsInBackground() {
-    const ctx = generateConditionContext()
-    const matchingConfigNames = getMatchingConfigNames(ctx, config.getMergedRules())
+    const conditionContext = generateConditionContextForActiveTextEditor()
+    const matchingConfigNames = getMatchingConfigNames(conditionContext, config.getMergedRules())
 
     if (areArraysShallowEqual(cachedMatchingConfigNames, matchingConfigNames)) return
     cachedMatchingConfigNames = matchingConfigNames
