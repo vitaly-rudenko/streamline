@@ -47,6 +47,10 @@ describe('testWhen()', () => {
       {
         apply: ['scoped-in'],
         when: [{ scopeEnabled: true }]
+      },
+      {
+        apply: ['untitled-javascript'],
+        when: [[{ untitled: true }, { languageId: 'javascript' }]]
       }
     ]
 
@@ -146,5 +150,37 @@ describe('testWhen()', () => {
         scopeEnabled: false,
       }, rules)
     ).toEqual(['light-theme', 'minimal-mode'])
+
+    // AND conditions
+
+    expect(
+      getMatchingConfigNames({
+        untitled: true,
+        languageId: 'javascript',
+        toggles: [],
+        colorThemeKind: 'dark',
+        scopeEnabled: false,
+      }, rules)
+    ).toContain('untitled-javascript')
+
+    expect(
+      getMatchingConfigNames({
+        untitled: true,
+        languageId: 'typescript',
+        toggles: [],
+        colorThemeKind: 'dark',
+        scopeEnabled: false,
+      }, rules)
+    ).not.toContain('untitled-javascript')
+
+    expect(
+      getMatchingConfigNames({
+        untitled: false,
+        languageId: 'javascript',
+        toggles: [],
+        colorThemeKind: 'dark',
+        scopeEnabled: false,
+      }, rules)
+    ).not.toContain('untitled-javascript')
   })
 })

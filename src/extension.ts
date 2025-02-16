@@ -42,6 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
         : 'high-contrast-light',
       scopeSelected: scopedPathsFeature?.getCurrentScope(),
       scopeEnabled: scopedPathsFeature?.isScopeEnabled() ?? false,
+      untitled: vscode.window.activeTextEditor?.document.isUntitled,
     }
   }
 

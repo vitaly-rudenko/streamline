@@ -5,6 +5,7 @@ const colorThemeKindSlugSchema = z.enum(['dark', 'light', 'high-contrast', 'high
 type ColorThemeKindSlug = z.infer<typeof colorThemeKindSlugSchema>
 
 export const conditionSchema = z.union([
+  z.object({ untitled: z.boolean() }),
   z.object({ basename: z.string() }),
   z.object({ path: z.string() }),
   z.object({ toggle: z.string() }),
@@ -17,7 +18,9 @@ export const conditionSchema = z.union([
 
 export type Condition = z.infer<typeof conditionSchema>
 
-export const whenSchema = z.array(conditionSchema)
+// [Condition1, Condition2, ...] => Condition1 || Condition2 || ...
+// [[Condition1, Condition2], [Condition3, Condition4], ...] => (Condition1 && Condition2) || (Condition3 && Condition4) || ...
+export const whenSchema = z.array(z.union([conditionSchema, z.array(conditionSchema)]))
 export type When = z.infer<typeof whenSchema>
 
 export type ConditionContext = {
@@ -27,21 +30,32 @@ export type ConditionContext = {
   colorThemeKind: ColorThemeKindSlug
   scopeSelected?: string | undefined
   scopeEnabled: boolean
+  untitled?: boolean | undefined
 }
 
 export function testWhen(ctx: ConditionContext, when: When): boolean {
-  return when.some(condition => testCondition(ctx, condition))
+  return when.some(condition => (
+    Array.isArray(condition)
+      ? condition.every(subCondition => testCondition(ctx, subCondition))
+      : testCondition(ctx, condition)
+  ))
 }
 
 /** Match specific condition against the provided context */
 function testCondition(ctx: ConditionContext, condition: Condition): boolean {
-  if (ctx.path) {
+  if (ctx.path !== undefined) {
     if ('path' in condition) {
       return new RegExp(condition.path).test(ctx.path)
     }
 
     if ('basename' in condition) {
       return new RegExp(condition.basename).test(basename(ctx.path))
+    }
+  }
+
+  if (ctx.untitled !== undefined) {
+    if ('untitled' in condition) {
+      return condition.untitled === ctx.untitled
     }
   }
 
