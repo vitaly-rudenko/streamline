@@ -54,6 +54,7 @@
   },
   "dependencies": {
     "common-tags": "^1.8.2",
+    "json-beautify": "^1.1.1",
     "lru-cache": "^10.2.2",
     "zod": "^3.24.1"
   },
@@ -296,6 +297,11 @@
         "command": "streamline.superSearch.quickOpen",
         "title": "Quick Open Super Search",
         "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.quickRepl.setup",
+        "title": "Setup Quick Repl",
+        "icon": "$(rocket)"
       },
       {
         "command": "streamline.quickRepl.run",
@@ -1059,7 +1065,7 @@
             }
           }
         },
-        "streamline.quickRepls.commands": {
+        "streamline.quickRepl.commands": {
           "type": "array",
           "default": [],
           "items": {

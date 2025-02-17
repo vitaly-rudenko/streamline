@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import * as os from 'os'
+import jsonBeautify from 'json-beautify'
 import { nouns } from './nouns'
 import { FileTreeItem, FolderTreeItem, QuickReplTreeDataProvider } from './quick-repl-tree-data-provider'
 import { ConditionContext, testWhen } from '../../common/when'
@@ -9,6 +10,8 @@ import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { GenerateConditionContextInput, GenerateConditionContext } from '../../generate-condition-context'
 import { QuickReplNotSetUpError, Template } from './common'
 import { formatPath } from './utils'
+import { setupCommands, setupReplsPath, setupTemplates } from './setup'
+import { waitUntil } from '../../utils/wait-until'
 
 // TODO: rename files/folders
 // TODO: move files/folders
@@ -255,7 +258,7 @@ export function createQuickReplFeature(input: {
 
     const templates = config.getTemplates()
     if (templates.length === 0) {
-      await vscode.window.showInformationMessage('You don\'t have any templates yet')
+      vscode.window.showInformationMessage('You don\'t have any templates yet')
       return
     }
 
@@ -366,7 +369,104 @@ export function createQuickReplFeature(input: {
   // Setup wizard
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.setup', async () => {
-      // TODO:
+      // Step 1: Quick Repls path
+      const selectedReplsPath = await vscode.window.showQuickPick([
+        ...config.getReplsPath() && config.getReplsPath() !== setupReplsPath
+          ? [{ label: 'Keep current Quick Repls folder', detail: config.getReplsPath(), option: 'keepCurrent' }]
+          : [],
+        { label: 'Use default folder for Quick Repls', detail: setupReplsPath, option: 'useDefault' },
+        { label: 'Use another folder...', option: 'selectCustom' },
+      ] as const)
+      if (!selectedReplsPath) return
+
+      const { option } = selectedReplsPath
+      let replsPath: string
+      if (option === 'keepCurrent') {
+        replsPath = config.getReplsPath()!
+      } else if (option === 'useDefault') {
+        replsPath = setupReplsPath
+      } else {
+        const replsUri = await vscode.window.showOpenDialog({
+          openLabel: 'Select folder for your Quick Repls',
+          canSelectFiles: false,
+          canSelectFolders: true,
+          canSelectMany: false,
+        })
+        if (!replsUri) return
+
+        replsPath = replaceHomeWithShorthand(replsUri[0].path)
+      }
+
+      await vscode.workspace.fs.createDirectory(config.getDynamicReplsUri()!)
+
+      config.setReplsPath(replsPath)
+      quickReplTreeDataProvider.refresh()
+      await config.save()
+
+      vscode.window.showInformationMessage(`Your Quick Repls will be stored in ${replsPath}`)
+
+      // Step 2: Templates
+      if (config.getTemplates().length === 0) {
+        const templatesEditor = await vscode.window.showTextDocument(
+          await vscode.workspace.openTextDocument({
+            content: [
+              '/*',
+              '  Here are some examples of Quick Repl templates',
+              '  You can manage them in VS Code settings (streamline.quickRepl.templates)',
+              '',
+              '  Templates allow you to quickly create scripts and projects in your Quick Repl folder',
+              '  For more information, see: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md',
+              '',
+              '  Close this file to save these templates and continue the setup',
+              '*/',
+              jsonBeautify(setupTemplates, null as any, 2, 100)
+            ].join('\n'),
+            language: 'jsonc',
+          })
+        )
+        await waitUntil(() => templatesEditor.document.isClosed)
+
+        config.setTemplates(setupTemplates)
+        await config.save()
+
+        vscode.window.showInformationMessage('Default templates have been added to your settings')
+      }
+
+      // Step 3: Commands
+      if (config.getCommands().length === 0) {
+        const commandsEditor = await vscode.window.showTextDocument(
+          await vscode.workspace.openTextDocument({
+            content: [
+              '/*',
+              '  To run Quick Repls, you need to define commands',
+              '  You can modify them in VS Code settings (streamline.quickRepl.commands)',
+              '',
+              '  Commands allow you run snippets, files and folders depending on the context',
+              '  For more information, see: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md',
+              '',
+              '  Close this file to save these commands and continue the setup',
+              '*/',
+              jsonBeautify(setupCommands, null as any, 2, 100)
+            ].join('\n'),
+            language: 'jsonc',
+          })
+        )
+        await waitUntil(() => commandsEditor.document.isClosed)
+
+        config.setCommands(setupCommands)
+        await config.save()
+
+        vscode.window.showInformationMessage('Default commands have been added to your settings')
+      }
+
+      const selectedFinalStep = await vscode.window.showQuickPick([
+        { label: 'Try creating a Quick Repl', iconPath: new vscode.ThemeIcon('rocket'), option: 'createQuickRepl' },
+        { label: 'I\'ll explore on my own', iconPath: new vscode.ThemeIcon('eye'), option: 'finish' },
+      ])
+
+      if (selectedFinalStep?.option === 'createQuickRepl') {
+        await vscode.commands.executeCommand('streamline.quickRepl.createQuickRepl')
+      }
     })
   )
 

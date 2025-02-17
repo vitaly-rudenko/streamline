@@ -11,8 +11,7 @@ export const setupTemplates: Template[] = [
     languageId: 'javascript',
     template: {
       content: [
-        'console.log(\'Hello, World!\');',
-        ''
+        'console.log(\'Hello, World!\');'
       ]
     }
   },
