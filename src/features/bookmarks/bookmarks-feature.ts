@@ -474,7 +474,7 @@ export function createBookmarksFeature(input: {
         .sort((a, b) => a.uri.path.localeCompare(b.uri.path))
 
       if (bookmarks.length === 0) {
-        await vscode.window.showInformationMessage(`You don't have bookmarks in "${currentList}" list yet`)
+        vscode.window.showInformationMessage(`You don't have bookmarks in "${currentList}" list yet`)
         return
       }
 
