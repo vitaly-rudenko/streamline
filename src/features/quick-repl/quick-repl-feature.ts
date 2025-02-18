@@ -77,25 +77,26 @@ export function createQuickReplFeature(input: {
     if (!replsUri) throw new QuickReplNotSetUpError()
 
     let result = replaceShorthandWithHomedir(path)
+      .replaceAll(/\$replsPath/g, replsUri.path)
+
     if (context?.path !== undefined) {
       result = result
-        .replaceAll(/\b\$replsPath\b/g, replsUri.path)
-        .replaceAll(/\b\$contextDirname\b/g, dirname(context.path))
-        .replaceAll(/\b\$contextBasename\b/g, basename(context.path))
-        .replaceAll(/\b\$contextPath\b/g, context.path)
+        .replaceAll(/\$contextDirname/g, dirname(context.path))
+        .replaceAll(/\$contextBasename/g, basename(context.path))
+        .replaceAll(/\$contextPath/g, context.path)
     }
 
     if (context?.content !== undefined) {
-      result = result.replaceAll(/\b\$contextContent\b/g, context.content)
+      result = result.replaceAll(/\$contextContent/g, context.content)
     }
 
     if (context?.selection !== undefined) {
-      result = result.replaceAll(/\b\$contextSelection\b/g, context.selection)
+      result = result.replaceAll(/\$contextSelection/g, context.selection)
     }
 
     return result
-      .replaceAll(/\b\$datetime\b/g, () => new Date().toISOString().replaceAll(/(\d{2}\.\d+Z|\D)/g, ''))
-      .replaceAll(/\b\$randomNoun\b/g, () => nouns[Math.floor(Math.random() * nouns.length)])
+      .replaceAll(/\$datetime/g, () => new Date().toISOString().replaceAll(/(\d{2}\.\d+Z|\D)/g, ''))
+      .replaceAll(/\$randomNoun/g, () => nouns[Math.floor(Math.random() * nouns.length)])
   }
 
   context.subscriptions.push(quickReplTreeView)
@@ -146,7 +147,10 @@ export function createQuickReplFeature(input: {
         : await vscode.window.showQuickPick(
           commands.map(command => ({
             label: command.name,
+            description: command.description,
+            detail: `${command.cwd}: ${Array.isArray(command.command) ? command.command.join(' \n ') : command.command}`,
             command,
+            iconPath: new vscode.ThemeIcon('play'),
           }))
         )
       if (!selected) return
@@ -371,12 +375,16 @@ export function createQuickReplFeature(input: {
     vscode.commands.registerCommand('streamline.quickRepl.setup', async () => {
       // Step 1: Quick Repls path
       const selectedReplsPath = await vscode.window.showQuickPick([
-        ...config.getReplsPath() && config.getReplsPath() !== setupReplsPath
-          ? [{ label: 'Keep current Quick Repls folder', detail: config.getReplsPath(), option: 'keepCurrent' }]
+        ...config.getReplsPath()
+          ? [{ label: 'Keep current Quick Repls folder', detail: config.getReplsPath(), iconPath: new vscode.ThemeIcon('folder-active'),  option: 'keepCurrent' }]
           : [],
-        { label: 'Use default folder for Quick Repls', detail: setupReplsPath, option: 'useDefault' },
-        { label: 'Use another folder...', option: 'selectCustom' },
-      ] as const)
+        ...!config.getReplsPath() || config.getReplsPath() !== setupReplsPath
+          ? [{ label: 'Use default folder for Quick Repls', detail: setupReplsPath, iconPath: new vscode.ThemeIcon('folder-library'),  option: 'useDefault' }]
+          : [],
+        { label: 'Pick custom folder...', iconPath: new vscode.ThemeIcon('folder-opened'),  option: 'selectCustom' },
+      ] as const, {
+        placeHolder: 'Select folder for storing your Quick Repls',
+      })
       if (!selectedReplsPath) return
 
       const { option } = selectedReplsPath
@@ -394,34 +402,52 @@ export function createQuickReplFeature(input: {
         })
         if (!replsUri) return
 
-        replsPath = replaceHomeWithShorthand(replsUri[0].path)
+        replsPath = replsUri[0].path
       }
 
-      await vscode.workspace.fs.createDirectory(config.getDynamicReplsUri()!)
+      await vscode.workspace.fs.createDirectory(vscode.Uri.file(replaceShorthandWithHomedir(replsPath)))
 
-      config.setReplsPath(replsPath)
+      config.setReplsPath(replaceHomeWithShorthand(replsPath))
       quickReplTreeDataProvider.refresh()
       await config.save()
 
-      vscode.window.showInformationMessage(`Your Quick Repls will be stored in ${replsPath}`)
+      vscode.window.showInformationMessage(`Your Quick Repls will now be stored in ${replsPath}`)
 
       // Step 2: Templates
-      if (config.getTemplates().length === 0) {
+      let shouldSetupTemplates = config.getTemplates().length === 0
+      if (config.getTemplates().length > 0) {
+        const selectedSetupTemplates = await vscode.window.showQuickPick([
+          { label: 'Keep current templates', detail: `You have ${config.getTemplates().length} templates`, iconPath: new vscode.ThemeIcon('check'), option: 'keepCurrent' },
+          { label: 'Setup default templates', detail: 'Your existing templates will be replaced', iconPath: new vscode.ThemeIcon('replace-all'), option: 'setupDefault' },
+        ], {
+          placeHolder: 'You already have templates, do you want to replace them?'
+        })
+        if (!selectedSetupTemplates) return
+
+        shouldSetupTemplates = selectedSetupTemplates.option === 'setupDefault'
+      }
+
+      if (shouldSetupTemplates) {
         const templatesEditor = await vscode.window.showTextDocument(
           await vscode.workspace.openTextDocument({
             content: [
-              '/*',
-              '  Here are some examples of Quick Repl templates',
-              '  You can manage them in VS Code settings (streamline.quickRepl.templates)',
+              '# Quick Repl',
               '',
-              '  Templates allow you to quickly create scripts and projects in your Quick Repl folder',
-              '  For more information, see: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md',
+              '## Templates',
               '',
-              '  Close this file to save these templates and continue the setup',
-              '*/',
-              jsonBeautify(setupTemplates, null as any, 2, 100)
+              'Templates allow you to quickly create scripts and projects in your Quick Repls folder.',
+              'You can manage them in VS Code settings via `streamline.quickRepl.templates`.',
+              'For more information, see: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md',
+              '',
+              '**Close this file to save these templates and continue the setup.**',
+              '',
+              '### Examples',
+              '',
+              '```json',
+              jsonBeautify(setupTemplates, null as any, 2, 100),
+              '```',
             ].join('\n'),
-            language: 'jsonc',
+            language: 'markdown',
           })
         )
         await waitUntil(() => templatesEditor.document.isClosed)
@@ -433,22 +459,40 @@ export function createQuickReplFeature(input: {
       }
 
       // Step 3: Commands
-      if (config.getCommands().length === 0) {
+      let shouldSetupCommands = config.getCommands().length === 0
+      if (config.getCommands().length > 0) {
+        const selectedSetupCommands = await vscode.window.showQuickPick([
+          { label: 'Keep current commands', detail: `You have ${config.getCommands().length} commands`, iconPath: new vscode.ThemeIcon('check'), option: 'keepCurrent' },
+          { label: 'Setup default commands', detail: 'Your existing commands will be replaced', iconPath: new vscode.ThemeIcon('replace-all'), option: 'setupDefault' },
+        ], {
+          placeHolder: 'You already have commands, do you want to replace them?'
+        })
+        if (!selectedSetupCommands) return
+
+        shouldSetupCommands = selectedSetupCommands.option === 'setupDefault'
+      }
+
+      if (shouldSetupCommands) {
         const commandsEditor = await vscode.window.showTextDocument(
           await vscode.workspace.openTextDocument({
             content: [
-              '/*',
-              '  To run Quick Repls, you need to define commands',
-              '  You can modify them in VS Code settings (streamline.quickRepl.commands)',
+              '# Quick Repl',
               '',
-              '  Commands allow you run snippets, files and folders depending on the context',
-              '  For more information, see: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md',
+              '## Commands',
               '',
-              '  Close this file to save these commands and continue the setup',
-              '*/',
-              jsonBeautify(setupCommands, null as any, 2, 100)
+              'Commands allow you run snippets, files and folders depending on the context.',
+              'You can modify them in VS Code settings via `streamline.quickRepl.commands`.',
+              'For more information, see: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md',
+              '',
+              '**Close this file to save these commands and continue the setup.**',
+              '',
+              '### Examples',
+              '',
+              '```json',
+              jsonBeautify(setupCommands, null as any, 2, 100),
+              '```',
             ].join('\n'),
-            language: 'jsonc',
+            language: 'markdown',
           })
         )
         await waitUntil(() => commandsEditor.document.isClosed)
@@ -462,7 +506,9 @@ export function createQuickReplFeature(input: {
       const selectedFinalStep = await vscode.window.showQuickPick([
         { label: 'Try creating a Quick Repl', iconPath: new vscode.ThemeIcon('rocket'), option: 'createQuickRepl' },
         { label: 'I\'ll explore on my own', iconPath: new vscode.ThemeIcon('eye'), option: 'finish' },
-      ])
+      ], {
+        placeHolder: 'You\'re all set! What would you like to do next?'
+      })
 
       if (selectedFinalStep?.option === 'createQuickRepl') {
         await vscode.commands.executeCommand('streamline.quickRepl.createQuickRepl')
@@ -546,7 +592,6 @@ export function createQuickReplFeature(input: {
     vscode.window.onDidChangeTextEditorOptions(() => updateContextInBackground()),
     // Slower refresh rate to avoid performance issues
     vscode.window.onDidChangeTextEditorSelection(() => debouncedUpdateContextInBackground()),
-    vscode.workspace.onDidChangeTextDocument(() => debouncedUpdateContextInBackground()),
   )
 
   updateContextInBackground()
@@ -560,12 +605,4 @@ export function replaceHomeWithShorthand(path: string) {
   return path.startsWith(os.homedir() + '/')
     ? `~/${path.slice(os.homedir().length + 1)}`
     : path
-}
-
-function replaceVariables(input: string, variables: Record<string, string>) {
-  let result = input
-  for (const [variable, value] of Object.entries(variables)) {
-    result = result.replaceAll(`$${variable}`, value)
-  }
-  return result
 }

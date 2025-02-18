@@ -65,7 +65,7 @@ export const setupCommands: Command[] = [
   {
     name: 'Run File (JavaScript)',
     description: 'Runs the JavaScript file with Node.js',
-    cwd: '$contextParentPath',
+    cwd: '$contextDirname',
     command: 'node $contextBasename',
     when: [
       [{ untitled: false }, { languageId: 'javascript' }],

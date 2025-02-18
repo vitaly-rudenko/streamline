@@ -10,7 +10,7 @@ export const templateSchema = z.object({
       type: z.literal('snippet'),
       languageId: z.string(),
       template: z.union([
-        z.object({ content: z.union([z.string(), z.array(z.string())]) }),
+        z.object({ content: z.array(z.string()) }),
         z.object({ path: z.string() }),
       ]).optional(),
     }),
@@ -18,7 +18,7 @@ export const templateSchema = z.object({
       type: z.literal('file'),
       defaultPath: z.string().optional(),
       template: z.union([
-        z.object({ content: z.union([z.string(), z.array(z.string())]) }),
+        z.object({ content: z.array(z.string()) }),
         z.object({ path: z.string() }),
       ]).optional(),
     }),

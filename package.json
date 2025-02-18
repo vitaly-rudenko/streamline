@@ -986,8 +986,8 @@
                 }
               },
               "when": {
+                "description": "Conditions when config is applied. Syntax: https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
                 "type": "array",
-                "description": "Syntax for 'when': https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
                 "items": {
                   "oneOf": [
                     {
@@ -1018,47 +1018,55 @@
           "description": "Path for stored Quick Repls (can be referenced as $replsPath)"
         },
         "streamline.quickRepl.templates": {
+          "description": "Templates allow you to quickly create scripts and projects in your Quick Repls folder: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md",
           "type": "array",
           "default": [],
           "items": {
             "type": "object",
             "required": [
               "name",
-              "type",
-              "defaultPath",
-              "defaultName"
+              "type"
             ],
             "properties": {
               "name": {
+                "description": "Name of the template",
+                "type": "string"
+              },
+              "description": {
+                "description": "Description of the template (optional)",
                 "type": "string"
               },
               "type": {
+                "description": "Type of the template ('snippet' will create an Untitled editor)",
                 "type": "string",
                 "enum": [
+                  "snippet",
                   "file",
                   "directory"
                 ]
               },
               "defaultPath": {
-                "type": "string"
-              },
-              "defaultName": {
+                "description": "Default path for the created file or directory",
                 "type": "string"
               },
               "template": {
+                "description": "Pre-populate snippet, file or directory upon creation",
                 "type": "object",
                 "properties": {
                   "content": {
-                    "type": "string",
-                    "description": "Content for the template"
+                    "description": "Content of the snippet or file",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   },
                   "path": {
-                    "type": "string",
-                    "description": "Path to template directory"
+                    "description": "Path to the template directory or file",
+                    "type": "string"
                   },
-                  "mainFilePath": {
-                    "type": "string",
-                    "description": "If provided, this file will be opened after copying the template"
+                  "fileToOpen": {
+                    "description": "If provided, this file will be opened after copying the template",
+                    "type": "string"
                   }
                 }
               }
@@ -1066,6 +1074,7 @@
           }
         },
         "streamline.quickRepl.commands": {
+          "description": "Commands allow you run snippets, files and folders depending on the context: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md",
           "type": "array",
           "default": [],
           "items": {
@@ -1077,12 +1086,20 @@
             ],
             "properties": {
               "name": {
+                "description": "Name of the command",
+                "type": "string"
+              },
+              "description": {
+                "description": "Description of the command (optional)",
                 "type": "string"
               },
               "cwd": {
+                "description": "Working directory for the command",
+                "default": "$replsPath",
                 "type": "string"
               },
               "command": {
+                "description": "Command to run",
                 "oneOf": [
                   {
                     "type": "string"
@@ -1096,20 +1113,23 @@
                 ]
               },
               "when": {
-                "description": "Syntax for 'when': https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "additionalProperties": true
-                  },
-                  {
-                    "type": "array",
-                    "items": {
+                "description": "Conditions when command is applicable (optional). Syntax: https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
                       "type": "object",
                       "additionalProperties": true
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
                     }
-                  }
-                ]
+                  ]
+                }
               }
             }
           }
