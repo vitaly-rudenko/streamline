@@ -12,9 +12,8 @@ import { QuickReplNotSetUpError, Template } from './common'
 import { formatPath } from './utils'
 import { setupCommands, setupReplsPath, setupTemplates } from './setup'
 import { waitUntil } from '../../utils/wait-until'
+import { QuickReplDragAndDropController } from './quick-repl-drag-and-drop-controller'
 
-// TODO: rename files/folders
-// TODO: move files/folders
 // TODO: somehow automatically focus on created file/folder in the tree view
 
 export function createQuickReplFeature(input: {
@@ -37,6 +36,7 @@ export function createQuickReplFeature(input: {
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
     treeDataProvider: quickReplTreeDataProvider,
+    dragAndDropController: new QuickReplDragAndDropController(config, quickReplTreeDataProvider),
     showCollapseAll: true,
   })
 
@@ -550,6 +550,24 @@ export function createQuickReplFeature(input: {
     vscode.commands.registerCommand('streamline.quickRepl.revealInOS', async (argument: unknown) => {
       if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
         await vscode.commands.executeCommand('revealFileInOS', argument.uri)
+      }
+    })
+  )
+
+  // Rename file or folder
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.quickRepl.rename', async (argument: unknown) => {
+      if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
+        const newBasename = await vscode.window.showInputBox({
+          placeHolder: basename(argument.uri.path),
+          value: basename(argument.uri.path),
+        })
+        if (!newBasename) return
+
+        const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
+        await vscode.workspace.fs.rename(argument.uri, vscode.Uri.joinPath(directoryUri, newBasename))
+
+        quickReplTreeDataProvider.refresh()
       }
     })
   )
