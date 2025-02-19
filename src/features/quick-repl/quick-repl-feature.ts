@@ -15,6 +15,8 @@ import { waitUntil } from '../../utils/wait-until'
 import { QuickReplDragAndDropController } from './quick-repl-drag-and-drop-controller'
 
 // TODO: somehow automatically focus on created file/folder in the tree view
+// TODO: CHANGELOG & README
+// TODO: documentation (quick-repl.md) + make it accessible with command "Quick Repl: Help"
 
 export function createQuickReplFeature(input: {
   context: vscode.ExtensionContext
@@ -142,8 +144,11 @@ export function createQuickReplFeature(input: {
       const commands = config.getCommands().filter(command => !command.when || testWhen(conditionContext, command.when))
       if (commands.length === 0) return
 
-      const selected = commands.length === 1
-        ? { command: commands[0] } // If only one command is available, run it immediately
+      // If only one command is available or if there is a matched default command, run it immediately
+      const defaultCommand = commands.length === 1 ? commands[0] : commands.find(command => command.default)
+
+      const selected = defaultCommand
+        ? { command: defaultCommand } 
         : await vscode.window.showQuickPick(
           commands.map(command => ({
             label: command.name,

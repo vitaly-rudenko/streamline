@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.908",
+  "version": "0.40.909",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -94,11 +94,11 @@
     "commands": [
       {
         "command": "streamline.superSearch.findSimilarMatches",
-        "title": "Find similar matches"
+        "title": "Super Search: Find similar matches"
       },
       {
         "command": "streamline.superSearch.findWords",
-        "title": "Find words"
+        "title": "Super Search: Find words"
       },
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
@@ -107,12 +107,12 @@
       },
       {
         "command": "streamline.scopedPaths.enableScope",
-        "title": "Enable Scope",
+        "title": "Enable Current Scope",
         "icon": "$(circle-large-outline)"
       },
       {
         "command": "streamline.scopedPaths.disableScope",
-        "title": "Disable Scope",
+        "title": "Disable Current Scope",
         "icon": "$(pass-filled)"
       },
       {
@@ -294,28 +294,23 @@
         "title": "Toggle"
       },
       {
-        "command": "streamline.superSearch.quickOpen",
-        "title": "Quick Open Super Search",
-        "icon": "$(eye)"
-      },
-      {
         "command": "streamline.quickRepl.setup",
-        "title": "Setup Quick Repl",
+        "title": "Quick Repl: Setup",
         "icon": "$(rocket)"
       },
       {
         "command": "streamline.quickRepl.run",
-        "title": "Run Quick Repl",
+        "title": "Quick Repl: Run",
         "icon": "$(play)"
       },
       {
         "command": "streamline.quickRepl.revealReplsInOS",
-        "title": "Reveal Quick Repls in OS",
+        "title": "Quick Repl: Reveal Repls in OS",
         "icon": "$(eye)"
       },
       {
         "command": "streamline.quickRepl.openReplsInNewWindow",
-        "title": "Open Quick Repls in a New Window",
+        "title": "Quick Repl: Open Repls in a New Window",
         "icon": "$(empty-window)"
       },
       {
@@ -350,7 +345,7 @@
       },
       {
         "command": "streamline.quickRepl.createQuickRepl",
-        "title": "Create Quick Repl...",
+        "title": "Quick Repl: Create...",
         "icon": "$(plus)"
       },
       {
@@ -364,28 +359,23 @@
         "icon": "$(plus)"
       },
       {
-        "command": "streamline.quickRepl.setupReplsPath",
-        "title": "Create Folder for Quick Repls",
-        "icon": "$(new-folder)"
-      },
-      {
         "command": "streamline.quickRepl.rename",
         "title": "Rename...",
         "icon": "$(edit)"
       },
       {
         "command": "streamline.navigator.goBack",
-        "title": "Go Back in Navigator",
+        "title": "Navigator: Go Back",
         "icon": "$(arrow-left)"
       },
       {
         "command": "streamline.navigator.goForward",
-        "title": "Go Forward in Navigator",
+        "title": "Navigator: Go Forward",
         "icon": "$(arrow-right)"
       },
       {
         "command": "streamline.navigator.clearRecords",
-        "title": "Clear Navigator Records",
+        "title": "Navigator: Clear Records",
         "icon": "$(clear-all)"
       },
       {
@@ -395,7 +385,7 @@
       },
       {
         "command": "streamline.navigator.quickOpen",
-        "title": "Quick Open Navigator Record",
+        "title": "Navigator: Quick Open Record",
         "icon": "$(reset)"
       },
       {
@@ -517,6 +507,46 @@
         },
         {
           "command": "streamline.navigator.jumpToRecord",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.rename",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.create",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.createInRoot",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.copyAbsolutePath",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.openFolderInTerminal",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.refresh",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.delete",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.openInNewWindow",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.revealInOS",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.undo",
           "when": "false"
         }
       ],
@@ -1102,6 +1132,10 @@
               "description": {
                 "description": "Description of the command (optional)",
                 "type": "string"
+              },
+              "default": {
+                "description": "Whether to pick this command automatically upon match",
+                "type": "boolean"
               },
               "cwd": {
                 "description": "Working directory for the command",

@@ -38,6 +38,7 @@ export type Template = z.infer<typeof templateSchema>
 export const commandSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
+  default: z.boolean().optional(),
   cwd: z.string(),
   command: z.union([z.string(), z.array(z.string())]),
   when: whenSchema.optional(),
