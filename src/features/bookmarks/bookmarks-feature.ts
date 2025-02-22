@@ -44,7 +44,7 @@ export function createBookmarksFeature(input: {
     try {
       const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
       const isActiveTextEditorBookmarked = activeTextEditorUri
-        ? cache.getCachedBookmarkedFilePathsSet().has(activeTextEditorUri.path)
+        ? cache.getCachedBookmarkedFilePathsInCurrentBookmarksListSet().has(activeTextEditorUri.path)
         : false
 
       const bookmarkedPaths = config.getBookmarks()
@@ -278,6 +278,7 @@ export function createBookmarksFeature(input: {
 
       workspaceState.setCurrentList(list)
       bookmarksTreeDataProvider.refresh()
+      updateContextInBackground()
       await workspaceState.save()
     })
   )
