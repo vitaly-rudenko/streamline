@@ -5,10 +5,13 @@ import { Command, commandSchema, Template, templateSchema } from './common'
 import { ConfigurationTarget, Uri } from 'vscode'
 import { replaceShorthandWithHomedir } from './quick-repl-feature'
 
+const defaultTerminalName = 'Quick Repl: $contextShortPath'
+
 export class QuickReplConfig extends FeatureConfig {
   private _replsPath: string | undefined = undefined
   private _templates: Template[] = []
   private _commands: Command[] = []
+  private _terminalName: string = defaultTerminalName
 
   constructor() {
     super('QuickRepl')
@@ -19,17 +22,20 @@ export class QuickReplConfig extends FeatureConfig {
     const replsPath = safeConfigGet(config, 'quickRepl.replsPath', undefined, z.string().optional())
     const templates = safeConfigGet(config, 'quickRepl.templates', [], z.array(templateSchema))
     const commands = safeConfigGet(config, 'quickRepl.commands', [], z.array(commandSchema))
+    const terminalName = safeConfigGet(config, 'quickRepl.terminalName', defaultTerminalName, z.string())
 
     let hasChanged = false
 
     if (
       this._replsPath !== replsPath
+      || this._terminalName !== terminalName
       || JSON.stringify(this._templates) !== JSON.stringify(templates)
       || JSON.stringify(this._commands) !== JSON.stringify(commands)
     ) {
       this._replsPath = replsPath
       this._templates = templates
       this._commands = commands
+      this._terminalName = terminalName
 
       hasChanged = true
     }
@@ -39,6 +45,7 @@ export class QuickReplConfig extends FeatureConfig {
       replsPath: this._replsPath,
       templates: this._templates,
       commands: this._commands,
+      terminalName: this._terminalName,
     })
 
     return hasChanged
@@ -97,5 +104,9 @@ export class QuickReplConfig extends FeatureConfig {
 
   setCommands(value: Command[]) {
     this._commands = value
+  }
+
+  getTerminalName() {
+    return this._terminalName
   }
 }

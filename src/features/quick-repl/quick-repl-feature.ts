@@ -47,11 +47,11 @@ export function createQuickReplFeature(input: {
     const replsUri = config.getDynamicReplsUri()
     if (!replsUri) throw new QuickReplNotSetUpError()
 
-    const shortPath = path.startsWith(replsUri.path)
+    const contextShortPath = path.startsWith(replsUri.path)
       ? path.slice(replsUri.path.length + 1)
       : formatPath(path)
 
-    return `Quick Repl: ${shortPath}`
+    return substitute(config.getTerminalName(), { path }, { contextShortPath })
   }
 
   // Whether file or folder is runnable (used in context and view)
@@ -74,31 +74,37 @@ export function createQuickReplFeature(input: {
     }
   }
 
-  function substitute(path: string, context?: { path?: string; content?: string; selection?: string }) {
+  function substitute(path: string, context?: { path?: string; content?: string; selection?: string }, additionalVariables?: Record<string, string>) {
     const replsUri = config.getDynamicReplsUri()
     if (!replsUri) throw new QuickReplNotSetUpError()
 
     let result = replaceShorthandWithHomedir(path)
-      .replaceAll(/\$replsPath/g, replsUri.path)
+      .replaceAll('$replsPath', replsUri.path)
 
     if (context?.path !== undefined) {
       result = result
-        .replaceAll(/\$contextDirname/g, dirname(context.path))
-        .replaceAll(/\$contextBasename/g, basename(context.path))
-        .replaceAll(/\$contextPath/g, context.path)
+        .replaceAll('$contextDirname', dirname(context.path))
+        .replaceAll('$contextBasename', basename(context.path))
+        .replaceAll('$contextPath', context.path)
+    }
+
+    if (additionalVariables) {
+      for (const [key, value] of Object.entries(additionalVariables)) {
+        result = result.replaceAll(`$${key}`, value)
+      }
     }
 
     if (context?.content !== undefined) {
-      result = result.replaceAll(/\$contextContent/g, context.content)
+      result = result.replaceAll('$contextContent', context.content)
     }
 
     if (context?.selection !== undefined) {
-      result = result.replaceAll(/\$contextSelection/g, context.selection)
+      result = result.replaceAll('$contextSelection', context.selection)
     }
 
     return result
-      .replaceAll(/\$datetime/g, () => new Date().toISOString().replaceAll(/(\d{2}\.\d+Z|\D)/g, ''))
-      .replaceAll(/\$randomNoun/g, () => nouns[Math.floor(Math.random() * nouns.length)])
+      .replaceAll('$datetime', () => new Date().toISOString().replaceAll(/(\d{2}\.\d+Z|\D)/g, ''))
+      .replaceAll('$randomNoun', () => nouns[Math.floor(Math.random() * nouns.length)])
   }
 
   context.subscriptions.push(quickReplTreeView)

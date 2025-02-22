@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.909",
+  "version": "0.40.911",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -1177,6 +1177,10 @@
               }
             }
           }
+        },
+        "streamline.quickRepl.terminalName": {
+          "type": "string",
+          "default": "Quick Repl: $contextShortPath"
         }
       }
     }
