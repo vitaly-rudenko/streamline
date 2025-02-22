@@ -53,8 +53,6 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
       files = files
         // Exclude symlinks and unknown file types
         .filter(([_, fileType]) => fileType === vscode.FileType.Directory || fileType === vscode.FileType.File)
-        // Exclude hidden files
-        .filter(([filename]) => !filename.startsWith('.'))
         // Sort by name, folders first
         .sort((a, b) => {
           if (a[1] === b[1]) return a[0].localeCompare(b[0])
