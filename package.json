@@ -81,13 +81,6 @@
           "contextualTitle": "Quick Repl",
           "visibility": "collapsed",
           "icon": "$(code)"
-        },
-        {
-          "id": "navigator",
-          "name": "Navigator",
-          "contextualTitle": "Navigator",
-          "visibility": "collapsed",
-          "icon": "$(history)"
         }
       ]
     },
@@ -362,52 +355,12 @@
         "command": "streamline.quickRepl.rename",
         "title": "Rename...",
         "icon": "$(edit)"
-      },
-      {
-        "command": "streamline.navigator.goBack",
-        "title": "Navigator: Go Back",
-        "icon": "$(arrow-left)"
-      },
-      {
-        "command": "streamline.navigator.goForward",
-        "title": "Navigator: Go Forward",
-        "icon": "$(arrow-right)"
-      },
-      {
-        "command": "streamline.navigator.clearRecords",
-        "title": "Navigator: Clear Records",
-        "icon": "$(clear-all)"
-      },
-      {
-        "command": "streamline.navigator.refresh",
-        "title": "Refresh",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "streamline.navigator.quickOpen",
-        "title": "Navigator: Quick Open Record",
-        "icon": "$(reset)"
-      },
-      {
-        "command": "streamline.navigator.jumpToRecord",
-        "title": "Internal: Jump to Record",
-        "icon": "$(compass)"
       }
     ],
     "keybindings": [
       {
         "command": "streamline.relatedFiles.quickOpen",
         "key": "alt+p",
-        "when": "resourceScheme == file"
-      },
-      {
-        "command": "streamline.navigator.goBack",
-        "key": "ctrl+[",
-        "when": "resourceScheme == file"
-      },
-      {
-        "command": "streamline.navigator.goForward",
-        "key": "ctrl+]",
         "when": "resourceScheme == file"
       }
     ],
@@ -499,14 +452,6 @@
         },
         {
           "command": "streamline.smartConfig.toggle",
-          "when": "false"
-        },
-        {
-          "command": "streamline.navigator.refresh",
-          "when": "false"
-        },
-        {
-          "command": "streamline.navigator.jumpToRecord",
           "when": "false"
         },
         {
@@ -630,26 +575,6 @@
           "command": "streamline.quickRepl.openReplsInNewWindow",
           "group": "info@2",
           "when": "view == quickRepl"
-        },
-        {
-          "command": "streamline.navigator.refresh",
-          "group": "navigation@1",
-          "when": "view == navigator"
-        },
-        {
-          "command": "streamline.navigator.clearRecords",
-          "group": "navigation@2",
-          "when": "view == navigator"
-        },
-        {
-          "command": "streamline.navigator.goBack",
-          "group": "navigation@3",
-          "when": "view == navigator"
-        },
-        {
-          "command": "streamline.navigator.goForward",
-          "group": "navigation@4",
-          "when": "view == navigator"
         }
       ],
       "view/item/context": [
@@ -834,14 +759,6 @@
           "command": "streamline.bookmarks.deleteFile",
           "when": "resourceScheme == file && streamline.bookmarks.activeTextEditorBookmarked",
           "group": "navigation@3"
-        },
-        {
-          "command": "streamline.navigator.goBack",
-          "group": "navigation@4"
-        },
-        {
-          "command": "streamline.navigator.goForward",
-          "group": "navigation@5"
         }
       ]
     },
@@ -867,8 +784,7 @@
               "relatedFiles",
               "scopedPaths",
               "smartConfig",
-              "superSearch",
-              "navigator"
+              "superSearch"
             ]
           },
           "default": [],
@@ -1046,11 +962,6 @@
               }
             }
           }
-        },
-        "streamline.navigator.reuseRecordsOffset": {
-          "type": "number",
-          "default": 1,
-          "description": "Reuse existing record within this offset by going backward or forward instead of creating a new record (set to 0 to always create new records)"
         },
         "streamline.quickRepl.replsPath": {
           "type": "string",
