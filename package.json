@@ -59,28 +59,46 @@
     "zod": "^3.24.1"
   },
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "quickRepl",
+          "icon": "$(code)",
+          "title": "Quick Repl"
+        },
+        {
+          "id": "bookmarks",
+          "icon": "$(bookmark)",
+          "title": "Bookmarks"
+        }
+      ]
+    },
     "views": {
       "explorer": [
         {
           "id": "relatedFiles",
-          "name": "Related files",
-          "contextualTitle": "Related files",
+          "name": "Related Files",
           "visibility": "collapsed",
-          "icon": "$(sparkle)"
-        },
+          "icon": "$(sparkle)",
+          "when": "streamline.relatedFiles.enabled"
+        }
+      ],
+      "quickRepl": [
+        {
+          "id": "quickRepl",
+          "name": "Quick Repls",
+          "visibility": "visible",
+          "icon": "$(code)",
+          "when": "streamline.quickRepl.enabled"
+        }
+      ],
+      "bookmarks": [
         {
           "id": "bookmarks",
           "name": "Bookmarks",
-          "contextualTitle": "Bookmarks",
-          "visibility": "collapsed",
-          "icon": "$(bookmark)"
-        },
-        {
-          "id": "quickRepl",
-          "name": "Quick Repl",
-          "contextualTitle": "Quick Repl",
-          "visibility": "collapsed",
-          "icon": "$(code)"
+          "visibility": "visible",
+          "icon": "$(code)",
+          "when": "streamline.bookmarks.enabled"
         }
       ]
     },
@@ -784,7 +802,8 @@
               "relatedFiles",
               "scopedPaths",
               "smartConfig",
-              "superSearch"
+              "superSearch",
+              "quickRepl"
             ]
           },
           "default": [],
