@@ -2,8 +2,9 @@ import * as vscode from 'vscode'
 import { QuickReplConfig } from './quick-repl-config'
 import { formatPath } from './utils'
 import { GenerateConditionContextInput } from '../../generate-condition-context'
+import { formatPaths } from '../../utils/format-paths'
 
-type TreeItem = FolderTreeItem | FileTreeItem | FailingFolderTreeItem
+type TreeItem = ReplsPathTreeItem | FolderTreeItem | FileTreeItem | FailingFolderTreeItem
 
 export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -26,10 +27,26 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
     let directoryUri: vscode.Uri | undefined
 
     if (element === undefined) {
-      directoryUri = this.config.getDynamicReplsUri()
-      if (directoryUri === undefined) {
+      const replsUri = this.config.getDynamicReplsUri()
+      if (replsUri === undefined) {
         return [new SetupTreeItem()]
       }
+
+      const additionalReplsUris = this.config.getDynamicAdditionalReplsUris()
+      if (additionalReplsUris.length > 0) {
+        const formattedPaths = formatPaths(additionalReplsUris.map(uri => uri.path))
+
+        return [
+          new ReplsPathTreeItem('Quick Repls', true, replsUri),
+          ...additionalReplsUris.map(uri => new ReplsPathTreeItem(formattedPaths.get(uri.path)!, false, uri))
+        ]
+      }
+
+      directoryUri = replsUri
+    }
+
+    if (element instanceof ReplsPathTreeItem) {
+      directoryUri = element.uri
     }
 
     if (element instanceof FolderTreeItem) {
@@ -71,6 +88,17 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
     }
 
     return undefined
+  }
+}
+
+export class ReplsPathTreeItem extends vscode.TreeItem {
+  constructor(label: string, isPrimary: boolean, public readonly uri: vscode.Uri) {
+    super(label, isPrimary ?  vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
+
+    this.iconPath = new vscode.ThemeIcon('folder-library')
+    this.resourceUri = uri
+    this.contextValue = 'replsPath'
+    this.tooltip = uri.path
   }
 }
 

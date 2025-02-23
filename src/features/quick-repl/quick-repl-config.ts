@@ -4,11 +4,13 @@ import { FeatureConfig } from '../feature-config'
 import { Command, commandSchema, Template, templateSchema } from './common'
 import { ConfigurationTarget, Uri } from 'vscode'
 import { replaceShorthandWithHomedir } from './quick-repl-feature'
+import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 
 const defaultTerminalName = 'Quick Repl: $contextShortPath'
 
 export class QuickReplConfig extends FeatureConfig {
   private _replsPath: string | undefined = undefined
+  private _additionalReplsPaths: string[] = []
   private _templates: Template[] = []
   private _commands: Command[] = []
   private _terminalName: string = defaultTerminalName
@@ -20,6 +22,7 @@ export class QuickReplConfig extends FeatureConfig {
 
   load(config = getConfig()) {
     const replsPath = safeConfigGet(config, 'quickRepl.replsPath', undefined, z.string().optional())
+    const additionalReplsPaths = safeConfigGet(config, 'quickRepl.additionalReplsPaths', [], z.array(z.string()))
     const templates = safeConfigGet(config, 'quickRepl.templates', [], z.array(templateSchema))
     const commands = safeConfigGet(config, 'quickRepl.commands', [], z.array(commandSchema))
     const terminalName = safeConfigGet(config, 'quickRepl.terminalName', defaultTerminalName, z.string())
@@ -29,10 +32,12 @@ export class QuickReplConfig extends FeatureConfig {
     if (
       this._replsPath !== replsPath
       || this._terminalName !== terminalName
+      || !areArraysShallowEqual(this._additionalReplsPaths, additionalReplsPaths)
       || JSON.stringify(this._templates) !== JSON.stringify(templates)
       || JSON.stringify(this._commands) !== JSON.stringify(commands)
     ) {
       this._replsPath = replsPath
+      this._additionalReplsPaths = additionalReplsPaths
       this._templates = templates
       this._commands = commands
       this._terminalName = terminalName
@@ -43,6 +48,7 @@ export class QuickReplConfig extends FeatureConfig {
     console.debug('[QuickRepl] Config has been loaded', {
       hasChanged,
       replsPath: this._replsPath,
+      additionalReplsPaths: this._additionalReplsPaths,
       templates: this._templates,
       commands: this._commands,
       terminalName: this._terminalName,
@@ -80,6 +86,10 @@ export class QuickReplConfig extends FeatureConfig {
     return this._replsPath
       ? Uri.file(replaceShorthandWithHomedir(this._replsPath))
       : undefined
+  }
+
+  getDynamicAdditionalReplsUris() {
+    return this._additionalReplsPaths.map(path => Uri.file(replaceShorthandWithHomedir(path)))
   }
 
   getReplsPath() {
