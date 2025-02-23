@@ -88,7 +88,7 @@
         },
         {
           "id": "quickRepl",
-          "name": "Quick Repl",
+          "name": "Quick Repls",
           "visibility": "visible",
           "icon": "$(code)",
           "when": "streamline.quickRepl.enabled"
@@ -301,6 +301,11 @@
         "command": "streamline.quickRepl.setup",
         "title": "Quick Repl: Setup",
         "icon": "$(rocket)"
+      },
+      {
+        "command": "streamline.quickRepl.help",
+        "title": "Quick Repl: Help",
+        "icon": "$(question)"
       },
       {
         "command": "streamline.quickRepl.run",
@@ -570,7 +575,7 @@
         {
           "command": "streamline.quickRepl.createInRoot",
           "group": "navigation@1",
-          "when": "view == quickRepl"
+          "when": "view == quickRepl && !streamline.quickRepl.hasAdditionalReplPaths"
         },
         {
           "command": "streamline.quickRepl.refresh",
@@ -585,6 +590,11 @@
         {
           "command": "streamline.quickRepl.openReplsInNewWindow",
           "group": "info@2",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.quickRepl.help",
+          "group": "info@3",
           "when": "view == quickRepl"
         }
       ],

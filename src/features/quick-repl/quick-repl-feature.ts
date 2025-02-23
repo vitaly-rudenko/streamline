@@ -76,6 +76,12 @@ export function createQuickReplFeature(input: {
         'streamline.quickRepl.isActiveTextEditorRunnable',
         vscode.window.activeTextEditor && isRunnable(vscode.window.activeTextEditor)
       )
+
+      await vscode.commands.executeCommand(
+        'setContext',
+        'streamline.quickRepl.hasAdditionalReplPaths',
+        config.getAdditionalShortReplsPaths().length > 0
+      )
     } catch (error) {
       console.warn('[QuickRepl] Could not update context', error)
     }
@@ -543,6 +549,17 @@ export function createQuickReplFeature(input: {
       if (selectedFinalStep?.option === 'createQuickRepl') {
         await vscode.commands.executeCommand('streamline.quickRepl.createQuickRepl')
       }
+    })
+  )
+
+  // Open help
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.quickRepl.help', async () => {
+      const helpPath = context.asAbsolutePath('docs/quick-repl.md')
+      if (!helpPath) return
+
+      const helpUri = vscode.Uri.file(helpPath)
+      await vscode.commands.executeCommand('markdown.showPreview', helpUri)
     })
   )
 
