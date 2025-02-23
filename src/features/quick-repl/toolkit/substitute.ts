@@ -1,13 +1,13 @@
 import { dirname, basename, relative } from 'path'
-import { QuickReplNotSetUpError } from '../common'
 import { adjectives } from './adjectives'
 import { nouns } from './nouns'
+import { collapseHomedir } from './collapse-homedir'
 
 export function substitute(
   input: {
     input: string
     homedir: string
-    replsPath?: string
+    replsPath: string
     context?: {
       path: string
       content?: string
@@ -20,15 +20,13 @@ export function substitute(
     adjectives,
   }
 ) {
-  if (!input.replsPath) throw new QuickReplNotSetUpError()
-
   enforceAbsolute(input.replsPath)
   enforceAbsolute(input.homedir)
 
   let result = input.input
     .replaceAll('$homedir', input.homedir)
     .replaceAll('$replsPath', input.replsPath)
-    .replaceAll('$shortReplsPath', shortenHomedir(input.replsPath, input.homedir))
+    .replaceAll('$shortReplsPath', collapseHomedir(input.replsPath, input.homedir))
     .replaceAll('$datetime', () => deps.now.toISOString().replaceAll(/(\d{2}\.\d+Z|\D)/g, ''))
     .replaceAll('$randomNoun', () => deps.nouns[Math.floor(Math.random() * deps.nouns.length)])
     .replaceAll('$randomAdjective', () => deps.adjectives[Math.floor(Math.random() * deps.adjectives.length)])
@@ -42,12 +40,12 @@ export function substitute(
 
     result = result
       .replaceAll('$contextPath', input.context.path)
-      .replaceAll('$shortContextPath', shortenHomedir(input.context.path, input.homedir))
+      .replaceAll('$shortContextPath', collapseHomedir(input.context.path, input.homedir))
       .replaceAll('$contextDirname', dirname(input.context.path))
-      .replaceAll('$shortContextDirname', shortenHomedir(dirname(input.context.path), input.homedir))
+      .replaceAll('$shortContextDirname', collapseHomedir(dirname(input.context.path), input.homedir))
       .replaceAll('$contextBasename', basename(input.context.path))
       .replaceAll('$contextRelativePath', contextRelativePath)
-      .replaceAll('$shortContextRelativePath', shortenHomedir(contextRelativePath, input.homedir))
+      .replaceAll('$shortContextRelativePath', collapseHomedir(contextRelativePath, input.homedir))
 
     if (input.context.content !== undefined) {
       result = result.replaceAll('$contextContent', input.context.content)
@@ -59,10 +57,6 @@ export function substitute(
   }
 
   return result
-}
-
-export function shortenHomedir(path: string, homedir: string) {
-  return path.startsWith(homedir + '/') ? ('~' + path.slice(homedir.length)) : path
 }
 
 function enforceAbsolute(path: string) {

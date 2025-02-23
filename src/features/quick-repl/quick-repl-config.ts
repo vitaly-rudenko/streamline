@@ -3,7 +3,6 @@ import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '
 import { FeatureConfig } from '../feature-config'
 import { Command, commandSchema, Template, templateSchema } from './common'
 import { ConfigurationTarget, Uri } from 'vscode'
-import { replaceShorthandWithHomedir } from './quick-repl-feature'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 
 const defaultTerminalName = 'Quick Repl: $contextShortPath'
@@ -82,21 +81,15 @@ export class QuickReplConfig extends FeatureConfig {
     )
   }
 
-  getDynamicReplsUri() {
-    return this._replsPath
-      ? Uri.file(replaceShorthandWithHomedir(this._replsPath))
-      : undefined
+  getAdditionalShortReplsPaths() {
+    return this._additionalReplsPaths
   }
 
-  getDynamicAdditionalReplsUris() {
-    return this._additionalReplsPaths.map(path => Uri.file(replaceShorthandWithHomedir(path)))
-  }
-
-  getReplsPath() {
+  getShortReplsPath() {
     return this._replsPath
   }
 
-  setReplsPath(value: string) {
+  setShortReplsPath(value: string) {
     this._replsPath = value
   }
 

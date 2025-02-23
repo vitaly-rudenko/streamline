@@ -170,27 +170,43 @@ Run a JavaScript project:
 ```json
 {
   "name": "Run Project (JavaScript)",
-  "description": "Runs 'npm start' when package.json or a directory is selected",
+  "description": "Runs 'npm start' in a selected directory",
   "cwd": "$contextPath",
   "command": "npm start",
-  "when": [
-    { "basename": "^package\\.json$" },
-    { "fileType": "directory" }
-  ]
+  "when": [{ "fileType": "directory" }]
 }
 ```
 
-## Variables
+## Substitution (variables)
 
-All variables in paths and terminal names:
-- `$replsPath` (example: `~/.streamline/quick-repl/repls`)
-- `$contextPath` (example: `~/.streamline/quick-repl/repls/my/file.mjs`)
-- `$contextBasename` (example: `file.mjs`)
-- `$contextDirname` (example: `~/.streamline/quick-repl/repls/my`)
-- `$contextContent` - full contents of file (if available)
-- `$contextSelection` - current selection (if available and not empty)
-- `$shortContextPath` (only available in terminal names)
-- `$datetime` - timestamp in `YYYYMMDDHHMM` format
-- `$randomNoun` (example: `squirrel`)
+> Implementation: [src/features/quick-repl/toolkit/substitute.ts](../src/features/quick-repl/toolkit/substitute.ts)
 
-These variables can be used in `template.defaultPath`, `template.template.path`, `command.cwd`, `command.command` and `terminalName` fields.
+Always available:
+- `$homedir` - `/Users/user`
+- `$replsPath` - `/Users/user/.streamline/quick-repl/repls`
+- `$shortReplsPath` - `~/.streamline/quick-repl/repls`
+- `$datetime` - `202504031234` (format: `YYYYMMDDHHMM`)
+- `$randomNoun` - `candle`
+- `$randomAdjective` - `delicate`
+
+Available when there's a context (e.g. an opened file, a selected folder or a code selection):
+- `$contextPath` - `/Users/user/path/to/file.mjs`
+- `$shortContextPath` - `~/path/to/file.mjs`
+- `$contextDirname` - `/Users/user/path/to`
+- `$shortContextDirname` - `~/path/to`
+- `$contextBasename` - `file.mjs`
+- `$contextRelativePath` - if file is inside `replsPath`: `playground/my_file.mjs`, if not: `/Users/user/path/to/file.mjs`
+- `$shortContextRelativePath` - if file is inside `replsPath`: `playground/my_file.mjs`, if not: `~/path/to/file.mjs`
+
+Available when the context is a file:
+- `$contextContent` - `const name = "John Doe";\nconsole.log("Hello,", name)`
+
+Available when the context is a file with a non-empty selection:
+- `$contextSelection` - `// My\n// Selection`
+
+These variables can be used in:
+- `streamline.quickRepl.terminalName`
+- `streamline.quickRepl.commands[].command.cwd`
+- `streamline.quickRepl.commands[].command.command`
+- `streamline.quickRepl.templates[].template.defaultPath`
+- `streamline.quickRepl.templates[].template.template.path`

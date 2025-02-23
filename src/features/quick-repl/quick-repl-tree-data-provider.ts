@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
 import { QuickReplConfig } from './quick-repl-config'
-import { formatPath } from './utils'
 import { GenerateConditionContextInput } from '../../generate-condition-context'
 import { formatPaths } from '../../utils/format-paths'
+import { expandHomedir } from './toolkit/expand-homedir'
 
 type TreeItem = FolderTreeItem | FileTreeItem | FailingFolderTreeItem
 
@@ -13,6 +13,7 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
   constructor(
     private readonly config: QuickReplConfig,
     private readonly isRunnable: (input: GenerateConditionContextInput) => boolean,
+    private readonly homedir: string,
   ) {}
 
   refresh(): void {
@@ -27,12 +28,15 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
     let directoryUri: vscode.Uri | undefined
 
     if (element === undefined) {
-      const replsUri = this.config.getDynamicReplsUri()
-      if (replsUri === undefined) {
+      const shortReplsPath = this.config.getShortReplsPath()
+      if (!shortReplsPath) {
         return [new SetupTreeItem()]
       }
 
-      const additionalReplsUris = this.config.getDynamicAdditionalReplsUris()
+      const replsUri = vscode.Uri.file(expandHomedir(shortReplsPath, this.homedir))
+      const additionalReplsUris = this.config.getAdditionalShortReplsPaths()
+        .map(shortPath => vscode.Uri.file(expandHomedir(shortPath, this.homedir)))
+
       if (additionalReplsUris.length > 0) {
         const formattedPaths = formatPaths(additionalReplsUris.map(uri => uri.path))
 
@@ -149,7 +153,7 @@ export class EmptyReplsFolderTreeItem extends vscode.TreeItem {
 export class FailingFolderTreeItem extends vscode.TreeItem {
   constructor(uri: vscode.Uri, errorMessage: string) {
     super(
-      `Failed to read folder: ${formatPath(uri.path)}`,
+      `Failed to read folder: ${uri.path}`,
       vscode.TreeItemCollapsibleState.None
     )
 

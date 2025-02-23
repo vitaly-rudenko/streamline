@@ -3,6 +3,7 @@ import path from 'path'
 import { TreeItem } from 'vscode'
 import { QuickReplConfig } from './quick-repl-config'
 import { QuickReplTreeDataProvider, FileTreeItem, FolderTreeItem } from './quick-repl-tree-data-provider'
+import { expandHomedir } from './toolkit/expand-homedir'
 
 export class QuickReplDragAndDropController implements vscode.TreeDragAndDropController<TreeItem> {
   dropMimeTypes = ['application/vnd.code.tree.quickrepl']
@@ -11,6 +12,7 @@ export class QuickReplDragAndDropController implements vscode.TreeDragAndDropCon
   constructor(
     private readonly config: QuickReplConfig,
     private readonly treeDataProvider: QuickReplTreeDataProvider,
+    private readonly homedir: string,
   ) {}
 
   async handleDrag(source: TreeItem[], treeDataTransfer: vscode.DataTransfer): Promise<void> {
@@ -30,8 +32,13 @@ export class QuickReplDragAndDropController implements vscode.TreeDragAndDropCon
     } else if (destination instanceof FileTreeItem) {
       destinationDirectoryUri = vscode.Uri.file(path.dirname(destination.uri.path))
     } else if (destination === undefined) {
-      if (this.config.getDynamicAdditionalReplsUris().length === 0) {
-        destinationDirectoryUri = this.config.getDynamicReplsUri()
+      const shortReplsPath = this.config.getShortReplsPath()
+      if (!shortReplsPath) return
+
+      if (this.config.getAdditionalShortReplsPaths().length === 0) {
+        destinationDirectoryUri = vscode.Uri.file(
+          expandHomedir(shortReplsPath, this.homedir)
+        )
       }
     }
     if (!destinationDirectoryUri) return

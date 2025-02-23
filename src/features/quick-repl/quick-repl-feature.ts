@@ -1,7 +1,6 @@
 import * as vscode from 'vscode'
 import * as os from 'os'
 import jsonBeautify from 'json-beautify'
-import { nouns } from './nouns'
 import { FileTreeItem, FolderTreeItem, QuickReplTreeDataProvider } from './quick-repl-tree-data-provider'
 import { ConditionContext, testWhen } from '../../common/when'
 import { QuickReplConfig } from './quick-repl-config'
@@ -9,10 +8,12 @@ import path, { basename, dirname } from 'path'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { GenerateConditionContextInput, GenerateConditionContext } from '../../generate-condition-context'
 import { QuickReplNotSetUpError, Template } from './common'
-import { formatPath } from './utils'
 import { setupCommands, setupReplsPath, setupTemplates } from './setup'
 import { waitUntil } from '../../utils/wait-until'
 import { QuickReplDragAndDropController } from './quick-repl-drag-and-drop-controller'
+import { substitute } from './toolkit/substitute'
+import { expandHomedir } from './toolkit/expand-homedir'
+import { collapseHomedir } from './toolkit/collapse-homedir'
 
 // TODO: somehow automatically focus on created file/folder in the tree view
 // TODO: CHANGELOG & README
@@ -23,6 +24,8 @@ export function createQuickReplFeature(input: {
   generateConditionContext: GenerateConditionContext
 }) {
   const { context, generateConditionContext } = input
+
+  const homedir = os.homedir()
 
   const config = new QuickReplConfig()
   const scheduleConfigLoad = createDebouncedFunction(async () => {
@@ -35,23 +38,27 @@ export function createQuickReplFeature(input: {
     await updateContextInBackground()
   }, 500)
 
-  const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable)
+  const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable, homedir)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
     treeDataProvider: quickReplTreeDataProvider,
-    dragAndDropController: new QuickReplDragAndDropController(config, quickReplTreeDataProvider),
+    dragAndDropController: new QuickReplDragAndDropController(config, quickReplTreeDataProvider, homedir),
     showCollapseAll: true,
   })
 
+  function getReplsPathOrFail() {
+    const shortReplsPath = config.getShortReplsPath()
+    if (!shortReplsPath) throw new QuickReplNotSetUpError()
+    return expandHomedir(shortReplsPath, homedir)
+  }
+
   // Generate consistent terminal name for a given path
-  function generateTerminalName(path: string) {
-    const replsUri = config.getDynamicReplsUri()
-    if (!replsUri) throw new QuickReplNotSetUpError()
-
-    const contextShortPath = path.startsWith(replsUri.path)
-      ? path.slice(replsUri.path.length + 1)
-      : formatPath(path)
-
-    return substitute(config.getTerminalName(), { path }, { contextShortPath })
+  function generateTerminalName(context: { path: string }) {
+    return substitute({
+      input: config.getTerminalName(),
+      replsPath: getReplsPathOrFail(),
+      context,
+      homedir,
+    })
   }
 
   // Whether file or folder is runnable (used in context and view)
@@ -72,39 +79,6 @@ export function createQuickReplFeature(input: {
     } catch (error) {
       console.warn('[QuickRepl] Could not update context', error)
     }
-  }
-
-  function substitute(path: string, context?: { path?: string; content?: string; selection?: string }, additionalVariables?: Record<string, string>) {
-    const replsUri = config.getDynamicReplsUri()
-    if (!replsUri) throw new QuickReplNotSetUpError()
-
-    let result = replaceShorthandWithHomedir(path)
-      .replaceAll('$replsPath', replsUri.path)
-
-    if (context?.path !== undefined) {
-      result = result
-        .replaceAll('$contextDirname', dirname(context.path))
-        .replaceAll('$contextBasename', basename(context.path))
-        .replaceAll('$contextPath', context.path)
-    }
-
-    if (additionalVariables) {
-      for (const [key, value] of Object.entries(additionalVariables)) {
-        result = result.replaceAll(`$${key}`, value)
-      }
-    }
-
-    if (context?.content !== undefined) {
-      result = result.replaceAll('$contextContent', context.content)
-    }
-
-    if (context?.selection !== undefined) {
-      result = result.replaceAll('$contextSelection', context.selection)
-    }
-
-    return result
-      .replaceAll('$datetime', () => new Date().toISOString().replaceAll(/(\d{2}\.\d+Z|\D)/g, ''))
-      .replaceAll('$randomNoun', () => nouns[Math.floor(Math.random() * nouns.length)])
   }
 
   context.subscriptions.push(quickReplTreeView)
@@ -168,16 +142,30 @@ export function createQuickReplFeature(input: {
 
       const { command } = selected
 
-      const terminalName = generateTerminalName(uri.path)
+      const terminalName = generateTerminalName({ path: uri.path })
       const terminal = vscode.window.terminals.find(t => t.name === terminalName)
         ?? vscode.window.createTerminal({
           name: terminalName,
           iconPath: new vscode.ThemeIcon('play'),
-          cwd: substitute(command.cwd, context)
+          cwd: substitute({
+            input: expandHomedir(command.cwd, homedir),
+            replsPath: getReplsPathOrFail(),
+            context,
+            homedir,
+          })
         })
 
       terminal.show(true)
-      terminal.sendText(substitute(typeof command.command === 'string' ? command.command : command.command.join('\n'), context))
+      terminal.sendText(
+        substitute({
+          input: typeof command.command === 'string'
+            ? command.command
+            : command.command.join('\n'),
+          replsPath: getReplsPathOrFail(),
+          context,
+          homedir,
+        })
+      )
     })
   )
 
@@ -192,10 +180,7 @@ export function createQuickReplFeature(input: {
   // For "+" button in the tree view title
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.createInRoot', async () => {
-      const replsUri = config.getDynamicReplsUri()
-      if (!replsUri) throw new QuickReplNotSetUpError()
-
-      await vscode.commands.executeCommand('streamline.quickRepl.create', replsUri)
+      await vscode.commands.executeCommand('streamline.quickRepl.create', vscode.Uri.file(getReplsPathOrFail()))
     })
   )
 
@@ -253,7 +238,13 @@ export function createQuickReplFeature(input: {
     }
 
     if ('path' in template) {
-      const templateUri = vscode.Uri.file(substitute(template.path))
+      const templateUri = vscode.Uri.file(
+        substitute({
+          input: expandHomedir(template.path, homedir),
+          replsPath: getReplsPathOrFail(),
+          homedir,
+        })
+      )
 
       try {
         return (await vscode.workspace.fs.readFile(templateUri)).toString()
@@ -268,8 +259,7 @@ export function createQuickReplFeature(input: {
   }
 
   async function startQuickReplWizard(input: { parentUri: vscode.Uri | undefined }) {
-    const replsUri = config.getDynamicReplsUri()
-    if (!replsUri) throw new QuickReplNotSetUpError()
+    const replsUri = vscode.Uri.file(getReplsPathOrFail())
 
     const templates = config.getTemplates()
     if (templates.length === 0) {
@@ -302,7 +292,13 @@ export function createQuickReplFeature(input: {
     }
 
     if (template.type === 'file') {
-      const defaultPath = template.defaultPath ? substitute(template.defaultPath) : undefined
+      const defaultPath = template.defaultPath
+        ? substitute({
+          input: expandHomedir(template.defaultPath, homedir),
+          replsPath: getReplsPathOrFail(),
+          homedir,
+        })
+        : undefined
 
       const defaultBasename = defaultPath ? path.basename(defaultPath) : undefined
       const defaultDirectory = input.parentUri
@@ -326,7 +322,14 @@ export function createQuickReplFeature(input: {
     }
 
     if (template.type === 'directory') {
-      const defaultPath = template.defaultPath ? substitute(template.defaultPath) : undefined
+      const defaultPath = template.defaultPath
+        ? substitute({
+          input: expandHomedir(template.defaultPath, homedir),
+          replsPath: getReplsPathOrFail(),
+          homedir,
+        })
+        : undefined
+
       const defaultBasename = defaultPath ? path.basename(defaultPath) : undefined
       const defaultDirectory = input.parentUri
         ? path.dirname(input.parentUri.path)
@@ -340,13 +343,25 @@ export function createQuickReplFeature(input: {
       })
       if (!basename) return
 
-      const templateDirectoryUri = vscode.Uri.file(substitute(template.template.path))
+      const templateDirectoryUri = vscode.Uri.file(
+        substitute({
+          input: expandHomedir(template.template.path, homedir),
+          replsPath: getReplsPathOrFail(),
+          homedir,
+        })
+      )
 
       const directoryUri = vscode.Uri.joinPath(defaultDirectory ? vscode.Uri.file(defaultDirectory) : replsUri, basename)
       await vscode.workspace.fs.copy(templateDirectoryUri, directoryUri, { overwrite: false })
 
       if (template.template.fileToOpen) {
-        const fileToOpenUri = vscode.Uri.joinPath(directoryUri, template.template.fileToOpen)
+        const fileToOpenUri = vscode.Uri.joinPath(directoryUri, substitute({
+          input: expandHomedir(template.template.fileToOpen, homedir),
+          replsPath: getReplsPathOrFail(),
+          context: { path: directoryUri.path },
+          homedir,
+        }))
+
         await vscode.window.showTextDocument(fileToOpenUri)
         // TODO: reveal file
       } else {
@@ -384,12 +399,14 @@ export function createQuickReplFeature(input: {
   // Setup wizard
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.setup', async () => {
+      const currentShortReplsPath = config.getShortReplsPath()
+
       // Step 1: Quick Repls path
       const selectedReplsPath = await vscode.window.showQuickPick([
-        ...config.getReplsPath()
-          ? [{ label: 'Keep current Quick Repls folder', detail: config.getReplsPath(), iconPath: new vscode.ThemeIcon('folder-active'),  option: 'keepCurrent' }]
+        ...currentShortReplsPath
+          ? [{ label: 'Keep current Quick Repls folder', detail: currentShortReplsPath, iconPath: new vscode.ThemeIcon('folder-active'),  option: 'keepCurrent' }]
           : [],
-        ...!config.getReplsPath() || config.getReplsPath() !== setupReplsPath
+        ...!currentShortReplsPath || currentShortReplsPath !== setupReplsPath
           ? [{ label: 'Use default folder for Quick Repls', detail: setupReplsPath, iconPath: new vscode.ThemeIcon('folder-library'),  option: 'useDefault' }]
           : [],
         { label: 'Pick custom folder...', iconPath: new vscode.ThemeIcon('folder-opened'),  option: 'selectCustom' },
@@ -399,11 +416,11 @@ export function createQuickReplFeature(input: {
       if (!selectedReplsPath) return
 
       const { option } = selectedReplsPath
-      let replsPath: string
+      let shortReplsPath: string
       if (option === 'keepCurrent') {
-        replsPath = config.getReplsPath()!
+        shortReplsPath = currentShortReplsPath ?? setupReplsPath
       } else if (option === 'useDefault') {
-        replsPath = setupReplsPath
+        shortReplsPath = setupReplsPath
       } else {
         const replsUri = await vscode.window.showOpenDialog({
           openLabel: 'Select folder for your Quick Repls',
@@ -413,16 +430,18 @@ export function createQuickReplFeature(input: {
         })
         if (!replsUri) return
 
-        replsPath = replsUri[0].path
+        shortReplsPath = replsUri[0].path
       }
 
-      await vscode.workspace.fs.createDirectory(vscode.Uri.file(replaceShorthandWithHomedir(replsPath)))
+      await vscode.workspace.fs.createDirectory(
+        vscode.Uri.file(expandHomedir(shortReplsPath, homedir))
+      )
 
-      config.setReplsPath(replaceHomeWithShorthand(replsPath))
+      config.setShortReplsPath(collapseHomedir(shortReplsPath, homedir))
       quickReplTreeDataProvider.refresh()
       await config.save()
 
-      vscode.window.showInformationMessage(`Your Quick Repls will now be stored in ${replsPath}`)
+      vscode.window.showInformationMessage(`Your Quick Repls will now be stored in ${shortReplsPath}`)
 
       // Step 2: Templates
       let shouldSetupTemplates = config.getTemplates().length === 0
@@ -530,20 +549,14 @@ export function createQuickReplFeature(input: {
   // Open Repls folder in a new VS Code window
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.openReplsInNewWindow', async () => {
-      const replsUri = config.getDynamicReplsUri()
-      if (!replsUri) throw new QuickReplNotSetUpError()
-
-      await vscode.commands.executeCommand('vscode.openFolder', replsUri, { forceNewWindow: true })
+      await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(getReplsPathOrFail()), { forceNewWindow: true })
     })
   )
 
   // Reveal Repls folder in OS
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.revealReplsInOS', async () => {
-      const replsUri = config.getDynamicReplsUri()
-      if (!replsUri) throw new QuickReplNotSetUpError()
-
-      await vscode.commands.executeCommand('revealFileInOS', replsUri)
+      await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(getReplsPathOrFail()))
     })
   )
 
@@ -596,7 +609,7 @@ export function createQuickReplFeature(input: {
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.openFolderInTerminal', async (argument: unknown) => {
       if (argument instanceof FolderTreeItem) {
-        const terminalName = generateTerminalName(argument.uri.path)
+        const terminalName = generateTerminalName({ path: argument.uri.path })
         const terminal = vscode.window.createTerminal({
           name: terminalName,
           iconPath: new vscode.ThemeIcon('play'),
@@ -624,14 +637,4 @@ export function createQuickReplFeature(input: {
   )
 
   updateContextInBackground()
-}
-
-export function replaceShorthandWithHomedir(path: string) {
-  return path.replace(/^~\//, `${os.homedir()}/`)
-}
-
-export function replaceHomeWithShorthand(path: string) {
-  return path.startsWith(os.homedir() + '/')
-    ? `~/${path.slice(os.homedir().length + 1)}`
-    : path
 }

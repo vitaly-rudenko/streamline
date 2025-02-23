@@ -62,14 +62,9 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "quickRepl",
-          "icon": "$(code)",
-          "title": "Quick Repl"
-        },
-        {
-          "id": "bookmarks",
-          "icon": "$(bookmark)",
-          "title": "Bookmarks"
+          "id": "streamline",
+          "icon": "$(arrow-up)",
+          "title": "Streamline"
         }
       ]
     },
@@ -83,22 +78,20 @@
           "when": "streamline.relatedFiles.enabled"
         }
       ],
-      "quickRepl": [
-        {
-          "id": "quickRepl",
-          "name": "Quick Repls",
-          "visibility": "visible",
-          "icon": "$(code)",
-          "when": "streamline.quickRepl.enabled"
-        }
-      ],
-      "bookmarks": [
+      "streamline": [
         {
           "id": "bookmarks",
           "name": "Bookmarks",
           "visibility": "visible",
           "icon": "$(code)",
           "when": "streamline.bookmarks.enabled"
+        },
+        {
+          "id": "quickRepl",
+          "name": "Quick Repl",
+          "visibility": "visible",
+          "icon": "$(code)",
+          "when": "streamline.quickRepl.enabled"
         }
       ]
     },
@@ -667,34 +660,39 @@
           "group": "inline@5"
         },
         {
-          "command": "streamline.quickRepl.copyAbsolutePath",
-          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
-          "group": "info@1"
-        },
-        {
-          "command": "streamline.quickRepl.openFolderInTerminal",
+          "command": "streamline.quickRepl.create",
           "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
-          "group": "info@2"
-        },
-        {
-          "command": "streamline.quickRepl.revealInOS",
-          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
-          "group": "info@3"
-        },
-        {
-          "command": "streamline.quickRepl.openInNewWindow",
-          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
-          "group": "info@4"
+          "group": "1_info@1"
         },
         {
           "command": "streamline.quickRepl.rename",
           "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
-          "group": "info@5"
+          "group": "1_info@2"
+        },
+        {
+          "command": "streamline.quickRepl.copyAbsolutePath",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "1_info@3"
+        },
+        {
+          "command": "streamline.quickRepl.openFolderInTerminal",
+          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
+          "group": "2_info@1"
+        },
+        {
+          "command": "streamline.quickRepl.revealInOS",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "2_info@2"
+        },
+        {
+          "command": "streamline.quickRepl.openInNewWindow",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "2_info@3"
         },
         {
           "command": "streamline.quickRepl.delete",
           "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
-          "group": "info@6"
+          "group": "3_info@1"
         }
       ],
       "explorer/context": [
