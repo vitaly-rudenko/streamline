@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import path from 'path'
 import { TreeItem } from 'vscode'
 import { QuickReplConfig } from './quick-repl-config'
-import { QuickReplTreeDataProvider, FileTreeItem, FolderTreeItem, ReplsPathTreeItem } from './quick-repl-tree-data-provider'
+import { QuickReplTreeDataProvider, FileTreeItem, FolderTreeItem } from './quick-repl-tree-data-provider'
 
 export class QuickReplDragAndDropController implements vscode.TreeDragAndDropController<TreeItem> {
   dropMimeTypes = ['application/vnd.code.tree.quickrepl']
@@ -29,10 +29,10 @@ export class QuickReplDragAndDropController implements vscode.TreeDragAndDropCon
       destinationDirectoryUri = destination.uri
     } else if (destination instanceof FileTreeItem) {
       destinationDirectoryUri = vscode.Uri.file(path.dirname(destination.uri.path))
-    } else if (destination instanceof ReplsPathTreeItem) {
-      destinationDirectoryUri = destination.uri
-    } else if (destination === undefined && this.config.getDynamicAdditionalReplsUris().length === 0) {
-      destinationDirectoryUri = this.config.getDynamicReplsUri()
+    } else if (destination === undefined) {
+      if (this.config.getDynamicAdditionalReplsUris().length === 0) {
+        destinationDirectoryUri = this.config.getDynamicReplsUri()
+      }
     }
     if (!destinationDirectoryUri) return
 

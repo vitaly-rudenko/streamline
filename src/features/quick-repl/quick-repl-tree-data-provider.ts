@@ -4,7 +4,7 @@ import { formatPath } from './utils'
 import { GenerateConditionContextInput } from '../../generate-condition-context'
 import { formatPaths } from '../../utils/format-paths'
 
-type TreeItem = ReplsPathTreeItem | FolderTreeItem | FileTreeItem | FailingFolderTreeItem
+type TreeItem = FolderTreeItem | FileTreeItem | FailingFolderTreeItem
 
 export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeItem> {
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -37,16 +37,12 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
         const formattedPaths = formatPaths(additionalReplsUris.map(uri => uri.path))
 
         return [
-          new ReplsPathTreeItem('Quick Repls', true, replsUri),
-          ...additionalReplsUris.map(uri => new ReplsPathTreeItem(formattedPaths.get(uri.path)!, false, uri))
+          new FolderTreeItem('Quick Repls', false, true, true, replsUri),
+          ...additionalReplsUris.map(uri => new FolderTreeItem(formattedPaths.get(uri.path)!, false, false, true, uri))
         ]
       }
 
       directoryUri = replsUri
-    }
-
-    if (element instanceof ReplsPathTreeItem) {
-      directoryUri = element.uri
     }
 
     if (element instanceof FolderTreeItem) {
@@ -83,7 +79,7 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
           return fileType === vscode.FileType.File
             ? new FileTreeItem(filename, isRunnable, fileUri)
-            : new FolderTreeItem(filename, isRunnable, fileUri)
+            : new FolderTreeItem(filename, isRunnable, false, false, fileUri)
         })
     }
 
@@ -91,22 +87,11 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
   }
 }
 
-export class ReplsPathTreeItem extends vscode.TreeItem {
-  constructor(label: string, isPrimary: boolean, public readonly uri: vscode.Uri) {
-    super(label, isPrimary ?  vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
-
-    this.iconPath = new vscode.ThemeIcon('folder-library')
-    this.resourceUri = uri
-    this.contextValue = 'replsPath'
-    this.tooltip = uri.path
-  }
-}
-
 export class FolderTreeItem extends vscode.TreeItem {
-  constructor(label: string, isRunnable: boolean, public readonly uri: vscode.Uri) {
-    super(label, vscode.TreeItemCollapsibleState.Collapsed)
+  constructor(label: string, isRunnable: boolean, isExpanded: boolean, isLibrary: boolean, public readonly uri: vscode.Uri) {
+    super(label, isExpanded ?  vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 
-    this.iconPath = vscode.ThemeIcon.Folder
+    this.iconPath = isLibrary ? new vscode.ThemeIcon('folder-library') : vscode.ThemeIcon.Folder
     this.resourceUri = uri
     this.contextValue = isRunnable ? 'runnableFolder' : 'folder'
     this.tooltip = uri.path
