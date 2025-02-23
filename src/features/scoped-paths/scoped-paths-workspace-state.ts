@@ -1,5 +1,5 @@
 import { Memento } from 'vscode'
-import { defaultCurrentScope, QUICK_SCOPE_PREFIX } from './common'
+import { BOOKMARKS_SCOPE, defaultCurrentScope, QUICK_SCOPE_PREFIX } from './common'
 
 const defaultEnabled = false
 
@@ -41,6 +41,10 @@ export class ScopedPathsWorkspaceState {
 
   getDynamicIsInQuickScope() {
     return this._currentScope.startsWith(QUICK_SCOPE_PREFIX)
+  }
+
+  getDynamicIsInBookmarksScope() {
+    return this._currentScope === BOOKMARKS_SCOPE
   }
 
   setEnabled(value: boolean) {

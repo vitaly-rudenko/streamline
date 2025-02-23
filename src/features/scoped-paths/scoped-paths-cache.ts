@@ -1,5 +1,6 @@
 import { getParents } from '../../utils/get-parents'
 import { unique } from '../../utils/unique'
+import { BookmarksFeature } from '../bookmarks/bookmarks-feature'
 import { ScopedPathsConfig } from './scoped-paths-config'
 import { ScopedPathsWorkspaceState } from './scoped-paths-workspace-state'
 
@@ -15,6 +16,7 @@ export class ScopedPathsCache {
   constructor(
     private readonly config: ScopedPathsConfig,
     private readonly workspaceState: ScopedPathsWorkspaceState,
+    private readonly bookmarksFeature: BookmarksFeature | undefined,
   ) {
     this.update()
   }
@@ -22,7 +24,9 @@ export class ScopedPathsCache {
   update() {
     this._cachedCurrentlyScopedAndExcludedPaths = this.workspaceState.getDynamicIsInQuickScope()
       ? [this.workspaceState.getDynamicQuickScopePath()]
-      : (this.config.getScopesObject()[this.workspaceState.getCurrentScope()] ?? [])
+      : this.workspaceState.getDynamicIsInBookmarksScope()
+        ? (this.bookmarksFeature?.getScopeableBookmarkedPathsInCurrentBookmarksListSet() ?? [])
+        : (this.config.getScopesObject()[this.workspaceState.getCurrentScope()] ?? [])
 
     this._cachedCurrentlyScopedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => !path.startsWith('!'))
     this._cachedCurrentlyExcludedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => path.startsWith('!')).map(path => path.slice(1))

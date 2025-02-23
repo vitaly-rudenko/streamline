@@ -14,16 +14,19 @@ import { createNavigatorFeature } from './features/navigator/navigator-feature'
 import { ConditionContext } from './common/when'
 import { GenerateConditionContextInput } from './generate-condition-context'
 
-type Feature =
-	| 'bookmarks'
-	| 'currentPath'
-	| 'highlightedPaths'
-	| 'relatedFiles'
-	| 'scopedPaths'
-  | 'smartConfig'
-  | 'superSearch'
-  | 'quickRepl'
-  | 'navigator'
+const featureSchema = z.enum([
+	'bookmarks',
+	'currentPath',
+	'highlightedPaths',
+	'relatedFiles',
+	'scopedPaths',
+  'smartConfig',
+  'superSearch',
+  'quickRepl',
+  'navigator',
+])
+
+type Feature = z.infer<typeof featureSchema>
 
 export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
@@ -58,36 +61,45 @@ export function activate(context: vscode.ExtensionContext) {
     }
   }
 
-	const highlightedPathsFeature = isFeatureEnabled('highlightedPaths')
+  let highlightedPathsFeature: ReturnType<typeof createHighlightedPathsFeature> | undefined
+  let smartConfigFeature: ReturnType<typeof createSmartConfigFeature> | undefined
+  let scopedPathsFeature: ReturnType<typeof createScopedPathsFeature> | undefined
+  let bookmarksFeature: ReturnType<typeof createBookmarksFeature> | undefined
+
+	highlightedPathsFeature = isFeatureEnabled('highlightedPaths')
 		? createHighlightedPathsFeature({
 			context,
 			onChange: () => onDidChangeFileDecorationsEmitter.fire(undefined),
 		})
 		: undefined
 
-  const smartConfigFeature = isFeatureEnabled('smartConfig')
+  smartConfigFeature = isFeatureEnabled('smartConfig')
     ? createSmartConfigFeature({
       context,
       generateConditionContext,
     })
     : undefined
 
-  const scopedPathsFeature = isFeatureEnabled('scopedPaths')
+  bookmarksFeature = isFeatureEnabled('bookmarks')
+    ? createBookmarksFeature({
+      context,
+      onChange: () => {
+        onDidChangeFileDecorationsEmitter.fire(undefined)
+        scopedPathsFeature?.handleBookmarksChanged()
+      }
+    })
+    : undefined
+
+  scopedPathsFeature = isFeatureEnabled('scopedPaths')
 		? createScopedPathsFeature({
 			context,
 			onChange: () => {
         onDidChangeFileDecorationsEmitter.fire(undefined)
         smartConfigFeature?.scheduleRefresh()
       },
+      bookmarksFeature,
 		})
 		: undefined
-
-  const bookmarksFeature = isFeatureEnabled('bookmarks')
-    ? createBookmarksFeature({
-      context,
-      onChange: () => onDidChangeFileDecorationsEmitter.fire(undefined),
-    })
-    : undefined
 
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
@@ -129,6 +141,18 @@ export function activate(context: vscode.ExtensionContext) {
       onDidChangeFileDecorationsEmitter,
     )
   }
+
+  async function updateContextInBackground() {
+    try {
+      for (const feature of featureSchema.options) {
+        await vscode.commands.executeCommand('setContext', `streamline.feature.${feature}Enabled`, isFeatureEnabled(feature))
+      }
+    } catch (error) {
+      console.log('[Streamline] Could not update context', error)
+    }
+  }
+
+  updateContextInBackground()
 }
 
 export function deactivate() {}
