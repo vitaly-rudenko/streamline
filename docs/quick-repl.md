@@ -11,7 +11,7 @@ It will walk you through the initial configuration and prepare some default temp
 ## Templates
 
 With templates, you can quickly create:
-- Scripts, a.k.a Untitled files
+- Snippets, a.k.a Untitled files
 - Files, either empty or with predefined contents
 - Projects – for example, a prepared setup for a HTML & CSS & JS app
 
@@ -97,7 +97,7 @@ Example of a project template:
 ## Commands
 
 Create commands to quickly run specific actions against your Quick Repls.  
-Commands can be ran on selections, files (saved and Untitled) and folder.
+Commands can be ran on selections, files (saved and Untitled) and folders.
 
 When multiple commands match for current context (e.g. file), you will be prompted to select which command to use.  
 If you want to avoid this, set `default: true` for the preferred command.
@@ -170,7 +170,7 @@ Run a JavaScript project:
 ```json
 {
   "name": "Run Project (JavaScript)",
-  "description": "Runs "npm start" when package.json or a directory is selected",
+  "description": "Runs 'npm start' when package.json or a directory is selected",
   "cwd": "$contextPath",
   "command": "npm start",
   "when": [
@@ -184,9 +184,9 @@ Run a JavaScript project:
 
 All variables in paths and terminal names:
 - `$replsPath` (example: `~/.streamline/quick-repl/repls`)
-- `$contextPath` (example: `~/.streamline/quick-repl/repls/file.mjs`)
+- `$contextPath` (example: `~/.streamline/quick-repl/repls/my/file.mjs`)
 - `$contextBasename` (example: `file.mjs`)
-- `$contextDirname` (example: `~/.streamline/quick-repl/repls`)
+- `$contextDirname` (example: `~/.streamline/quick-repl/repls/my`)
 - `$contextContent` - full contents of file (if available)
 - `$contextSelection` - current selection (if available and not empty)
 - `$shortContextPath` (only available in terminal names)
