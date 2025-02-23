@@ -294,7 +294,7 @@ export function createScopedPathsFeature(input: {
       const paths = getTargetPathsForCommand(uri, selectedUris)
       if (paths.length === 0) return
       if (paths.length > 1) {
-        await vscode.window.showWarningMessage('Only one path can be used for Quick Scope')
+        vscode.window.showWarningMessage('Only one path can be used for Quick Scope')
         return
       }
 
@@ -312,7 +312,7 @@ export function createScopedPathsFeature(input: {
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.addPathToCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
       if (workspaceState.getDynamicIsInQuickScope()) {
-        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        vscode.window.showWarningMessage('Cannot modify Quick Scope')
         return
       }
 
@@ -337,7 +337,7 @@ export function createScopedPathsFeature(input: {
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
       if (workspaceState.getDynamicIsInQuickScope()) {
-        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        vscode.window.showWarningMessage('Cannot modify Quick Scope')
         return
       }
 
@@ -359,7 +359,7 @@ export function createScopedPathsFeature(input: {
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.excludePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
       if (workspaceState.getDynamicIsInQuickScope()) {
-        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        vscode.window.showWarningMessage('Cannot modify Quick Scope')
         return
       }
 
@@ -384,7 +384,7 @@ export function createScopedPathsFeature(input: {
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.includePathIntoCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
       if (workspaceState.getDynamicIsInQuickScope()) {
-        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        vscode.window.showWarningMessage('Cannot modify Quick Scope')
         return
       }
 
@@ -436,7 +436,7 @@ export function createScopedPathsFeature(input: {
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.clearCurrentScope', async () => {
       if (workspaceState.getDynamicIsInQuickScope()) {
-        await vscode.window.showWarningMessage('Cannot modify Quick Scope')
+        vscode.window.showWarningMessage('Cannot modify Quick Scope')
         return
       }
 

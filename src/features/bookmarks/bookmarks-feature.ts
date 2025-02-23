@@ -188,7 +188,7 @@ export function createBookmarksFeature(input: {
 
       if (!bookmarks.includes(bookmarkToEdit)) {
         bookmarksTreeDataProvider.refresh()
-        await vscode.window.showWarningMessage('Something went wrong, please try again')
+        vscode.window.showWarningMessage('Something went wrong, please try again')
         return
       }
 

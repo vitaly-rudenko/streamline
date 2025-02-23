@@ -14,11 +14,11 @@ import { ConditionContext } from './common/when'
 import { GenerateConditionContextInput } from './generate-condition-context'
 
 const featureSchema = z.enum([
-	'bookmarks',
-	'currentPath',
-	'highlightedPaths',
-	'relatedFiles',
-	'scopedPaths',
+  'bookmarks',
+  'currentPath',
+  'highlightedPaths',
+  'relatedFiles',
+  'scopedPaths',
   'smartConfig',
   'superSearch',
   'quickRepl',

@@ -2,9 +2,28 @@
 
 ## 0.50
 
+### General
+
+- Added command to view documentation for 'when' syntax: `Streamline: Syntax for 'when' (Help)`
+- Refactored 'when' syntax and added new conditions, such as `selection`, `fileType` and `untitled`
+
+### New feature: Quick Repl
+
+Easily create scripts and projects, and run them.  
+Supports templates, custom commands, and a separate tree view for your snippets.
+
+- Setup with `Quick Repl: Setup` command
+- Check documentation with `Streamline: Quick Repl (Help)` command
+
+### Scoped Paths
+
+- You can now scope into your bookmarks (from the currently selected list)
+
 ### Bookmarks
 
 - Added "Quick Open Bookmark from Current List" command as alternative to the view
+- You can now delete bookmark from a file in Explorer view
+- Fixed deletion and context detection when you have multiple lists
 
 ### Related Files
 

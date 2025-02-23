@@ -17,7 +17,6 @@ import { collapseHomedir } from './toolkit/collapse-homedir'
 
 // TODO: somehow automatically focus on created file/folder in the tree view
 // TODO: CHANGELOG & README
-// TODO: documentation (quick-repl.md) + make it accessible with command "Quick Repl: Help"
 
 export function createQuickReplFeature(input: {
   context: vscode.ExtensionContext
@@ -182,7 +181,6 @@ export function createQuickReplFeature(input: {
     })
   )
 
-  // TODO: It only shows Quick Repl templates at the moment, does not allow creating files or folders
   // For "+" button in the tree view title
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.createInRoot', async () => {
@@ -255,8 +253,8 @@ export function createQuickReplFeature(input: {
       try {
         return (await vscode.workspace.fs.readFile(templateUri)).toString()
       } catch (error) {
-        // TODO: warning
-        console.warn('[QuickRepl] Could not read file template content', error)
+        console.warn(`[QuickRepl] Failed to read template: ${template.path}`, error)
+        vscode.window.showWarningMessage(`Failed to read template: ${template.path}`)
         return undefined
       }
     }

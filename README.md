@@ -2,6 +2,11 @@
 
 Productivity-oriented VS Code extension packed with features for working on large projects.
 
+## Quick Repls
+
+Easily create scripts and projects, and run them.  
+Supports templates, custom commands, and a separate tree view for your snippets.
+
 ## Scoped Paths
 
 Add files and folders into 'scopes' and easily toggle between them to only see what's important.
