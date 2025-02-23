@@ -488,6 +488,7 @@ export function createScopedPathsFeature(input: {
     isParentOfCurrentlyScopedAndExcludedPaths(path: string) {
       return cache.getCachedParentsOfCurrentlyScopedAndExcludedPathsSet().has(path)
     },
+    // TODO: probably doesn't belong here, perhaps can be abstracted to be more generic & reusable (e.g. for highlighted paths too?)
     handleBookmarksChanged() {
       cache.update()
       scheduleSoftRefresh()
