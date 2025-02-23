@@ -15,6 +15,8 @@ With templates, you can quickly create:
 - Files, either empty or with predefined contents
 - Projects – for example, a prepared setup for a HTML & CSS & JS app
 
+Create as many templates as you need, because you can choose which one to use whenever you create a new Quick Repl.
+
 ```ts
 type Template = SnippetTemplate | FileTemplate | ProjectTemplate
 
@@ -22,8 +24,7 @@ type SnippetTemplate = {
   name: string
   description?: string
   type: 'snippet'
-  // https://code.visualstudio.com/docs/languages/identifiers
-  // for example, 'javascript'
+  /** https://code.visualstudio.com/docs/languages/identifiers */
   languageId: string
   template?: { content: string[] } | { path: string }
 }
@@ -97,6 +98,9 @@ Example of a project template:
 
 Create commands to quickly run specific actions against your Quick Repls.  
 Commands can be ran on selections, files (saved and Untitled) and folder.
+
+When multiple commands match for current context (e.g. file), you will be prompted to select which command to use.  
+If you want to avoid this, set `default: true` for the preferred command.
 
 ```ts
 type Command = {
