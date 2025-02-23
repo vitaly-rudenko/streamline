@@ -139,6 +139,23 @@ export function activate(context: vscode.ExtensionContext) {
     )
   }
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.help.when', async () => {
+      await openHelp('docs/when.md')
+    }),
+    vscode.commands.registerCommand('streamline.help.quickRepl', async () => {
+      await openHelp('docs/quick-repl.md')
+    })
+  )
+
+  async function openHelp(path: string) {
+    const helpPath = context.asAbsolutePath(path)
+    if (!helpPath) return
+
+    const helpUri = vscode.Uri.file(helpPath)
+    await vscode.commands.executeCommand('markdown.showPreview', helpUri)
+  }
+
   async function updateContextInBackground() {
     try {
       for (const feature of featureSchema.options) {

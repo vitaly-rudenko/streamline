@@ -134,7 +134,7 @@ export function createQuickReplFeature(input: {
       const defaultCommand = commands.length === 1 ? commands[0] : commands.find(command => command.default)
 
       const selected = defaultCommand
-        ? { command: defaultCommand } 
+        ? { command: defaultCommand }
         : await vscode.window.showQuickPick(
           commands.map(command => ({
             label: command.name,
@@ -549,17 +549,6 @@ export function createQuickReplFeature(input: {
       if (selectedFinalStep?.option === 'createQuickRepl') {
         await vscode.commands.executeCommand('streamline.quickRepl.createQuickRepl')
       }
-    })
-  )
-
-  // Open help
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.quickRepl.help', async () => {
-      const helpPath = context.asAbsolutePath('docs/quick-repl.md')
-      if (!helpPath) return
-
-      const helpUri = vscode.Uri.file(helpPath)
-      await vscode.commands.executeCommand('markdown.showPreview', helpUri)
     })
   )
 

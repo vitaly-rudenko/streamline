@@ -97,12 +97,24 @@
     },
     "commands": [
       {
+        "command": "streamline.help.when",
+        "title": "Streamline: Syntax for 'when' (Help)",
+        "icon": "$(question)"
+      },
+      {
+        "command": "streamline.help.quickRepl",
+        "title": "Streamline: Quick Repl (Help)",
+        "icon": "$(question)"
+      },
+      {
         "command": "streamline.superSearch.findSimilarMatches",
-        "title": "Super Search: Find similar matches"
+        "title": "Super Search: Find similar matches",
+        "icon": "$(search)"
       },
       {
         "command": "streamline.superSearch.findWords",
-        "title": "Super Search: Find words"
+        "title": "Super Search: Find words",
+        "icon": "$(search)"
       },
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
@@ -301,11 +313,6 @@
         "command": "streamline.quickRepl.setup",
         "title": "Quick Repl: Setup",
         "icon": "$(rocket)"
-      },
-      {
-        "command": "streamline.quickRepl.help",
-        "title": "Quick Repl: Help",
-        "icon": "$(question)"
       },
       {
         "command": "streamline.quickRepl.run",
@@ -593,7 +600,7 @@
           "when": "view == quickRepl"
         },
         {
-          "command": "streamline.quickRepl.help",
+          "command": "streamline.help.quickRepl",
           "group": "info@3",
           "when": "view == quickRepl"
         }
