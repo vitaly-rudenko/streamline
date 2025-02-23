@@ -31,7 +31,7 @@ export function createQuickReplFeature(input: {
     await updateContextInBackground()
   }, 500)
 
-  const debouncedUpdateContextInBackground = createDebouncedFunction(async () => {
+  const scheduleUpdateContextInBackground = createDebouncedFunction(async () => {
     await updateContextInBackground()
   }, 500)
 
@@ -620,7 +620,7 @@ export function createQuickReplFeature(input: {
     vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
     vscode.window.onDidChangeTextEditorOptions(() => updateContextInBackground()),
     // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => debouncedUpdateContextInBackground()),
+    vscode.window.onDidChangeTextEditorSelection(() => scheduleUpdateContextInBackground()),
   )
 
   updateContextInBackground()
