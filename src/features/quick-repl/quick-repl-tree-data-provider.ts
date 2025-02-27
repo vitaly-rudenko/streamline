@@ -33,20 +33,7 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
         return [new SetupTreeItem()]
       }
 
-      const replsUri = vscode.Uri.file(expandHomedir(shortReplsPath, this.homedir))
-      const additionalReplsUris = this.config.getAdditionalShortReplsPaths()
-        .map(shortPath => vscode.Uri.file(expandHomedir(shortPath, this.homedir)))
-
-      if (additionalReplsUris.length > 0) {
-        const formattedPaths = formatPaths(additionalReplsUris.map(uri => uri.path))
-
-        return [
-          new FolderTreeItem('Quick Repls', false, true, true, replsUri),
-          ...additionalReplsUris.map(uri => new FolderTreeItem(formattedPaths.get(uri.path)!, false, false, true, uri))
-        ]
-      }
-
-      directoryUri = replsUri
+      directoryUri = vscode.Uri.file(expandHomedir(shortReplsPath, this.homedir))
     }
 
     if (element instanceof FolderTreeItem) {

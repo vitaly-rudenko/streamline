@@ -53,7 +53,7 @@ export function createQuickReplFeature(input: {
   // Generate consistent terminal name for a given path
   function generateTerminalName(context: { path: string }) {
     return substitute({
-      input: config.getTerminalName(),
+      input: '$shortContextRelativePath',
       replsPath: getReplsPathOrFail(),
       context,
       homedir,
@@ -74,12 +74,6 @@ export function createQuickReplFeature(input: {
         'setContext',
         'streamline.quickRepl.isActiveTextEditorRunnable',
         vscode.window.activeTextEditor && isRunnable(vscode.window.activeTextEditor)
-      )
-
-      await vscode.commands.executeCommand(
-        'setContext',
-        'streamline.quickRepl.hasAdditionalReplPaths',
-        config.getAdditionalShortReplsPaths().length > 0
       )
     } catch (error) {
       console.warn('[QuickRepl] Could not update context', error)
@@ -148,17 +142,22 @@ export function createQuickReplFeature(input: {
       const { command } = selected
 
       const terminalName = generateTerminalName({ path: uri.path })
-      const terminal = vscode.window.terminals.find(t => t.name === terminalName)
-        ?? vscode.window.createTerminal({
-          name: terminalName,
-          iconPath: new vscode.ThemeIcon('play'),
-          cwd: substitute({
-            input: expandHomedir(command.cwd, homedir),
-            replsPath: getReplsPathOrFail(),
-            context,
-            homedir,
-          })
-        })
+      const terminalIconPath = new vscode.ThemeIcon('play')
+      const terminalCwd = substitute({
+        input: expandHomedir(command.cwd, homedir),
+        replsPath: getReplsPathOrFail(),
+        context,
+        homedir,
+      })
+
+      const existingTerminal = vscode.window.terminals
+        .find(t => (
+          t.creationOptions.name === terminalName
+          && (t.creationOptions.iconPath instanceof vscode.ThemeIcon && t.creationOptions.iconPath.id === terminalIconPath.id)
+          && t.shellIntegration?.cwd?.path === terminalCwd
+        ))
+
+      const terminal = existingTerminal ?? vscode.window.createTerminal({ name: terminalName, iconPath: terminalIconPath, cwd: terminalCwd })
 
       terminal.show(true)
       terminal.sendText(

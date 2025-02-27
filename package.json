@@ -582,7 +582,7 @@
         {
           "command": "streamline.quickRepl.createInRoot",
           "group": "navigation@1",
-          "when": "view == quickRepl && !streamline.quickRepl.hasAdditionalReplPaths"
+          "when": "view == quickRepl"
         },
         {
           "command": "streamline.quickRepl.refresh",
@@ -1001,14 +1001,6 @@
           "type": "string",
           "default": "~/.streamline/quick-repl/repls",
           "description": "Path for stored Quick Repls (can be referenced as $replsPath)"
-        },
-        "streamline.quickRepl.additionalReplsPaths": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "description": "Additional paths to show in the Quick Repl view, cannot be used in commands or templates"
         },
         "streamline.quickRepl.templates": {
           "description": "Templates allow you to quickly create scripts and projects in your Quick Repls folder: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md",

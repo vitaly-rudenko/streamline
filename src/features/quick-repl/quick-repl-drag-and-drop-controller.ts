@@ -33,9 +33,7 @@ export class QuickReplDragAndDropController implements vscode.TreeDragAndDropCon
       destinationDirectoryUri = vscode.Uri.file(path.dirname(destination.uri.path))
     } else if (destination === undefined) {
       const shortReplsPath = this.config.getShortReplsPath()
-      if (!shortReplsPath) return
-
-      if (this.config.getAdditionalShortReplsPaths().length === 0) {
+      if (shortReplsPath) {
         destinationDirectoryUri = vscode.Uri.file(
           expandHomedir(shortReplsPath, this.homedir)
         )
