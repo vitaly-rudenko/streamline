@@ -6,7 +6,6 @@ import { FeatureConfig } from '../feature-config'
 import z from 'zod'
 
 const defaultUseExcludes = true
-const defaultUseStricterQuickOpenQuery = false
 const defaultUseGlobalSearch = false
 const defaultMaxLabelLength = 60
 const defaultCollapsedIndicator = '⸱⸱⸱'
@@ -15,7 +14,6 @@ const defaultExcludedSuffixes = ['spec', 'test', 'e2e-spec']
 export class RelatedFilesConfig extends FeatureConfig {
   private _customExcludes: Record<string, unknown> = {}
   private _useExcludes: boolean = defaultUseExcludes
-  private _useStricterQuickOpenQuery: boolean = defaultUseStricterQuickOpenQuery
   private _useGlobalSearch: boolean = defaultUseGlobalSearch
   private _hiddenWorkspaceFoldersInGlobalSearch: string[] = []
   private _maxLabelLength: number = defaultMaxLabelLength
@@ -30,7 +28,6 @@ export class RelatedFilesConfig extends FeatureConfig {
   load(config = getConfig()) {
     const customExcludes = safeConfigGet(config, 'relatedFiles.exclude', {}, z.record(z.unknown()))
     const useExcludes = safeConfigGet(config, 'relatedFiles.useExcludes', defaultUseExcludes, z.boolean())
-    const useStricterQuickOpenQuery = safeConfigGet(config, 'relatedFiles.useStricterQuickOpenQuery', defaultUseStricterQuickOpenQuery, z.boolean())
     const useGlobalSearch = safeConfigGet(config, 'relatedFiles.useGlobalSearch', defaultUseGlobalSearch, z.boolean())
     const hiddenWorkspaceFoldersInGlobalSearch = safeConfigGet(config, 'relatedFiles.hiddenWorkspaceFoldersInGlobalSearch', [], z.array(z.string()))
     const maxLabelLength = safeConfigGet(config, 'relatedFiles.maxLabelLength', defaultMaxLabelLength, z.number().nonnegative())
@@ -41,7 +38,6 @@ export class RelatedFilesConfig extends FeatureConfig {
 
     if (
       this._useExcludes !== useExcludes
-      || this._useStricterQuickOpenQuery !== useStricterQuickOpenQuery
       || this._useGlobalSearch !== useGlobalSearch
       || this._maxLabelLength !== maxLabelLength
       || this._collapsedIndicator !== collapsedIndicator
@@ -50,7 +46,6 @@ export class RelatedFilesConfig extends FeatureConfig {
       || !areArraysShallowEqual(this._excludedSuffixes, excludedSuffixes)
     ) {
       this._useExcludes = useExcludes
-      this._useStricterQuickOpenQuery = useStricterQuickOpenQuery
       this._useGlobalSearch = useGlobalSearch
       this._maxLabelLength = maxLabelLength
       this._collapsedIndicator = collapsedIndicator
@@ -63,7 +58,6 @@ export class RelatedFilesConfig extends FeatureConfig {
 
     console.debug(`[RelatedFiles] Config has been loaded (hasChanged: ${hasChanged})`, {
       useExcludes,
-      useStricterQuickOpenQuery,
       useGlobalSearch,
       maxLabelLength,
       collapsedIndicator,
@@ -108,10 +102,6 @@ export class RelatedFilesConfig extends FeatureConfig {
 
   getCustomExcludes() {
     return this._customExcludes
-  }
-
-  getUseStricterQuickOpenQuery() {
-    return this._useStricterQuickOpenQuery
   }
 
   getMaxLabelLength() {

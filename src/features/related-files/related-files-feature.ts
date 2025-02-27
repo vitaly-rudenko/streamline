@@ -42,9 +42,7 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
         ? vscode.workspace.getWorkspaceFolder(uri)
         : undefined
 
-      const basename = config.getUseStricterQuickOpenQuery()
-        ? getSmartBasename(uri.path, config.getExcludedSuffixes())
-        : getSmartBasename(uri.path, config.getExcludedSuffixes()).replaceAll(/[-_]/g, ' ')
+      const basename = getSmartBasename(uri.path, config.getExcludedSuffixes()).replaceAll(/[-_]/g, ' ')
 
       const query = workspaceFolder ? `${workspaceFolder.name}/${basename}` : basename
 

@@ -870,11 +870,6 @@
           "default": true,
           "description": "Enable custom exclude patterns from 'streamline.relatedFiles.exclude' configuration section"
         },
-        "streamline.relatedFiles.useStricterQuickOpenQuery": {
-          "type": "boolean",
-          "default": false,
-          "description": "Keep hyphens or underscores in the basename when using 'Quick Open Related File...' command"
-        },
         "streamline.relatedFiles.useGlobalSearch": {
           "type": "boolean",
           "default": false,

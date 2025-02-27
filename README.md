@@ -41,7 +41,6 @@ Available as an Explorer view and as a command in the Command Palette (`Quick Op
 
 > The extension searches for files whose basename include the current file's basename.
 > Priority is given to files within the same parent folder name.
-> You can also enable global search across all workspace folders and enable stricter search query in the settings.
 
 ![Demo](docs/related_files.gif)
 
