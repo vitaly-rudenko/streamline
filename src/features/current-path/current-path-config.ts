@@ -1,4 +1,3 @@
-import { ConfigurationTarget } from 'vscode'
 import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { FeatureConfig } from '../feature-config'
 import z from 'zod'
