@@ -47,9 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
         path: input.document.uri.path,
         untitled: input.document.isUntitled,
         fileType: 'file',
-        selection: vscode.window.activeTextEditor
-          ? !vscode.window.activeTextEditor.selection.isEmpty
-          : undefined,
+        selection: !input.selection.isEmpty,
       } : (input && 'path' in input) ? {
         path: input.path,
         fileType: input.fileType === vscode.FileType.File ? 'file'
