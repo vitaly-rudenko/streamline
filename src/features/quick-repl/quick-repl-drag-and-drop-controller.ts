@@ -6,8 +6,11 @@ import { QuickReplTreeDataProvider, FileTreeItem, FolderTreeItem } from './quick
 import { expandHomedir } from './toolkit/expand-homedir'
 
 export class QuickReplDragAndDropController implements vscode.TreeDragAndDropController<TreeItem> {
-  dropMimeTypes = ['application/vnd.code.tree.quickrepl']
-  dragMimeTypes = []
+  // MIMEs for dropping items into Quick Repl view
+  dropMimeTypes = ['text/uri-list']
+
+  // MIMEs for dragging items from Quick Repl view (e.g. into explorer, editor or into Quick Repl view itself)
+  dragMimeTypes = ['text/uri-list']
 
   constructor(
     private readonly config: QuickReplConfig,
@@ -19,8 +22,8 @@ export class QuickReplDragAndDropController implements vscode.TreeDragAndDropCon
     const movableTreeItems = source.filter(item => item instanceof FileTreeItem || item instanceof FolderTreeItem)
     if (movableTreeItems.length > 0) {
       treeDataTransfer.set(
-        'application/vnd.code.tree.quickrepl',
-        new vscode.DataTransferItem(movableTreeItems.map(item => item.uri)),
+        'text/uri-list',
+        new vscode.DataTransferItem(movableTreeItems.map(item => item.uri.toString()).join('\r\n')),
       )
     }
   }
@@ -41,9 +44,10 @@ export class QuickReplDragAndDropController implements vscode.TreeDragAndDropCon
     }
     if (!destinationDirectoryUri) return
 
-    const targetUris: vscode.Uri[] = dataTransfer.get('application/vnd.code.tree.quickrepl')?.value
-    if (!targetUris) return
+    const uriList = dataTransfer.get('text/uri-list')?.value as string | undefined
+    if (!uriList) return
 
+    const targetUris = uriList.split(/[\r\n]+/g).filter(Boolean).map(p => vscode.Uri.parse(p))
     for (const targetUri of targetUris) {
       const destinationUri = vscode.Uri.joinPath(destinationDirectoryUri, path.basename(targetUri.path))
       await vscode.workspace.fs.rename(targetUri, destinationUri)

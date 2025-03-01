@@ -42,6 +42,7 @@ export function createQuickReplFeature(input: {
     treeDataProvider: quickReplTreeDataProvider,
     dragAndDropController: new QuickReplDragAndDropController(config, quickReplTreeDataProvider, homedir),
     showCollapseAll: true,
+    canSelectMany: true,
   })
 
   function getReplsPathOrFail() {
