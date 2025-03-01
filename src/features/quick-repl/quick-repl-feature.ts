@@ -382,18 +382,26 @@ export function createQuickReplFeature(input: {
 
   // Delete file or folder
   context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.quickRepl.delete', async (argument) => {
-      if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
-        const confirmed = await vscode.window.showInformationMessage(`Are you sure you want to delete "${argument.label}"?`, 'Yes, delete', 'Cancel')
-        if (confirmed !== 'Yes, delete') return
+    vscode.commands.registerCommand('streamline.quickRepl.delete', async (arg: unknown, alernativeArg: unknown) => {
+      const args = Array.isArray(alernativeArg) ? alernativeArg : [arg]
+      const treeItems = args.filter(arg => arg instanceof FileTreeItem || arg instanceof FolderTreeItem)
+      if (treeItems.length === 0) return
 
-        await vscode.workspace.fs.delete(argument.uri, {
-          recursive: true,
-          useTrash: true,
-        })
+      const firstLabel = `"${treeItems[0].label ?? basename(treeItems[0].uri.path)}"`
+      const label = treeItems.length > 1 ? `${firstLabel} and ${treeItems.length - 1} more files` : firstLabel
+      const confirmed = await vscode.window.showInformationMessage(`Are you sure you want to delete ${label}?`, 'Yes, delete', 'Cancel')
+      if (confirmed !== 'Yes, delete') return
 
-        quickReplTreeDataProvider.refresh()
+      for (const item of treeItems) {
+        try {
+          await vscode.workspace.fs.delete(item.uri, { recursive: true, useTrash: true })
+        } catch (error) {
+          console.warn(`[QuickRepl] Failed to delete ${item.uri.path}`, error)
+          vscode.window.showWarningMessage(`Failed to delete ${item.uri.path}`)
+        }
       }
+
+      quickReplTreeDataProvider.refresh()
     })
   )
 
