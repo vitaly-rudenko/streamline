@@ -5,6 +5,12 @@ export const setupReplsPath = '~/.streamline/quick-repl/repls'
 
 export const setupTemplates: Template[] = [
   {
+    name: 'JavaScript File',
+    description: 'Creates an empty JavaScript file',
+    type: 'file',
+    defaultPath: '$replsPath/playground/$datetime_$randomAdjective_$randomNoun.mjs',
+  },
+  {
     name: 'JavaScript Script',
     description: 'Opens an Untitled JavaScript file with predefined script template',
     type: 'snippet',
@@ -12,12 +18,6 @@ export const setupTemplates: Template[] = [
     template: {
       content: ['console.log(\'Hello, World!\');']
     }
-  },
-  {
-    name: 'JavaScript File',
-    description: 'Creates an empty JavaScript file',
-    type: 'file',
-    defaultPath: '$replsPath/playground/$datetime_$randomAdjective_$randomNoun.mjs',
   },
   {
     name: 'JavaScript Project',
