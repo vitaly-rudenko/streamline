@@ -158,7 +158,11 @@ export function createQuickReplFeature(input: {
           && t.shellIntegration?.cwd?.path === terminalCwd
         ))
 
-      const terminal = existingTerminal ?? vscode.window.createTerminal({ name: terminalName, iconPath: terminalIconPath, cwd: terminalCwd })
+      const terminal = existingTerminal ?? vscode.window.createTerminal({
+        name: terminalName,
+        iconPath: terminalIconPath,
+        cwd: terminalCwd,
+      })
 
       terminal.show(true)
       terminal.sendText(
