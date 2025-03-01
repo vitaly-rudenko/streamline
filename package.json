@@ -84,7 +84,7 @@
           "id": "bookmarks",
           "name": "Bookmarks",
           "visibility": "visible",
-          "icon": "$(code)",
+          "icon": "$(bookmark)",
           "when": "streamline.bookmarks.enabled"
         },
         {
