@@ -4,20 +4,20 @@ import z from 'zod'
 const colorThemeKindSlugSchema = z.enum(['dark', 'light', 'high-contrast', 'high-contrast-light'])
 type ColorThemeKindSlug = z.infer<typeof colorThemeKindSlugSchema>
 
-export const conditionSchema = z.union([
-  z.object({ untitled: z.boolean() }),
-  z.object({ basename: z.string() }),
-  z.object({ path: z.string() }),
-  z.object({ toggle: z.string() }),
-  z.object({ colorThemeKind: colorThemeKindSlugSchema }),
+export const conditionSchema = z.strictObject({
+  untitled: z.boolean().optional(),
+  basename: z.string().optional(),
+  path: z.string().optional(),
+  toggle: z.string().optional(),
+  colorThemeKind: colorThemeKindSlugSchema.optional(),
   // https://code.visualstudio.com/docs/languages/identifiers
-  z.object({ languageId: z.string() }),
-  z.object({ scopeSelected: z.string() }),
-  z.object({ scopeEnabled: z.boolean() }),
-  z.object({ scope: z.string() }), // Shorthand for [{ scopeSelected: 'scope' }, { scopeEnabled: true }]
-  z.object({ fileType: z.enum(['file', 'directory']) }),
-  z.object({ selection: z.boolean() }),
-])
+  languageId: z.string().optional(),
+  scopeSelected: z.string().optional(),
+  scopeEnabled: z.boolean().optional(),
+  scope: z.string().optional(), // Shorthand for [{ scopeSelected: 'scope', scopeEnabled: true }]
+  fileType: z.enum(['file', 'directory']).optional(),
+  selection: z.boolean().optional(),
+}).refine(data => Object.keys(data).length > 0,  'At least one condition must be present')
 
 export type Condition = z.infer<typeof conditionSchema>
 
@@ -39,60 +39,60 @@ export type ConditionContext = {
 }
 
 export function testWhen(ctx: ConditionContext, when: When): boolean {
+  if (when.length === 0) return true
   return when.some(condition => (
     Array.isArray(condition)
       ? condition.every(subCondition => testCondition(ctx, subCondition))
       : testCondition(ctx, condition)
   ))
 }
-
 /** Match specific condition against the provided context */
 function testCondition(ctx: ConditionContext, condition: Condition): boolean {
   if (ctx.path !== undefined) {
-    if ('path' in condition) {
+    if (condition.path !== undefined) {
       return new RegExp(condition.path).test(ctx.path)
     }
 
-    if ('basename' in condition) {
+    if (condition.basename !== undefined) {
       return new RegExp(condition.basename).test(basename(ctx.path))
     }
   }
 
   if (ctx.untitled !== undefined) {
-    if ('untitled' in condition) {
+    if (condition.untitled !== undefined) {
       return condition.untitled === ctx.untitled
     }
   }
 
-  if ('toggle' in condition) {
+  if (condition.toggle !== undefined) {
     return ctx.toggles.includes(condition.toggle)
   }
 
-  if ('colorThemeKind' in condition) {
+  if (condition.colorThemeKind !== undefined) {
     return ctx.colorThemeKind === condition.colorThemeKind
   }
 
-  if ('languageId' in condition) {
+  if (condition.languageId !== undefined) {
     return ctx.languageId === condition.languageId
   }
 
-  if ('scope' in condition) {
+  if (condition.scope !== undefined) {
     return ctx.scopeSelected === condition.scope && ctx.scopeEnabled
   }
 
-  if ('scopeSelected' in condition) {
+  if (condition.scopeSelected !== undefined) {
     return ctx.scopeSelected === condition.scopeSelected
   }
 
-  if ('scopeEnabled' in condition) {
+  if (condition.scopeEnabled !== undefined) {
     return ctx.scopeEnabled === condition.scopeEnabled
   }
 
-  if ('fileType' in condition) {
+  if (condition.fileType !== undefined) {
     return ctx.fileType === condition.fileType
   }
 
-  if ('selection' in condition) {
+  if (condition.selection !== undefined) {
     return ctx.selection === condition.selection
   }
 

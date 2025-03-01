@@ -1,4 +1,4 @@
-import { ConditionContext, testWhen, When } from './when'
+import { ConditionContext, testWhen, When, whenSchema } from './when'
 
 type Rule = {
   apply: string[]
@@ -182,5 +182,19 @@ describe('testWhen()', () => {
         scopeEnabled: false,
       }, rules)
     ).not.toContain('untitled-javascript')
+  })
+
+  it('returns true when conditions list is empty', () => {
+    expect(testWhen({
+      colorThemeKind: 'dark',
+      scopeEnabled: false,
+      toggles: [],
+    }, [])).toBe(true)
+  })
+
+  it('validates "when" (schema)', () => {
+    expect(whenSchema.safeParse([]).success).toBe(true)
+    expect(whenSchema.safeParse([{}]).success).toBe(false)
+    expect(whenSchema.safeParse([{ basename: 'file.mjs' }]).success).toBe(true)
   })
 })
