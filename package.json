@@ -975,19 +975,8 @@
                 "description": "Conditions when config is applied. Syntax: https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
                 "type": "array",
                 "items": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "additionalProperties": true
-                    },
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  ]
+                  "type": "object",
+                  "additionalProperties": true
                 }
               }
             }
@@ -1101,19 +1090,8 @@
                 "description": "Conditions when command is applicable (optional). Syntax: https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
                 "type": "array",
                 "items": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "additionalProperties": true
-                    },
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true
-                      }
-                    }
-                  ]
+                  "type": "object",
+                  "additionalProperties": true
                 }
               }
             }
