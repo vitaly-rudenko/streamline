@@ -384,6 +384,11 @@
         "command": "streamline.quickRepl.duplicate",
         "title": "Duplicate...",
         "icon": "$(copy)"
+      },
+      {
+        "command": "streamline.quickRepl.createTemplateFromFolder",
+        "title": "Create Template from Folder...",
+        "icon": "$(notebook)"
       }
     ],
     "keybindings": [
@@ -497,6 +502,10 @@
         },
         {
           "command": "streamline.quickRepl.createInRoot",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.createTemplateFromFolder",
           "when": "false"
         },
         {
@@ -707,19 +716,24 @@
           "group": "1_info@4"
         },
         {
-          "command": "streamline.quickRepl.openFolderInTerminal",
-          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
+          "command": "streamline.quickRepl.revealInOS",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
           "group": "2_info@1"
         },
         {
-          "command": "streamline.quickRepl.revealInOS",
-          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "command": "streamline.quickRepl.openFolderInTerminal",
+          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
           "group": "2_info@2"
         },
         {
           "command": "streamline.quickRepl.openInNewWindow",
           "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
           "group": "2_info@3"
+        },
+        {
+          "command": "streamline.quickRepl.createTemplateFromFolder",
+          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
+          "group": "2_info@4"
         },
         {
           "command": "streamline.quickRepl.delete",

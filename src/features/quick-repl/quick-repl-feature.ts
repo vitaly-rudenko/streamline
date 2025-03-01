@@ -661,6 +661,45 @@ export function createQuickReplFeature(input: {
     })
   )
 
+  // Create template from a folder
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.quickRepl.createTemplateFromFolder', async (argument: unknown) => {
+      if (argument instanceof FolderTreeItem) {
+        const templateName = await vscode.window.showInputBox({
+          value: basename(argument.uri.path),
+          placeHolder: 'Enter template name',
+        })
+        if (!templateName) return
+
+        if (config.getTemplates().some(template => template.name === templateName)) {
+          vscode.window.showWarningMessage(`Template with name "${templateName}" already exists`)
+          await vscode.commands.executeCommand('streamline.quickRepl.createTemplateFromFolder', argument)
+          return
+        }
+
+        const replsPath = getReplsPathOrFail()
+        const templatePath = argument.uri.path
+        const templateTemplatePath = templatePath.startsWith(replsPath + '/')
+          ? ('$replsPath' + templatePath.slice(replsPath.length))
+          : templatePath
+
+        const template: Template = {
+          name: templateName,
+          type: 'directory',
+          defaultPath: '$replsPath/$datetime_$randomAdjective_$randomNoun',
+          template: {
+            path: templateTemplatePath,
+          }
+        }
+
+        config.setTemplates([...config.getTemplates(), template])
+        await config.save()
+
+        vscode.window.showInformationMessage(`Template "${templateName}" has been created`)
+      }
+    })
+  )
+
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.quickRepl')) {
