@@ -195,8 +195,10 @@ export function createQuickReplFeature(input: {
   // For files and folders in the tree view
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.create', async (argument: unknown) => {
-      const parentUri = argument instanceof FolderTreeItem ? argument.uri
-        : argument instanceof vscode.Uri ? argument
+      const parentUri = argument instanceof FolderTreeItem
+        ? argument.uri
+        : argument instanceof vscode.Uri
+          ? argument
           : undefined
       if (!parentUri) return
 
@@ -210,7 +212,7 @@ export function createQuickReplFeature(input: {
       const { option } = selected
 
       if (option === 'createQuickRepl') {
-        await startQuickReplWizard({ parentUri: parentUri })
+        await startQuickReplWizard({ parentUri })
       }
 
       if (option === 'createFile') {
@@ -310,7 +312,7 @@ export function createQuickReplFeature(input: {
 
       const defaultBasename = defaultPath ? path.basename(defaultPath) : undefined
       const defaultDirectory = input.parentUri
-        ? path.dirname(input.parentUri.path)
+        ? input.parentUri.path
         : defaultPath
           ? path.dirname(defaultPath)
           : undefined
@@ -340,7 +342,7 @@ export function createQuickReplFeature(input: {
 
       const defaultBasename = defaultPath ? path.basename(defaultPath) : undefined
       const defaultDirectory = input.parentUri
-        ? path.dirname(input.parentUri.path)
+        ? input.parentUri.path
         : defaultPath
           ? path.dirname(defaultPath)
           : undefined
