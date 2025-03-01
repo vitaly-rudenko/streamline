@@ -53,7 +53,7 @@ export function createQuickReplFeature(input: {
   // Generate consistent terminal name for a given path
   function generateTerminalName(context: { path: string }) {
     return substitute({
-      input: '$shortContextRelativePath',
+      input: '$contextBasename',
       replsPath: getReplsPathOrFail(),
       context,
       homedir,
