@@ -1,7 +1,7 @@
+import wcmatch from 'wildcard-match'
 import * as vscode from 'vscode'
 import { QuickReplConfig } from './quick-repl-config'
 import { GenerateConditionContextInput } from '../../generate-condition-context'
-import { formatPaths } from '../../utils/format-paths'
 import { expandHomedir } from './toolkit/expand-homedir'
 
 type TreeItem = FolderTreeItem | FileTreeItem | FailingFolderTreeItem
@@ -10,6 +10,8 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 	private _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
 
+  private _isPathExcluded: ((path: string) => boolean) | undefined
+
   constructor(
     private readonly config: QuickReplConfig,
     private readonly isRunnable: (input: GenerateConditionContextInput) => boolean,
@@ -17,6 +19,7 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
   ) {}
 
   refresh(): void {
+    this._isPathExcluded = undefined
 		this._onDidChangeTreeData.fire()
   }
 
@@ -63,15 +66,24 @@ export class QuickReplTreeDataProvider implements vscode.TreeDataProvider<TreeIt
           return a[1] === vscode.FileType.Directory ? -1 : 1
         })
 
+      if (!this._isPathExcluded) {
+        const exclude = vscode.workspace.getConfiguration('files').get<Record<string, unknown>>('exclude', {})
+        const excludes = Object.entries(exclude).filter(([_, value]) => value === true).map(([key]) => key)
+        this._isPathExcluded = wcmatch(excludes)
+      }
+
       return files
         .map(([filename, fileType]) => {
           const fileUri = vscode.Uri.joinPath(directoryUri, filename)
+          if (this._isPathExcluded!(fileUri.path)) return undefined
+
           const isRunnable = this.isRunnable({ path: fileUri.path, fileType })
 
           return fileType === vscode.FileType.File
             ? new FileTreeItem(filename, isRunnable, fileUri)
             : new FolderTreeItem(filename, isRunnable, false, false, fileUri)
         })
+        .filter((item) => item !== undefined)
     }
 
     return undefined
