@@ -42,8 +42,8 @@ export const setupCommands: Command[] = [
       'QUICKREPL'
     ],
     when: [
-      [{ selection: true }, { languageId: 'typescript' }],
-      [{ selection: true }, { languageId: 'javascript' }]
+      { selection: true, languageId: 'typescript' },
+      { selection: true, languageId: 'javascript' }
     ],
   },
   {
@@ -56,8 +56,8 @@ export const setupCommands: Command[] = [
       'QUICKREPL'
     ],
     when: [
-      [{ untitled: true }, { languageId: 'typescript' }],
-      [{ untitled: true }, { languageId: 'javascript' }]
+      { untitled: true, languageId: 'typescript' },
+      { untitled: true, languageId: 'javascript' }
     ],
   },
   {
@@ -66,8 +66,8 @@ export const setupCommands: Command[] = [
     cwd: '$contextDirname',
     command: 'node $contextBasename',
     when: [
-      [{ untitled: false }, { languageId: 'javascript' }],
-      [{ basename: '\\.(c|m)?js$' }],
+      { untitled: false, languageId: 'javascript' },
+      { basename: '\\.(c|m)?js$' },
     ],
   },
   {

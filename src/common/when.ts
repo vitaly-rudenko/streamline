@@ -21,9 +21,8 @@ export const conditionSchema = z.strictObject({
 
 export type Condition = z.infer<typeof conditionSchema>
 
-// [Condition1, Condition2, ...] => Condition1 || Condition2 || ...
-// [[Condition1, Condition2], [Condition3, Condition4], ...] => (Condition1 && Condition2) || (Condition3 && Condition4) || ...
-export const whenSchema = z.array(z.union([conditionSchema, z.array(conditionSchema)]))
+// [{ Condition1 }, { Condition2, Condition3 }, ...] => Condition1 || (Condition2 && Condition3) || ...
+export const whenSchema = z.array(conditionSchema)
 export type When = z.infer<typeof whenSchema>
 
 export type ConditionContext = {
@@ -39,62 +38,56 @@ export type ConditionContext = {
 }
 
 export function testWhen(ctx: ConditionContext, when: When): boolean {
-  if (when.length === 0) return true
-  return when.some(condition => (
-    Array.isArray(condition)
-      ? condition.every(subCondition => testCondition(ctx, subCondition))
-      : testCondition(ctx, condition)
-  ))
+  return when.length === 0 || when.some(condition => testCondition(ctx, condition))
 }
+
 /** Match specific condition against the provided context */
 function testCondition(ctx: ConditionContext, condition: Condition): boolean {
-  if (ctx.path !== undefined) {
-    if (condition.path !== undefined) {
-      return new RegExp(condition.path).test(ctx.path)
-    }
+  const checks: boolean[] = []
 
-    if (condition.basename !== undefined) {
-      return new RegExp(condition.basename).test(basename(ctx.path))
-    }
+  if (condition.path !== undefined) {
+    checks.push(ctx.path !== undefined && new RegExp(condition.path).test(ctx.path))
   }
 
-  if (ctx.untitled !== undefined) {
-    if (condition.untitled !== undefined) {
-      return condition.untitled === ctx.untitled
-    }
+  if (condition.basename !== undefined) {
+    checks.push(ctx.path !== undefined && new RegExp(condition.basename).test(basename(ctx.path)))
+  }
+
+  if (condition.untitled !== undefined) {
+    checks.push(ctx.untitled !== undefined && condition.untitled === ctx.untitled)
   }
 
   if (condition.toggle !== undefined) {
-    return ctx.toggles.includes(condition.toggle)
+    checks.push(ctx.toggles.includes(condition.toggle))
   }
 
   if (condition.colorThemeKind !== undefined) {
-    return ctx.colorThemeKind === condition.colorThemeKind
+    checks.push(ctx.colorThemeKind === condition.colorThemeKind)
   }
 
   if (condition.languageId !== undefined) {
-    return ctx.languageId === condition.languageId
+    checks.push(ctx.languageId === condition.languageId)
   }
 
   if (condition.scope !== undefined) {
-    return ctx.scopeSelected === condition.scope && ctx.scopeEnabled
+    checks.push(ctx.scopeSelected === condition.scope && ctx.scopeEnabled)
   }
 
   if (condition.scopeSelected !== undefined) {
-    return ctx.scopeSelected === condition.scopeSelected
+    checks.push(ctx.scopeSelected === condition.scopeSelected)
   }
 
   if (condition.scopeEnabled !== undefined) {
-    return ctx.scopeEnabled === condition.scopeEnabled
+    checks.push(ctx.scopeEnabled === condition.scopeEnabled)
   }
 
   if (condition.fileType !== undefined) {
-    return ctx.fileType === condition.fileType
+    checks.push(ctx.fileType === condition.fileType)
   }
 
   if (condition.selection !== undefined) {
-    return ctx.selection === condition.selection
+    checks.push(ctx.selection === condition.selection)
   }
 
-  return false
+  return checks.length > 0 && checks.every(check => check === true)
 }

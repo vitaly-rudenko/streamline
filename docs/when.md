@@ -34,10 +34,10 @@ type Condition = {
 ## Syntax
 
 ```ts
-// [Condition1, Condition2, ...]
+// [{ Condition1 }, { Condition2 }, ...]
 //   => Condition1 || Condition2 || ...
 
-// [[Condition1, Condition2], [Condition3, Condition4], ...]
+// [{ Condition1, Condition2 }, { Condition3, Condition4 }]
 //   => (Condition1 && Condition2) || (Condition3 && Condition4) || ...
 
 type When = (Condition | Condition[])[]
@@ -70,18 +70,18 @@ Multiple conditions (AND):
 ```json
 {
   "when": [
-    [{ "untitled": true }, { "languageId": "javascript" }],
+    { "untitled": true, "languageId": "javascript" }
   ]
 }
 ```
 > `file.isUntitled && file.languageId === 'javascript'`
 
-Multiple conditions (comlex):
+Multiple conditions (complex):
 ```json
 {
   "when": [
     { "basename": "\\.m?js$" },
-    [{ "untitled": true }, { "languageId": "javascript" }],
+    { "untitled": true, "languageId": "javascript" },
   ]
 }
 ```

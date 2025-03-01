@@ -50,7 +50,7 @@ describe('testWhen()', () => {
       },
       {
         apply: ['untitled-javascript'],
-        when: [[{ untitled: true }, { languageId: 'javascript' }]]
+        when: [{ untitled: true, languageId: 'javascript' }]
       }
     ]
 
