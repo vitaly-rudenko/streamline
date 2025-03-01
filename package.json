@@ -99,12 +99,12 @@
     "commands": [
       {
         "command": "streamline.help.when",
-        "title": "Streamline: Syntax for 'when' (Help)",
+        "title": "Streamline: Syntax for 'when' (Open Help)",
         "icon": "$(question)"
       },
       {
         "command": "streamline.help.quickRepl",
-        "title": "Streamline: Quick Repl (Help)",
+        "title": "Streamline: Quick Repl (Open Help)",
         "icon": "$(question)"
       },
       {
@@ -610,17 +610,22 @@
         },
         {
           "command": "streamline.quickRepl.revealReplsInOS",
-          "group": "info@1",
+          "group": "1_info@1",
           "when": "view == quickRepl"
         },
         {
           "command": "streamline.quickRepl.openReplsInNewWindow",
-          "group": "info@2",
+          "group": "1_info@2",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.quickRepl.setup",
+          "group": "2_info@1",
           "when": "view == quickRepl"
         },
         {
           "command": "streamline.help.quickRepl",
-          "group": "info@3",
+          "group": "2_info@2",
           "when": "view == quickRepl"
         }
       ],

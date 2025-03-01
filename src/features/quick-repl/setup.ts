@@ -33,7 +33,7 @@ export const setupTemplates: Template[] = [
 
 export const setupCommands: Command[] = [
   {
-    name: 'Run Selection (JavaScript)',
+    name: 'Run Selection (Node.js)',
     description: 'Runs the selected JavaScript code with Node.js',
     cwd: '$replsPath',
     command: [
@@ -47,7 +47,7 @@ export const setupCommands: Command[] = [
     ],
   },
   {
-    name: 'Run Script (JavaScript)',
+    name: 'Run Script (Node.js)',
     description: 'Runs the Untitled JavaScript file with Node.js',
     cwd: '$replsPath',
     command: [
@@ -61,7 +61,7 @@ export const setupCommands: Command[] = [
     ],
   },
   {
-    name: 'Run File (JavaScript)',
+    name: 'Run File (Node.js)',
     description: 'Runs the JavaScript file with Node.js',
     cwd: '$contextDirname',
     command: 'node $contextBasename',
@@ -71,11 +71,18 @@ export const setupCommands: Command[] = [
     ],
   },
   {
-    name: 'Run Project (JavaScript)',
-    description: 'Runs "npm start" when in a selected directory',
+    name: 'Run Project (Node.js)',
+    description: 'Runs "npm start" in a selected directory',
     cwd: '$contextPath',
     command: 'npm start',
     when: [{ fileType: 'directory' }]
+  },
+  {
+    name: 'Install Dependencies (Node.js)',
+    description: 'Runs "npm install" when package.json is selected',
+    cwd: '$contextDirname',
+    command: 'npm install',
+    when: [{ basename: 'package\.json$' }]
   },
 ]
 

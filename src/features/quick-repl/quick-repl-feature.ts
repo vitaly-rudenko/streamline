@@ -422,12 +422,12 @@ export function createQuickReplFeature(input: {
       // Step 1: Quick Repls path
       const selectedReplsPath = await vscode.window.showQuickPick([
         ...currentShortReplsPath
-          ? [{ label: 'Keep current Quick Repls folder', detail: currentShortReplsPath, iconPath: new vscode.ThemeIcon('folder-active'),  option: 'keepCurrent' }]
+          ? [{ label: 'Keep current Quick Repls folder', detail: currentShortReplsPath, iconPath: new vscode.ThemeIcon('folder-active'), option: 'keepCurrent' }]
           : [],
         ...!currentShortReplsPath || currentShortReplsPath !== setupReplsPath
-          ? [{ label: 'Use default folder for Quick Repls', detail: setupReplsPath, iconPath: new vscode.ThemeIcon('folder-library'),  option: 'useDefault' }]
+          ? [{ label: 'Use default folder for Quick Repls', detail: setupReplsPath, iconPath: new vscode.ThemeIcon('folder-library'), option: 'useDefault' }]
           : [],
-        { label: 'Pick custom folder...', iconPath: new vscode.ThemeIcon('folder-opened'),  option: 'selectCustom' },
+        { label: 'Pick custom folder...', iconPath: new vscode.ThemeIcon('folder-opened'), option: 'selectCustom' },
       ] as const, {
         placeHolder: 'Select folder for storing your Quick Repls',
       })
@@ -551,14 +551,12 @@ export function createQuickReplFeature(input: {
         vscode.window.showInformationMessage('Default commands have been added to your settings')
       }
 
-      const selectedFinalStep = await vscode.window.showQuickPick([
-        { label: 'Try creating a Quick Repl', iconPath: new vscode.ThemeIcon('rocket'), option: 'createQuickRepl' },
-        { label: 'I\'ll explore on my own', iconPath: new vscode.ThemeIcon('eye'), option: 'finish' },
-      ], {
-        placeHolder: 'You\'re all set! What would you like to do next?'
-      })
-
-      if (selectedFinalStep?.option === 'createQuickRepl') {
+      if (
+        await vscode.window.showInformationMessage(
+          'You\'re all set. Enjoy using Quick Repl!',
+          'Try creating a Quick Repl now',
+        )
+      ) {
         await vscode.commands.executeCommand('streamline.quickRepl.createQuickRepl')
       }
     })
@@ -613,7 +611,7 @@ export function createQuickReplFeature(input: {
         }
 
         const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
-        await vscode.workspace.fs.copy(argument.uri, vscode.Uri.joinPath(directoryUri, copyBasename), { overwrite: false})
+        await vscode.workspace.fs.copy(argument.uri, vscode.Uri.joinPath(directoryUri, copyBasename), { overwrite: false })
 
         quickReplTreeDataProvider.refresh()
       }
