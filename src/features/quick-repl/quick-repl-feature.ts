@@ -594,6 +594,30 @@ export function createQuickReplFeature(input: {
     })
   )
 
+  // Duplicate file or folder
+  context.subscriptions.push(
+    vscode.commands.registerCommand('streamline.quickRepl.duplicate', async (argument: unknown) => {
+      if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
+        const originalBasename = basename(argument.uri.path)
+        const copyBasename = await vscode.window.showInputBox({
+          placeHolder: originalBasename,
+          value: originalBasename,
+        })
+        if (!copyBasename) return
+        if (copyBasename === originalBasename) {
+          vscode.window.showWarningMessage('Please provide a different name')
+          await vscode.commands.executeCommand('streamline.quickRepl.duplicate', argument)
+          return
+        }
+
+        const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
+        await vscode.workspace.fs.copy(argument.uri, vscode.Uri.joinPath(directoryUri, copyBasename), { overwrite: false})
+
+        quickReplTreeDataProvider.refresh()
+      }
+    })
+  )
+
   // Rename file or folder
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.quickRepl.rename', async (argument: unknown) => {

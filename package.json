@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.915",
+  "version": "0.40.917",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -379,6 +379,11 @@
         "command": "streamline.quickRepl.rename",
         "title": "Rename...",
         "icon": "$(edit)"
+      },
+      {
+        "command": "streamline.quickRepl.duplicate",
+        "title": "Duplicate...",
+        "icon": "$(copy)"
       }
     ],
     "keybindings": [
@@ -484,6 +489,10 @@
         },
         {
           "command": "streamline.quickRepl.create",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.duplicate",
           "when": "false"
         },
         {
@@ -688,9 +697,14 @@
           "group": "1_info@2"
         },
         {
-          "command": "streamline.quickRepl.copyAbsolutePath",
+          "command": "streamline.quickRepl.duplicate",
           "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
           "group": "1_info@3"
+        },
+        {
+          "command": "streamline.quickRepl.copyAbsolutePath",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "1_info@4"
         },
         {
           "command": "streamline.quickRepl.openFolderInTerminal",
