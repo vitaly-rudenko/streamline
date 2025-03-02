@@ -6,7 +6,7 @@ import { ScopedPathsConfig } from './scoped-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { CachedDirectoryReader } from '../../utils/cached-directory-reader'
 import { generateExcludedPathsFromScopedAndExcludedPaths } from './toolkit/generate-excluded-paths-from-scoped-and-excluded-paths'
-import { defaultCurrentScope } from './common'
+import { generateQuickScope, isQuickScope } from './common'
 import { ScopedPathsWorkspaceState } from './scoped-paths-workspace-state'
 import { ScopedPathsCache } from './scoped-paths-cache'
 import { getTargetPathsForCommand } from './toolkit/get-target-paths-for-command'
@@ -25,8 +25,6 @@ From VS Code documentation:
 - "Note: it is not valid to call updateWorkspaceFolders() multiple times without waiting for the onDidChangeWorkspaceFolders() to fire."
 */
 
-// TODO: Does not update workspace folders properly when changing between bookmark lists
-
 export function createScopedPathsFeature(input: {
   context: vscode.ExtensionContext
   onChange: () => unknown
@@ -38,9 +36,9 @@ export function createScopedPathsFeature(input: {
   dynamicScopeProviders.push({
     name: 'Quick Scope',
     iconPath: new vscode.ThemeIcon('folder'),
-    isScopeMatching: (scope) => scope.startsWith('@'),
+    isScopeMatching: (scope) => isQuickScope(scope),
     getScopedAndExcludedPaths: ({ currentScope: scope }) => [scope.slice(1)],
-    getScopes: () => getCurrentWorkspaceFoldersSnapshot().map(wf => `@${wf.name}`),
+    getScopes: () => getCurrentWorkspaceFoldersSnapshot().map(wf => generateQuickScope(wf.name)),
     subscribe: (callback) => {
       context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => callback()))
     }
@@ -316,8 +314,7 @@ export function createScopedPathsFeature(input: {
         return
       }
 
-      // TODO: remove hardcoding
-      workspaceState.setCurrentScope(`@${paths[0]}`)
+      workspaceState.setCurrentScope(generateQuickScope(paths[0]))
       workspaceState.setEnabled(true)
 
       updateStatusBarItems()
