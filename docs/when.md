@@ -28,6 +28,8 @@ type Condition = {
   fileType: 'file' | 'directory'
   /** Whether file has a non-empty selection */
   selection: boolean
+  /** For negating the condition */
+  not: Condition
 }
 ```
 
@@ -86,3 +88,24 @@ Multiple conditions (complex):
 }
 ```
 > `/\.m?js$/.test(file.basename) || (file.isUntitled && file.languageId === 'javascript')`
+
+Negating the condition:
+```json
+{
+  "when": [
+    { "not": { "basename": "\\.js$" } }
+  ]
+}
+```
+> `!/\.js$/.test(file.basename)`
+
+Negating the condition (complex):
+```json
+{
+  "when": [
+    { "path": "\\/repls", "not": { "path": "\\/playground" } },
+    { "languageId": "javascript", "not": { "basename": "\\.cjs$" } }
+  ]
+}
+```
+> `(/\/repls/.test(file.path) && !/\/playground/.test(file.path)) || (file.languageId === 'javascript' && !/\.cjs$/.test(file.basename))`

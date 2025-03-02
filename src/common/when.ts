@@ -4,7 +4,7 @@ import z from 'zod'
 const colorThemeKindSlugSchema = z.enum(['dark', 'light', 'high-contrast', 'high-contrast-light'])
 type ColorThemeKindSlug = z.infer<typeof colorThemeKindSlugSchema>
 
-export const conditionSchema = z.strictObject({
+const basicConditionSchema = z.strictObject({
   untitled: z.boolean().optional(),
   basename: z.string().optional(),
   path: z.string().optional(),
@@ -18,6 +18,12 @@ export const conditionSchema = z.strictObject({
   fileType: z.enum(['file', 'directory']).optional(),
   selection: z.boolean().optional(),
 }).refine(data => Object.keys(data).length > 0,  'At least one condition must be present')
+
+export const conditionSchema = basicConditionSchema.and(
+  z.object({
+    not: basicConditionSchema.optional(),
+  })
+)
 
 export type Condition = z.infer<typeof conditionSchema>
 
@@ -87,6 +93,10 @@ function testCondition(ctx: ConditionContext, condition: Condition): boolean {
 
   if (condition.selection !== undefined) {
     checks.push(ctx.selection === condition.selection)
+  }
+
+  if (condition.not !== undefined) {
+    checks.push(!testCondition(ctx, condition.not))
   }
 
   return checks.length > 0 && checks.every(check => check === true)

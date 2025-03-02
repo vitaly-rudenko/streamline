@@ -1,8 +1,17 @@
-import { ConditionContext, testWhen, When, whenSchema } from './when'
+import { Condition, ConditionContext, testWhen, When, whenSchema } from './when'
 
 type Rule = {
   apply: string[]
   when: When
+}
+
+function createConditionContext(attributes?: Partial<ConditionContext>): ConditionContext {
+  return {
+    colorThemeKind: 'light',
+    scopeEnabled: false,
+    toggles: [],
+    ...attributes,
+  }
 }
 
 describe('testWhen()', () => {
@@ -184,6 +193,25 @@ describe('testWhen()', () => {
     ).not.toContain('untitled-javascript')
   })
 
+  it('supports basic negated conditions', () => {
+    function testNegation(context: ConditionContext, condition: Condition) {
+      expect(testWhen(context, [condition])).toBe(true)
+      expect(testWhen(context, [{ not: condition }])).toBe(false)
+    }
+
+    testNegation(createConditionContext({ path: '/path/to/file.js' }), { basename: '\.js$' })
+    testNegation(createConditionContext({ path: '/path/to/file.js' }), { path: '\/path\/to\/' })
+    testNegation(createConditionContext({ colorThemeKind: 'high-contrast' }), { colorThemeKind: 'high-contrast' })
+    testNegation(createConditionContext({ scopeSelected: 'Minimal', scopeEnabled: true }), { scope: 'Minimal' })
+  })
+
+  it('supports condition with added negation', () => {
+    const when = [{ path: '\/path\/', not: { basename: '\.js' } }]
+
+    expect(testWhen(createConditionContext({ path: '/path/to/file.ts' }), when)).toBe(true)
+    expect(testWhen(createConditionContext({ path: '/path/to/file.js' }), when)).toBe(false)
+  })
+
   it('returns true when conditions list is empty', () => {
     expect(testWhen({
       colorThemeKind: 'dark',
@@ -194,7 +222,9 @@ describe('testWhen()', () => {
 
   it('validates "when" (schema)', () => {
     expect(whenSchema.safeParse([]).success).toBe(true)
-    expect(whenSchema.safeParse([{}]).success).toBe(false)
     expect(whenSchema.safeParse([{ basename: 'file.mjs' }]).success).toBe(true)
+
+    expect(whenSchema.safeParse([{}]).success).toBe(false)
+    expect(whenSchema.safeParse([{ not: {} }]).success).toBe(false)
   })
 })
