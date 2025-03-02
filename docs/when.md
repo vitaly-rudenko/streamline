@@ -36,13 +36,7 @@ type Condition = {
 ## Syntax
 
 ```ts
-// [{ Condition1 }, { Condition2 }, ...]
-//   => Condition1 || Condition2 || ...
-
-// [{ Condition1, Condition2 }, { Condition3, Condition4 }]
-//   => (Condition1 && Condition2) || (Condition3 && Condition4) || ...
-
-type When = (Condition | Condition[])[]
+type When = Condition[]
 ```
 
 ## Examples
