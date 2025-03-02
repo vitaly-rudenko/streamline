@@ -91,6 +91,8 @@ export function createQuickReplFeature(input: {
       let selection: string | undefined
       let uri: vscode.Uri
 
+      console.debug('streamline.quickRepl.run', { argument })
+
       const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
       if (
         argument instanceof FileTreeItem
@@ -120,12 +122,15 @@ export function createQuickReplFeature(input: {
       }
 
       const context = { path: uri.path, content, selection }
+      console.debug('streamline.quickRepl.run', { context })
 
       const commands = config.getCommands().filter(command => !command.when || testWhen(conditionContext, command.when))
+      console.debug('streamline.quickRepl.run', { commands })
       if (commands.length === 0) return
 
       // If only one command is available or if there is a matched default command, run it immediately
       const defaultCommand = commands.length === 1 ? commands[0] : commands.find(command => command.default)
+      console.debug('streamline.quickRepl.run', { defaultCommand })
 
       const selected = defaultCommand
         ? { command: defaultCommand }
@@ -141,6 +146,7 @@ export function createQuickReplFeature(input: {
       if (!selected) return
 
       const { command } = selected
+      console.debug('streamline.quickRepl.run', { command })
 
       const terminalName = generateTerminalName({ path: uri.path })
       const terminalIconPath = new vscode.ThemeIcon('play')
@@ -150,6 +156,7 @@ export function createQuickReplFeature(input: {
         context,
         homedir,
       })
+      console.debug('streamline.quickRepl.run', { terminalName, terminalIconPath, terminalCwd })
 
       const existingTerminal = vscode.window.terminals
         .find(t => (
@@ -164,6 +171,15 @@ export function createQuickReplFeature(input: {
         cwd: terminalCwd,
       })
 
+      console.log('textToSend:', substitute({
+        input: typeof command.command === 'string'
+          ? command.command
+          : command.command.join('\n'),
+        replsPath: getReplsPathOrFail(),
+        context,
+        homedir,
+      }))
+
       terminal.show(true)
       terminal.sendText(
         substitute({
@@ -175,6 +191,8 @@ export function createQuickReplFeature(input: {
           homedir,
         })
       )
+
+      console.debug('streamline.quickRepl.run', { terminal })
     })
   )
 
