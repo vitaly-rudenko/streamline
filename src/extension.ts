@@ -76,12 +76,14 @@ export function activate(context: vscode.ExtensionContext) {
     })
     : undefined
 
+  const onDidChangeBookmarksEmitter = new vscode.EventEmitter<void>()
+
   bookmarksFeature = isFeatureEnabled('bookmarks')
     ? createBookmarksFeature({
       context,
       onChange: () => {
         onDidChangeFileDecorationsEmitter.fire(undefined)
-        scopedPathsFeature?.handleBookmarksChanged()
+        onDidChangeBookmarksEmitter.fire()
       }
     })
     : undefined
@@ -93,7 +95,16 @@ export function activate(context: vscode.ExtensionContext) {
         onDidChangeFileDecorationsEmitter.fire(undefined)
         smartConfigFeature?.scheduleRefresh()
       },
-      bookmarksFeature,
+      dynamicScopeProviders: [{
+        name: 'Bookmarks',
+        isScopeMatching: (scope) => scope === '#bookmarks',
+        getScopes: () => ['#bookmarks'],
+        getScopedAndExcludedPaths: () => {
+          const bookmarks = bookmarksFeature?.getCachedBookmarksInCurrentBookmarksList() ?? []
+          return bookmarks.map(b => uriToPath(b.uri)).filter((path): path is string => path !== undefined)
+        },
+        subscribe: (callback: Function) => onDidChangeBookmarksEmitter.event(() => callback())
+      }]
 		})
 		: undefined
 

@@ -14,8 +14,6 @@ const UNDO_HISTORY_SIZE = 50
 // TODO: Deleting "virtual" file should suggest user to delete all selections inside of it (with confirmation)
 // TODO: optimize & cache new functionality
 
-export type BookmarksFeature = ReturnType<typeof createBookmarksFeature>
-
 export function createBookmarksFeature(input: {
   context: vscode.ExtensionContext
   onChange: () => unknown
@@ -577,8 +575,8 @@ export function createBookmarksFeature(input: {
     isPathBookmarkedInCurrentBookmarksList(path: string) {
       return cache.getCachedBookmarkedPathsInCurrentBookmarksListSet().has(path)
     },
-    getScopeableBookmarkedPathsInCurrentBookmarksListSet(){
-      return cache.getCachedScopeableBookmarkedPathsInCurrentBookmarksList()
+    getCachedBookmarksInCurrentBookmarksList(){
+      return cache.getCachedBookmarksInCurrentBookmarksList()
     }
   }
 }

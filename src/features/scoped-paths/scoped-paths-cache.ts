@@ -1,6 +1,6 @@
 import { getParents } from '../../utils/get-parents'
 import { unique } from '../../utils/unique'
-import { BookmarksFeature } from '../bookmarks/bookmarks-feature'
+import { DynamicScopeProvider } from './dynamic-scope-provider'
 import { ScopedPathsConfig } from './scoped-paths-config'
 import { ScopedPathsWorkspaceState } from './scoped-paths-workspace-state'
 
@@ -16,17 +16,23 @@ export class ScopedPathsCache {
   constructor(
     private readonly config: ScopedPathsConfig,
     private readonly workspaceState: ScopedPathsWorkspaceState,
-    private readonly bookmarksFeature: BookmarksFeature | undefined,
+    private readonly dynamicScopeProviders: DynamicScopeProvider[],
   ) {
     this.update()
   }
 
   update() {
-    this._cachedCurrentlyScopedAndExcludedPaths = this.workspaceState.getDynamicIsInQuickScope()
-      ? [this.workspaceState.getDynamicQuickScopePath()]
-      : this.workspaceState.getDynamicIsInBookmarksScope()
-        ? (this.bookmarksFeature?.getScopeableBookmarkedPathsInCurrentBookmarksListSet() ?? [])
-        : (this.config.getScopesObject()[this.workspaceState.getCurrentScope()] ?? [])
+    const currentScope = this.workspaceState.getCurrentScope()
+
+    const [dynamicScopeProvider, ...remainingDynamicScopeProviders] = this.dynamicScopeProviders
+      .filter(provider => provider.isScopeMatching(currentScope))
+    if (remainingDynamicScopeProviders.length > 0) {
+      console.warn('[ScopedPaths] More than one dynamic scope provider is matching the current scope. Using the first one.')
+    }
+
+    this._cachedCurrentlyScopedAndExcludedPaths = dynamicScopeProvider
+      ? dynamicScopeProvider.getScopedAndExcludedPaths(currentScope)
+      : (this.config.getScopesObject()[currentScope] ?? [])
 
     this._cachedCurrentlyScopedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => !path.startsWith('!'))
     this._cachedCurrentlyExcludedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => path.startsWith('!')).map(path => path.slice(1))
