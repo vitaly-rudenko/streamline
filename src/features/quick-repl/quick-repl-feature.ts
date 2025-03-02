@@ -122,14 +122,18 @@ export function createQuickReplFeature(input: {
       }
 
       const context = { path: uri.path, content, selection }
+
       console.debug('streamline.quickRepl.run', { context })
 
       const commands = config.getCommands().filter(command => !command.when || testWhen(conditionContext, command.when))
+
       console.debug('streamline.quickRepl.run', { commands })
+
       if (commands.length === 0) return
 
       // If only one command is available or if there is a matched default command, run it immediately
       const defaultCommand = commands.length === 1 ? commands[0] : commands.find(command => command.default)
+
       console.debug('streamline.quickRepl.run', { defaultCommand })
 
       const selected = defaultCommand
@@ -146,39 +150,35 @@ export function createQuickReplFeature(input: {
       if (!selected) return
 
       const { command } = selected
+
       console.debug('streamline.quickRepl.run', { command })
 
       const terminalName = generateTerminalName({ path: uri.path })
       const terminalIconPath = new vscode.ThemeIcon('play')
+      const terminalColor = new vscode.ThemeColor('terminal.ansiBlue')
       const terminalCwd = substitute({
         input: expandHomedir(command.cwd, homedir),
         replsPath: getReplsPathOrFail(),
         context,
         homedir,
       })
-      console.debug('streamline.quickRepl.run', { terminalName, terminalIconPath, terminalCwd })
+
+      console.debug('streamline.quickRepl.run', { terminalName, terminalCwd, terminalIconPath, terminalColor })
 
       const existingTerminal = vscode.window.terminals
         .find(t => (
           t.creationOptions.name === terminalName
           && (t.creationOptions.iconPath instanceof vscode.ThemeIcon && t.creationOptions.iconPath.id === terminalIconPath.id)
+          && (t.creationOptions.color instanceof vscode.ThemeColor && t.creationOptions.color.id === terminalColor.id)
           && t.shellIntegration?.cwd?.path === terminalCwd
         ))
 
       const terminal = existingTerminal ?? vscode.window.createTerminal({
         name: terminalName,
-        iconPath: terminalIconPath,
         cwd: terminalCwd,
+        color: terminalColor,
+        iconPath: terminalIconPath,
       })
-
-      console.log('textToSend:', substitute({
-        input: typeof command.command === 'string'
-          ? command.command
-          : command.command.join('\n'),
-        replsPath: getReplsPathOrFail(),
-        context,
-        homedir,
-      }))
 
       terminal.show(true)
       terminal.sendText(

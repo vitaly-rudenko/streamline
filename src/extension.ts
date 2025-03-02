@@ -160,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.commands.executeCommand('setContext', `streamline.${feature}.enabled`, isFeatureEnabled(feature))
       }
     } catch (error) {
-      console.log('[Streamline] Could not update context', error)
+      console.warn('[Streamline] Could not update context', error)
     }
   }
 
