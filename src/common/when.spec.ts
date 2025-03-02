@@ -206,10 +206,18 @@ describe('testWhen()', () => {
   })
 
   it('supports condition with added negation', () => {
-    const when = [{ path: '\/path\/', not: { basename: '\.js' } }]
+    const when: When = [{ path: '\/path\/', not: { basename: '\.js' } }]
 
     expect(testWhen(createConditionContext({ path: '/path/to/file.ts' }), when)).toBe(true)
     expect(testWhen(createConditionContext({ path: '/path/to/file.js' }), when)).toBe(false)
+  })
+
+  it('supports basic conditions with arrays', () => {
+    const when: When = [{ languageId: ['javascript', 'typescript'] }]
+
+    expect(testWhen(createConditionContext({ languageId: 'javascript' }), when)).toBe(true)
+    expect(testWhen(createConditionContext({ languageId: 'typescript' }), when)).toBe(true)
+    expect(testWhen(createConditionContext({ languageId: 'markdown' }), when)).toBe(false)
   })
 
   it('returns true when conditions list is empty', () => {

@@ -1,22 +1,26 @@
 import { basename } from 'path'
-import z from 'zod'
+import z, { ZodSchema, ZodType } from 'zod'
 
 const colorThemeKindSlugSchema = z.enum(['dark', 'light', 'high-contrast', 'high-contrast-light'])
 type ColorThemeKindSlug = z.infer<typeof colorThemeKindSlugSchema>
 
+function createConditionField<T extends ZodType>(type: T) {
+  return z.union([type, z.array(type)]).optional()
+}
+
 const basicConditionSchema = z.strictObject({
-  untitled: z.boolean().optional(),
-  basename: z.string().optional(),
-  path: z.string().optional(),
-  toggle: z.string().optional(),
-  colorThemeKind: colorThemeKindSlugSchema.optional(),
+  untitled: createConditionField(z.boolean()),
+  basename: createConditionField(z.string()),
+  path: createConditionField(z.string()),
+  toggle: createConditionField(z.string()),
+  colorThemeKind: createConditionField(colorThemeKindSlugSchema),
   // https://code.visualstudio.com/docs/languages/identifiers
-  languageId: z.string().optional(),
-  scopeSelected: z.string().optional(),
-  scopeEnabled: z.boolean().optional(),
-  scope: z.string().optional(), // Shorthand for [{ scopeSelected: 'scope', scopeEnabled: true }]
-  fileType: z.enum(['file', 'directory']).optional(),
-  selection: z.boolean().optional(),
+  languageId: createConditionField(z.string()),
+  scopeSelected: createConditionField(z.string()),
+  scopeEnabled: createConditionField(z.boolean()),
+  scope: createConditionField(z.string()), // Shorthand for [{ scopeSelected: 'scope', scopeEnabled: true }]
+  fileType: createConditionField(z.enum(['file', 'directory'])),
+  selection: createConditionField(z.boolean()),
 }).refine(data => Object.keys(data).length > 0,  'At least one condition must be present')
 
 export const conditionSchema = basicConditionSchema.and(
@@ -52,47 +56,47 @@ function testCondition(ctx: ConditionContext, condition: Condition): boolean {
   const checks: boolean[] = []
 
   if (condition.path !== undefined) {
-    checks.push(ctx.path !== undefined && new RegExp(condition.path).test(ctx.path))
+    checks.push(ctx.path !== undefined && toArray(condition.path).some(i => new RegExp(i).test(ctx.path!)))
   }
 
   if (condition.basename !== undefined) {
-    checks.push(ctx.path !== undefined && new RegExp(condition.basename).test(basename(ctx.path)))
+    checks.push(ctx.path !== undefined && toArray(condition.basename).some(i => new RegExp(i).test(basename(ctx.path!))))
   }
 
   if (condition.untitled !== undefined) {
-    checks.push(ctx.untitled !== undefined && condition.untitled === ctx.untitled)
+    checks.push(ctx.untitled !== undefined && toArray(condition.untitled).some(i => i === ctx.untitled))
   }
 
   if (condition.toggle !== undefined) {
-    checks.push(ctx.toggles.includes(condition.toggle))
+    checks.push(toArray(condition.toggle).some(i => ctx.toggles.includes(i)))
   }
 
   if (condition.colorThemeKind !== undefined) {
-    checks.push(ctx.colorThemeKind === condition.colorThemeKind)
+    checks.push(toArray(condition.colorThemeKind).some(i => i === ctx.colorThemeKind))
   }
 
   if (condition.languageId !== undefined) {
-    checks.push(ctx.languageId === condition.languageId)
+    checks.push(toArray(condition.languageId).some(i => i === ctx.languageId))
   }
 
   if (condition.scope !== undefined) {
-    checks.push(ctx.scopeSelected === condition.scope && ctx.scopeEnabled)
+    checks.push(ctx.scopeEnabled && toArray(condition.scope).some(i => i === ctx.scopeSelected))
   }
 
   if (condition.scopeSelected !== undefined) {
-    checks.push(ctx.scopeSelected === condition.scopeSelected)
+    checks.push(toArray(condition.scopeSelected).some(i => i === ctx.scopeSelected))
   }
 
   if (condition.scopeEnabled !== undefined) {
-    checks.push(ctx.scopeEnabled === condition.scopeEnabled)
+    checks.push(toArray(condition.scopeEnabled).some(i => i === ctx.scopeEnabled))
   }
 
   if (condition.fileType !== undefined) {
-    checks.push(ctx.fileType === condition.fileType)
+    checks.push(toArray(condition.fileType).some(i => i === ctx.fileType))
   }
 
   if (condition.selection !== undefined) {
-    checks.push(ctx.selection === condition.selection)
+    checks.push(toArray(condition.selection).some(i => i === ctx.selection))
   }
 
   if (condition.not !== undefined) {
@@ -100,4 +104,8 @@ function testCondition(ctx: ConditionContext, condition: Condition): boolean {
   }
 
   return checks.length > 0 && checks.every(check => check === true)
+}
+
+function toArray<T>(item: T | T[]): T[] {
+  return Array.isArray(item) ? item : [item]
 }

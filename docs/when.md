@@ -68,6 +68,16 @@ Multiple conditions (OR):
 ```
 > `file.languageId === 'javascript' || file.languageId === 'javascript'`
 
+Shorthand syntax for the same condition:
+```json
+{
+  "when": [
+    { "languageId": ["javascript", "typescript"] }
+  ]
+}
+```
+> `file.languageId === 'javascript' || file.languageId === 'javascript'`
+
 Multiple conditions (AND):
 ```json
 {
