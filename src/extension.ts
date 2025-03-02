@@ -12,6 +12,7 @@ import { createSuperSearchFeature } from './features/super-search/super-search-f
 import { createQuickReplFeature } from './features/quick-repl/quick-repl-feature'
 import { ConditionContext } from './common/when'
 import { GenerateConditionContextInput } from './generate-condition-context'
+import { DynamicScopeProvider } from './features/scoped-paths/dynamic-scope-provider'
 
 const featureSchema = z.enum([
   'bookmarks',
@@ -88,6 +89,22 @@ export function activate(context: vscode.ExtensionContext) {
     })
     : undefined
 
+  const dynamicScopeProviders: DynamicScopeProvider[] = []
+  if (bookmarksFeature) {
+    dynamicScopeProviders.push({
+      name: 'Bookmarks',
+      iconPath: new vscode.ThemeIcon('bookmark'),
+      isScopeMatching: (scope) => scope === '#bookmarks',
+      getScopes: () => ['#bookmarks'],
+      getScopedAndExcludedPaths: ({ uriToPath }) => (
+        bookmarksFeature.getCachedBookmarksInCurrentBookmarksList()
+          .map(b => uriToPath(b.uri))
+          .filter((path): path is string => path !== undefined)
+      ),
+      subscribe: (callback: Function) => onDidChangeBookmarksEmitter.event(() => callback())
+    })
+  }
+
   scopedPathsFeature = isFeatureEnabled('scopedPaths')
 		? createScopedPathsFeature({
 			context,
@@ -95,16 +112,7 @@ export function activate(context: vscode.ExtensionContext) {
         onDidChangeFileDecorationsEmitter.fire(undefined)
         smartConfigFeature?.scheduleRefresh()
       },
-      dynamicScopeProviders: [{
-        name: 'Bookmarks',
-        isScopeMatching: (scope) => scope === '#bookmarks',
-        getScopes: () => ['#bookmarks'],
-        getScopedAndExcludedPaths: () => {
-          const bookmarks = bookmarksFeature?.getCachedBookmarksInCurrentBookmarksList() ?? []
-          return bookmarks.map(b => uriToPath(b.uri)).filter((path): path is string => path !== undefined)
-        },
-        subscribe: (callback: Function) => onDidChangeBookmarksEmitter.event(() => callback())
-      }]
+      dynamicScopeProviders,
 		})
 		: undefined
 

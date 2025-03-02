@@ -1,3 +1,4 @@
+import { WorkspaceFolder } from 'vscode'
 import { getParents } from '../../utils/get-parents'
 import { unique } from '../../utils/unique'
 import { DynamicScopeProvider } from './dynamic-scope-provider'
@@ -17,6 +18,7 @@ export class ScopedPathsCache {
     private readonly config: ScopedPathsConfig,
     private readonly workspaceState: ScopedPathsWorkspaceState,
     private readonly dynamicScopeProviders: DynamicScopeProvider[],
+    private readonly getCurrentWorkspaceFoldersSnapshot: () => WorkspaceFolder[],
   ) {
     this.update()
   }
@@ -24,15 +26,29 @@ export class ScopedPathsCache {
   update() {
     const currentScope = this.workspaceState.getCurrentScope()
 
-    const [dynamicScopeProvider, ...remainingDynamicScopeProviders] = this.dynamicScopeProviders
-      .filter(provider => provider.isScopeMatching(currentScope))
+    const [dynamicScopeProvider, ...remainingDynamicScopeProviders] = this.dynamicScopeProviders.filter(p => p.isScopeMatching(currentScope))
     if (remainingDynamicScopeProviders.length > 0) {
-      console.warn('[ScopedPaths] More than one dynamic scope provider is matching the current scope. Using the first one.')
+      console.warn('[ScopedPaths] More than one DynamicScopeProvider is matching the current scope')
     }
 
-    this._cachedCurrentlyScopedAndExcludedPaths = dynamicScopeProvider
-      ? dynamicScopeProvider.getScopedAndExcludedPaths(currentScope)
-      : (this.config.getScopesObject()[currentScope] ?? [])
+    const currentWorkspaceFolders = this.getCurrentWorkspaceFoldersSnapshot()
+    this._cachedCurrentlyScopedAndExcludedPaths = unique(
+      dynamicScopeProvider
+        ? dynamicScopeProvider.getScopedAndExcludedPaths({
+          currentScope,
+          // TODO: extract & add tests
+          uriToPath: (uri) => {
+            const exactWorkspaceFolder = currentWorkspaceFolders.find(wf => wf.uri.path === uri.path)
+            if (exactWorkspaceFolder) return exactWorkspaceFolder.name
+
+            const workspaceFolder = currentWorkspaceFolders.find(wf => uri.path.startsWith(wf.uri.path + '/'))
+            if (!workspaceFolder) return undefined
+
+            return workspaceFolder.name + uri.path.slice(workspaceFolder.uri.path.length)
+          }
+        })
+        : (this.config.getScopesObject()[currentScope] ?? [])
+    )
 
     this._cachedCurrentlyScopedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => !path.startsWith('!'))
     this._cachedCurrentlyExcludedPaths = this._cachedCurrentlyScopedAndExcludedPaths.filter(path => path.startsWith('!')).map(path => path.slice(1))
@@ -42,8 +58,7 @@ export class ScopedPathsCache {
     this._cachedCurrentlyScopedPathsSet = new Set(this._cachedCurrentlyScopedPaths)
     this._cachedCurrentlyExcludedPathsSet = new Set(this._cachedCurrentlyExcludedPaths)
     this._cachedParentsOfCurrentlyScopedAndExcludedPathsSet = new Set(
-      [...this._cachedCurrentlyScopedPaths, ...this._cachedCurrentlyExcludedPaths]
-        .flatMap(path => getParents(path))
+      [...this._cachedCurrentlyScopedPaths, ...this._cachedCurrentlyExcludedPaths].flatMap(path => getParents(path))
     )
   }
 

@@ -35,11 +35,15 @@ export function createScopedPathsFeature(input: {
   const { context, onChange, dynamicScopeProviders } = input
 
   // Quick Scope
-  dynamicScopeProviders.unshift({
+  dynamicScopeProviders.push({
     name: 'Quick Scope',
+    iconPath: new vscode.ThemeIcon('folder'),
     isScopeMatching: (scope) => scope.startsWith('@'),
-    getScopedAndExcludedPaths: (scope) => [scope.slice(1)],
-    getScopes: () => [],
+    getScopedAndExcludedPaths: ({ currentScope: scope }) => [scope.slice(1)],
+    getScopes: () => getCurrentWorkspaceFoldersSnapshot().map(wf => `@${wf.name}`),
+    subscribe: (callback) => {
+      context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => callback()))
+    }
   })
 
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 2)
@@ -56,7 +60,7 @@ export function createScopedPathsFeature(input: {
   const config = new ScopedPathsConfig()
   const workspaceState = new ScopedPathsWorkspaceState(context.workspaceState)
 
-  const cache = new ScopedPathsCache(config, workspaceState, dynamicScopeProviders)
+  const cache = new ScopedPathsCache(config, workspaceState, dynamicScopeProviders, getCurrentWorkspaceFoldersSnapshot)
   config.onChange = workspaceState.onChange = () => {
     cache.update()
     onChange()
@@ -86,7 +90,7 @@ export function createScopedPathsFeature(input: {
   }, 250)
 
   function isCurrentScopeEditable() {
-    return dynamicScopeProviders.every(provider => !provider.isScopeMatching(workspaceState.getCurrentScope()))
+    return dynamicScopeProviders.every(p => !p.isScopeMatching(workspaceState.getCurrentScope()))
   }
 
   /** Returns 'true' is excludes are currently set by the extension */
@@ -420,25 +424,52 @@ export function createScopedPathsFeature(input: {
   // Select current scope
   context.subscriptions.push(
     vscode.commands.registerCommand('streamline.scopedPaths.changeCurrentScope', async () => {
-      const addNewScopeItem = '+ Add new scope'
+      const addNewScopeItem = 'Add new scope'
 
-      const scopes = Object.keys(config.getScopesObject())
-      let selectedScope = await vscode.window.showQuickPick(
-        unique([
-          ...scopes.length === 0 ? [defaultCurrentScope] : [],
-          ...scopes,
-          workspaceState.getCurrentScope(),
-          ...dynamicScopeProviders.flatMap(provider => provider.getScopes()),
-          addNewScopeItem,
-        ]),
-        { title: 'Select Scope' }
-      )
+      const scopeQuickPickItems: (vscode.QuickPickItem & { scope?: string })[] = []
+      const addedScopesSet = new Set<string>()
 
-      if (!selectedScope) return
-      if (selectedScope === addNewScopeItem) {
-        selectedScope = await vscode.window.showInputBox({ prompt: 'Enter the name of new scope' })
-        if (!selectedScope) return
+      function addScopeQuickPickItem(scope: string) {
+        if (addedScopesSet.has(scope)) return
+        addedScopesSet.add(scope)
+
+        scopeQuickPickItems.push({
+          label: scope,
+          iconPath: dynamicScopeProviders.find(p => p.isScopeMatching(scope))?.iconPath ?? new vscode.ThemeIcon('folder'),
+          description: scope === workspaceState.getCurrentScope() ? 'Current Scope' : undefined,
+          scope,
+        })
       }
+
+      addScopeQuickPickItem(workspaceState.getCurrentScope())
+
+      for (const scope of Object.keys(config.getScopesObject())) {
+        addScopeQuickPickItem(scope)
+      }
+
+      scopeQuickPickItems.push({
+        label: addNewScopeItem,
+        iconPath: new vscode.ThemeIcon('add'),
+        alwaysShow: true,
+      })
+
+      scopeQuickPickItems.push({
+        label: 'Dynamic Scopes',
+        kind: vscode.QuickPickItemKind.Separator,
+      })
+
+      for (const dynamicScopeProvider of dynamicScopeProviders) {
+        for (const scope of dynamicScopeProvider.getScopes()) {
+          addScopeQuickPickItem(scope)
+        }
+      }
+
+      const selected = await vscode.window.showQuickPick(scopeQuickPickItems, { title: 'Select Scope' })
+      if (!selected) return
+
+      const selectedScope = selected.scope ?? await vscode.window.showInputBox({ prompt: 'Enter the name of new scope' })
+      if (!selectedScope) return
+
       workspaceState.setCurrentScope(selectedScope)
 
       updateStatusBarItems()
