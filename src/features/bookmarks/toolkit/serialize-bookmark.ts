@@ -1,5 +1,5 @@
-import type { Selection } from 'vscode'
 import { Bookmark, SerializedBookmark } from '../common'
+import { serializeSelection } from '../../../utils/serialize-selection'
 
 export function serializeBookmark(bookmark: Bookmark): SerializedBookmark {
   return {
@@ -14,9 +14,4 @@ export function serializeBookmark(bookmark: Bookmark): SerializedBookmark {
       type: bookmark.type,
     }
   }
-}
-
-// TODO: extract into common module
-export function serializeSelection(selection: Selection): string {
-  return `${selection.anchor.line}:${selection.anchor.character}-${selection.active.line}:${selection.active.character}`
 }

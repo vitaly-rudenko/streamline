@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { SerializedBookmark, Bookmark } from '../common'
+import { deserializeSelection } from '../../../utils/deserialize-selection'
 
 export function deserializeBookmark(serializedBookmark: SerializedBookmark): Bookmark {
   return {
@@ -14,10 +15,4 @@ export function deserializeBookmark(serializedBookmark: SerializedBookmark): Boo
       type: serializedBookmark.type,
     }
   }
-}
-
-// TODO: extract into common module
-export function deserializeSelection(serializedSelection: Extract<SerializedBookmark, { type: 'selection' }>['selection']): vscode.Selection {
-  const [anchorLine, anchorCharacter, activeLine, activeCharacter] = serializedSelection.split(/:|-/).map(Number)
-  return new vscode.Selection(anchorLine, anchorCharacter, activeLine, activeCharacter)
 }
