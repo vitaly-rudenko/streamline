@@ -24,9 +24,9 @@ export function substitute(
   enforceAbsolute(input.homedir)
 
   let result = input.input
-    .replaceAll('$homedir', input.homedir)
-    .replaceAll('$replsPath', input.replsPath)
-    .replaceAll('$shortReplsPath', collapseHomedir(input.replsPath, input.homedir))
+    .replaceAll('$homedir', () => input.homedir)
+    .replaceAll('$replsPath', () => input.replsPath)
+    .replaceAll('$shortReplsPath', () => collapseHomedir(input.replsPath, input.homedir))
     .replaceAll('$datetime', () => deps.now.toISOString().replaceAll(/(\d{2}\.\d+Z|\D)/g, ''))
     .replaceAll('$randomNoun', () => deps.nouns[Math.floor(Math.random() * deps.nouns.length)])
     .replaceAll('$randomAdjective', () => deps.adjectives[Math.floor(Math.random() * deps.adjectives.length)])
@@ -34,25 +34,28 @@ export function substitute(
   if (input.context) {
     enforceAbsolute(input.context.path)
 
+    const contextPath = input.context.path
     const contextRelativePath = input.context.path.startsWith(input.replsPath + '/')
       ? input.context.path.slice(input.replsPath.length + 1)
       : input.context.path
 
     result = result
-      .replaceAll('$contextPath', input.context.path)
-      .replaceAll('$shortContextPath', collapseHomedir(input.context.path, input.homedir))
-      .replaceAll('$contextDirname', dirname(input.context.path))
-      .replaceAll('$shortContextDirname', collapseHomedir(dirname(input.context.path), input.homedir))
-      .replaceAll('$contextBasename', basename(input.context.path))
-      .replaceAll('$contextRelativePath', contextRelativePath)
-      .replaceAll('$shortContextRelativePath', collapseHomedir(contextRelativePath, input.homedir))
+      .replaceAll('$contextPath', () => contextPath)
+      .replaceAll('$shortContextPath', () => collapseHomedir(contextPath, input.homedir))
+      .replaceAll('$contextDirname', () => dirname(contextPath))
+      .replaceAll('$shortContextDirname', () => collapseHomedir(dirname(contextPath), input.homedir))
+      .replaceAll('$contextBasename', () => basename(contextPath))
+      .replaceAll('$contextRelativePath', () => contextRelativePath)
+      .replaceAll('$shortContextRelativePath', () => collapseHomedir(contextRelativePath, input.homedir))
 
     if (input.context.content !== undefined) {
-      result = result.replaceAll('$contextContent', input.context.content)
+      const content = input.context.content
+      result = result.replaceAll('$contextContent', () => content)
     }
 
     if (input.context.selection !== undefined) {
-      result = result.replaceAll('$contextSelection', input.context.selection)
+      const selection = input.context.selection
+      result = result.replaceAll('$contextSelection', () => selection)
     }
   }
 
