@@ -41,10 +41,7 @@ export const setupCommands: Command[] = [
       '$contextSelection',
       'QUICKREPL'
     ],
-    when: [
-      { selection: true, languageId: 'typescript' },
-      { selection: true, languageId: 'javascript' }
-    ],
+    when: [{ languageId: ['typescript', 'javascript'], selection: true }],
   },
   {
     name: 'Run Script (Node.js)',
@@ -55,10 +52,7 @@ export const setupCommands: Command[] = [
       '$contextContent',
       'QUICKREPL'
     ],
-    when: [
-      { untitled: true, languageId: 'typescript' },
-      { untitled: true, languageId: 'javascript' }
-    ],
+    when: [{ languageId: ['typescript', 'javascript'], untitled: true }],
   },
   {
     name: 'Run File (Node.js)',
@@ -66,8 +60,8 @@ export const setupCommands: Command[] = [
     cwd: '$contextDirname',
     command: 'node $contextBasename',
     when: [
-      { untitled: false, languageId: 'javascript' },
-      { basename: '\\.(c|m)?js$' },
+      { languageId: ['javascript', 'javascript'], untitled: false },
+      { basename: ['\\.(c|m)?ts$', '\\.(c|m)?js$'] },
     ],
   },
   {
