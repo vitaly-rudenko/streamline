@@ -83,4 +83,20 @@ describe('substitute()', () => {
       adjectives: ['funny'],
     })).toEqual('/home/user/not_repls/playground/hello_world.mjs, ~/not_repls/playground/hello_world.mjs')
   })
+
+  it('handles replacements with $ (dollar signs) correctly', () => {
+    expect(substitute({
+      input: '$contextSelection',
+      homedir: '/home/user',
+      replsPath: '/home/user/repls',
+      context: {
+        path: '/home/user/not_repls/playground/hello_world.mjs',
+        selection: 'console.log(\'$\')',
+      }
+    }, {
+      now: new Date('2022-03-04T12:34:56.789Z'),
+      nouns: ['squirrel'],
+      adjectives: ['funny'],
+    })).toEqual('console.log(\'$\')')
+  })
 })

@@ -84,6 +84,13 @@ export const setupCommands: Command[] = [
     command: 'npm install',
     when: [{ basename: 'package\.json$' }]
   },
+  {
+    name: 'Open in Browser',
+    description: 'Opens the selected HTML file in a browser',
+    command: 'open $contextPath',
+    cwd: '$contextDirname',
+    when: [{ basename: '\\.html?$' }]
+  }
 ]
 
 // Sanity checks
