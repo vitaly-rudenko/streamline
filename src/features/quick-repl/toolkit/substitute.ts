@@ -32,8 +32,6 @@ export function substitute(
     .replaceAll('$randomAdjective', () => deps.adjectives[Math.floor(Math.random() * deps.adjectives.length)])
 
   if (input.context) {
-    enforceAbsolute(input.context.path)
-
     const contextPath = input.context.path
     const contextRelativePath = input.context.path.startsWith(input.replsPath + '/')
       ? input.context.path.slice(input.replsPath.length + 1)
@@ -42,11 +40,15 @@ export function substitute(
     result = result
       .replaceAll('$contextPath', () => contextPath)
       .replaceAll('$shortContextPath', () => collapseHomedir(contextPath, input.homedir))
-      .replaceAll('$contextDirname', () => dirname(contextPath))
-      .replaceAll('$shortContextDirname', () => collapseHomedir(dirname(contextPath), input.homedir))
       .replaceAll('$contextBasename', () => basename(contextPath))
       .replaceAll('$contextRelativePath', () => contextRelativePath)
       .replaceAll('$shortContextRelativePath', () => collapseHomedir(contextRelativePath, input.homedir))
+
+    if (input.context.path.startsWith('/')) {
+      result = result
+        .replaceAll('$contextDirname', () => dirname(contextPath))
+        .replaceAll('$shortContextDirname', () => collapseHomedir(dirname(contextPath), input.homedir))
+    }
 
     if (input.context.content !== undefined) {
       const content = input.context.content

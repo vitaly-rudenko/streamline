@@ -99,4 +99,28 @@ describe('substitute()', () => {
       adjectives: ['funny'],
     })).toEqual('console.log(\'$\')')
   })
+  it('correctly handles untitled files', () => {
+    expect(substitute({
+      input: [
+        '$homedir, $replsPath, $shortReplsPath, $datetime, $randomNoun, $randomAdjective',
+        '$contextPath, $shortContextPath, $contextDirname, $shortContextDirname, $contextBasename, $contextRelativePath, $shortContextRelativePath',
+        '$contextContent, $contextSelection',
+      ].join('\n'),
+      homedir: '/home/user',
+      replsPath: '/home/user/repls',
+      context: {
+        path: 'Untitled-3',
+        content: 'console.log("Hello world!")',
+        selection: '"Hello world!"',
+      }
+    }, {
+      now: new Date('2022-03-04T12:34:56.789Z'),
+      nouns: ['squirrel'],
+      adjectives: ['funny'],
+    })).toEqual([
+      '/home/user, /home/user/repls, ~/repls, 202203041234, squirrel, funny',
+      'Untitled-3, Untitled-3, $contextDirname, $shortContextDirname, Untitled-3, Untitled-3, Untitled-3',
+      'console.log("Hello world!"), "Hello world!"',
+    ].join('\n'))
+  })
 })
