@@ -280,6 +280,17 @@ export function createScopedPathsFeature(input: {
     }
   }
 
+  // Toggle current scope
+	context.subscriptions.push(
+		vscode.commands.registerCommand('streamline.scopedPaths.toggleScope', async () => {
+      if (workspaceState.getEnabled()) {
+        await vscode.commands.executeCommand('streamline.scopedPaths.disableScope')
+      } else {
+        await vscode.commands.executeCommand('streamline.scopedPaths.enableScope')
+      }
+		})
+	)
+
   // Activate current scope
   context.subscriptions.push(
 		vscode.commands.registerCommand('streamline.scopedPaths.enableScope', async () => {

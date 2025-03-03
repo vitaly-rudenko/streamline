@@ -123,6 +123,10 @@
         "icon": "$(chevron-down)"
       },
       {
+        "command": "streamline.scopedPaths.toggleScope",
+        "title": "Toggle Current Scope"
+      },
+      {
         "command": "streamline.scopedPaths.enableScope",
         "title": "Enable Current Scope",
         "icon": "$(circle-large-outline)"
