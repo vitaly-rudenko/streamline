@@ -3,9 +3,13 @@ import { CurrentPathConfig } from './current-path-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { collapseString } from '../../utils/collapse-string'
 import { basename, extname } from 'path'
+import { RegisterCommand } from '../../register-command'
 
-export function createCurrentPathFeature(input: { context: vscode.ExtensionContext }) {
-  const { context } = input
+export function createCurrentPathFeature(input: {
+  context: vscode.ExtensionContext
+  registerCommand: RegisterCommand
+}) {
+  const { context, registerCommand } = input
 
   const config = new CurrentPathConfig()
   const scheduleConfigLoad = createDebouncedFunction(() => {
@@ -79,23 +83,21 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   }
 
   // Copy currently opened file's absolute path
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.currentPath.copy', async () => {
-      const activeTextEditor = vscode.window.activeTextEditor
-      if (!activeTextEditor) return
+  registerCommand('streamline.currentPath.copy', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
 
-      // Save relative path when possible (but without workspace folder)
-      const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path, false)
-      await vscode.env.clipboard.writeText(path)
+    // Save relative path when possible (but without workspace folder)
+    const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path, false)
+    await vscode.env.clipboard.writeText(path)
 
-      const copiedMessage = '⸱⸱⸱ copied!'
-      currentPathStatusBarItem.text = currentPathStatusBarItem.text.length > copiedMessage.length
-        ? currentPathStatusBarItem.text.slice(0, -copiedMessage.length) + copiedMessage
-        : copiedMessage
+    const copiedMessage = '⸱⸱⸱ copied!'
+    currentPathStatusBarItem.text = currentPathStatusBarItem.text.length > copiedMessage.length
+      ? currentPathStatusBarItem.text.slice(0, -copiedMessage.length) + copiedMessage
+      : copiedMessage
 
-      setTimeout(() => updateCurrentPathStatusBarItem(), 1000)
-    })
-  )
+    setTimeout(() => updateCurrentPathStatusBarItem(), 1000)
+  })
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => {

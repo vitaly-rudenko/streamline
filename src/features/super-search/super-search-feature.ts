@@ -2,9 +2,13 @@ import * as vscode from 'vscode'
 import { extractWords } from './extract-words'
 import { patterns } from './patterns'
 import { escapeRegex } from '../../utils/escape-regex'
+import { RegisterCommand } from '../../register-command'
 
-export function createSuperSearchFeature(input: { context: vscode.ExtensionContext }) {
-  const { context } = input
+export function createSuperSearchFeature(input: {
+  context: vscode.ExtensionContext
+  registerCommand: RegisterCommand
+}) {
+  const { registerCommand } = input
 
   async function promptToSearch(input: { title: string; searchString: string; matchCase: boolean }) {
     const copySearchQuery = '$(copy) Copy search query'
@@ -97,237 +101,233 @@ export function createSuperSearchFeature(input: { context: vscode.ExtensionConte
     }
   }
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.superSearch.findSimilarMatches', async () => {
-      const quickPick = vscode.window.createQuickPick()
-      quickPick.canSelectMany = true
+  registerCommand('streamline.superSearch.findSimilarMatches', async () => {
+    const quickPick = vscode.window.createQuickPick()
+    quickPick.canSelectMany = true
 
-      const allowHyphensItem = { label: '$(circle-filled)', description: 'Allow hyphens (snake-case)', alwaysShow: true }
-      const allowUnderscoresItem = { label: '$(circle-filled)', description: 'Allow underscores (kebab_case)', alwaysShow: true }
-      const allowWhitespaceItem = { label: '$(whitespace)', alwaysShow: true, description: 'Allow whitespace' }
-      const matchCaseItem = { label: '$(case-sensitive)', alwaysShow: true, description: 'Match case (case sensitive)' }
-      const matchWholeWordItem = { label: '$(whole-word)', alwaysShow: true, description: 'Match whole word' }
-      const escapeRegexItem = { label: '$(regex)', description: 'Escape input for regular expression', alwaysShow: true }
+    const allowHyphensItem = { label: '$(circle-filled)', description: 'Allow hyphens (snake-case)', alwaysShow: true }
+    const allowUnderscoresItem = { label: '$(circle-filled)', description: 'Allow underscores (kebab_case)', alwaysShow: true }
+    const allowWhitespaceItem = { label: '$(whitespace)', alwaysShow: true, description: 'Allow whitespace' }
+    const matchCaseItem = { label: '$(case-sensitive)', alwaysShow: true, description: 'Match case (case sensitive)' }
+    const matchWholeWordItem = { label: '$(whole-word)', alwaysShow: true, description: 'Match whole word' }
+    const escapeRegexItem = { label: '$(regex)', description: 'Escape input for regular expression', alwaysShow: true }
 
-      quickPick.items = [
-        allowHyphensItem,
-        allowUnderscoresItem,
-        allowWhitespaceItem,
-        matchCaseItem,
-        matchWholeWordItem,
-        escapeRegexItem,
-      ]
-      quickPick.selectedItems = [allowHyphensItem, allowUnderscoresItem, matchWholeWordItem, escapeRegexItem]
+    quickPick.items = [
+      allowHyphensItem,
+      allowUnderscoresItem,
+      allowWhitespaceItem,
+      matchCaseItem,
+      matchWholeWordItem,
+      escapeRegexItem,
+    ]
+    quickPick.selectedItems = [allowHyphensItem, allowUnderscoresItem, matchWholeWordItem, escapeRegexItem]
 
-      if (vscode.window.activeTextEditor) {
-        if (vscode.window.activeTextEditor.selection.isSingleLine) {
-          quickPick.value = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection)
-        }
+    if (vscode.window.activeTextEditor) {
+      if (vscode.window.activeTextEditor.selection.isSingleLine) {
+        quickPick.value = vscode.window.activeTextEditor.document.getText(vscode.window.activeTextEditor.selection)
+      }
+    }
+
+    function getAllowHyphens() {
+      return quickPick.selectedItems.some((item) => item.description === allowHyphensItem.description)
+    }
+
+    function getAllowUnderscores() {
+      return quickPick.selectedItems.some((item) => item.description === allowUnderscoresItem.description)
+    }
+
+    function getAllowWhitespace() {
+      return quickPick.selectedItems.some((item) => item.description === allowWhitespaceItem.description)
+    }
+
+    function getMatchCase() {
+      return quickPick.selectedItems.some((item) => item.description === matchCaseItem.description)
+    }
+
+    function getMatchWholeWord() {
+      return quickPick.selectedItems.some((item) => item.description === matchWholeWordItem.description)
+    }
+
+    function getEscapeRegex() {
+      return quickPick.selectedItems.some((item) => item.description === escapeRegexItem.description)
+    }
+
+    function refresh() {
+      quickPick.placeholder = 'Example: \'getEnabledFeatures()\' or \'get enabled features\''
+
+      if (!quickPick.value.trim()) {
+        quickPick.title = 'Start typing...'
+        return
       }
 
-      function getAllowHyphens() {
-        return quickPick.selectedItems.some((item) => item.description === allowHyphensItem.description)
-      }
-
-      function getAllowUnderscores() {
-        return quickPick.selectedItems.some((item) => item.description === allowUnderscoresItem.description)
-      }
-
-      function getAllowWhitespace() {
-        return quickPick.selectedItems.some((item) => item.description === allowWhitespaceItem.description)
-      }
-
-      function getMatchCase() {
-        return quickPick.selectedItems.some((item) => item.description === matchCaseItem.description)
-      }
-
-      function getMatchWholeWord() {
-        return quickPick.selectedItems.some((item) => item.description === matchWholeWordItem.description)
-      }
-
-      function getEscapeRegex() {
-        return quickPick.selectedItems.some((item) => item.description === escapeRegexItem.description)
-      }
-
-      function refresh() {
-        quickPick.placeholder = 'Example: \'getEnabledFeatures()\' or \'get enabled features\''
-
-        if (!quickPick.value.trim()) {
-          quickPick.title = 'Start typing...'
-          return
-        }
-
-        const { regex } = generateSimilarMatchesRegex({
-          value: quickPick.value,
-          allowHyphens: getAllowHyphens(),
-          allowUnderscores: getAllowUnderscores(),
-          allowWhitespace: getAllowWhitespace(),
-          matchCase: getMatchCase(),
-          matchWholeWord: getMatchWholeWord(),
-          escapeRegex: getEscapeRegex(),
-        })
-
-        quickPick.title = regex
-      }
-
-      quickPick.onDidChangeSelection(() => refresh())
-      quickPick.onDidChangeValue(() => refresh())
-      quickPick.onDidAccept(async () => {
-        quickPick.dispose()
-
-        const { regex, searchString } = generateSimilarMatchesRegex({
-          value: quickPick.value,
-          allowHyphens: getAllowHyphens(),
-          allowUnderscores: getAllowUnderscores(),
-          allowWhitespace: getAllowWhitespace(),
-          matchCase: getMatchCase(),
-          matchWholeWord: getMatchWholeWord(),
-          escapeRegex: getEscapeRegex(),
-        })
-
-        await promptToSearch({
-          searchString,
-          title: regex,
-          matchCase: getMatchCase(),
-        })
+      const { regex } = generateSimilarMatchesRegex({
+        value: quickPick.value,
+        allowHyphens: getAllowHyphens(),
+        allowUnderscores: getAllowUnderscores(),
+        allowWhitespace: getAllowWhitespace(),
+        matchCase: getMatchCase(),
+        matchWholeWord: getMatchWholeWord(),
+        escapeRegex: getEscapeRegex(),
       })
 
-      quickPick.show()
-      refresh()
-    })
-  )
+      quickPick.title = regex
+    }
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.superSearch.findWords', async () => {
-      const quickPick = vscode.window.createQuickPick()
-      quickPick.canSelectMany = true
+    quickPick.onDidChangeSelection(() => refresh())
+    quickPick.onDidChangeValue(() => refresh())
+    quickPick.onDidAccept(async () => {
+      quickPick.dispose()
 
-      const onSameLineItem = { label: '$(circle-filled)', description: 'Words must be on the same line', alwaysShow: true }
-      const inProvidedOrderItem = { label: '$(circle-filled)', description: 'Words must appear in the provided order', alwaysShow: true }
-      const matchAllNamingConventions = { label: '$(circle-filled)', description: 'Match words in all naming conventions', alwaysShow: true }
-      const matchCaseItem = { label: '$(case-sensitive)', alwaysShow: true, description: 'Match case (case sensitive)' }
-      const matchWholeWordItem = { label: '$(whole-word)', alwaysShow: true, description: 'Match whole word' }
-      const escapeRegexItem = { label: '$(regex)', description: 'Escape input for regular expression', alwaysShow: true }
-
-      quickPick.items = [
-        onSameLineItem,
-        inProvidedOrderItem,
-        matchAllNamingConventions,
-        matchCaseItem,
-        matchWholeWordItem,
-        escapeRegexItem,
-      ]
-      quickPick.selectedItems = [matchWholeWordItem, escapeRegexItem]
-
-      function getOnSameLine() {
-        return quickPick.selectedItems.some((item) => item.description === onSameLineItem.description)
-      }
-
-      function getInProvidedOrder() {
-        return quickPick.selectedItems.some((item) => item.description === inProvidedOrderItem.description)
-      }
-
-      function getMatchAllNamingConventions() {
-        return quickPick.selectedItems.some((item) => item.description === matchAllNamingConventions.description)
-      }
-
-      function getMatchCase() {
-        return quickPick.selectedItems.some((item) => item.description === matchCaseItem.description)
-      }
-
-      function getMatchWholeWord() {
-        return quickPick.selectedItems.some((item) => item.description === matchWholeWordItem.description)
-      }
-
-      function getEscapeRegex() {
-        return quickPick.selectedItems.some((item) => item.description === escapeRegexItem.description)
-      }
-
-      // TODO: allow matching words in any naming convention
-      function generateRegex(input: {
-        value: string
-        onSameLine: boolean
-        inProvidedOrder: boolean
-        matchAllNamingConventions: boolean
-        matchCase: boolean
-        matchWholeWord: boolean
-        escapeRegex: boolean
-      }) {
-        // Allow escaping whitespace
-        const words = input.value.split(' ')
-          .map(word => input.escapeRegex ? escapeRegex(word) : word)
-          .map(word => input.matchWholeWord ? `\\b${word}\\b` : word)
-          .map(word => input.matchAllNamingConventions
-              ? generateSimilarMatchesRegex({
-                value: word,
-                allowHyphens: true,
-                allowUnderscores: true,
-                allowWhitespace: false,
-                matchCase: false,
-                matchWholeWord: false,
-                escapeRegex: false,
-              }).searchString
-              : word)
-
-        const searchString = input.onSameLine
-          ? input.inProvidedOrder
-            ? patterns.findLinesWithAllWordsInProvidedOrder(words)
-            : patterns.findLinesWithAllWordsInAnyOrder(words)
-          : input.inProvidedOrder
-            ? patterns.findFilesWithAllWordsInProvidedOrder(words)
-            : patterns.findFilesWithAllWordsInAnyOrder(words)
-
-        return {
-          regex: `/${searchString}/${input.matchCase ? '' : 'i'}`,
-          searchString,
-        }
-      }
-
-      function refresh() {
-        quickPick.placeholder = 'Example: \'cats dogs\''
-
-        if (!quickPick.value.trim()) {
-          quickPick.title = 'Start typing...'
-          return
-        }
-
-        const { regex } = generateRegex({
-          value: quickPick.value,
-          onSameLine: getOnSameLine(),
-          inProvidedOrder: getInProvidedOrder(),
-          matchAllNamingConventions: getMatchAllNamingConventions(),
-          matchCase: getMatchCase(),
-          matchWholeWord: getMatchWholeWord(),
-          escapeRegex: getEscapeRegex(),
-        })
-
-        quickPick.title = regex
-      }
-
-      quickPick.onDidChangeSelection(() => refresh())
-      quickPick.onDidChangeValue(() => refresh())
-      quickPick.onDidAccept(async () => {
-        quickPick.dispose()
-
-        const { regex, searchString } = generateRegex({
-          value: quickPick.value,
-          onSameLine: getOnSameLine(),
-          inProvidedOrder: getInProvidedOrder(),
-          matchAllNamingConventions: getMatchAllNamingConventions(),
-          matchCase: getMatchCase(),
-          matchWholeWord: getMatchWholeWord(),
-          escapeRegex: getEscapeRegex(),
-        })
-
-        await promptToSearch({
-          searchString,
-          title: regex,
-          matchCase: getMatchCase(),
-        })
+      const { regex, searchString } = generateSimilarMatchesRegex({
+        value: quickPick.value,
+        allowHyphens: getAllowHyphens(),
+        allowUnderscores: getAllowUnderscores(),
+        allowWhitespace: getAllowWhitespace(),
+        matchCase: getMatchCase(),
+        matchWholeWord: getMatchWholeWord(),
+        escapeRegex: getEscapeRegex(),
       })
 
-      quickPick.show()
-      refresh()
+      await promptToSearch({
+        searchString,
+        title: regex,
+        matchCase: getMatchCase(),
+      })
     })
-  )
+
+    quickPick.show()
+    refresh()
+  })
+
+  registerCommand('streamline.superSearch.findWords', async () => {
+    const quickPick = vscode.window.createQuickPick()
+    quickPick.canSelectMany = true
+
+    const onSameLineItem = { label: '$(circle-filled)', description: 'Words must be on the same line', alwaysShow: true }
+    const inProvidedOrderItem = { label: '$(circle-filled)', description: 'Words must appear in the provided order', alwaysShow: true }
+    const matchAllNamingConventions = { label: '$(circle-filled)', description: 'Match words in all naming conventions', alwaysShow: true }
+    const matchCaseItem = { label: '$(case-sensitive)', alwaysShow: true, description: 'Match case (case sensitive)' }
+    const matchWholeWordItem = { label: '$(whole-word)', alwaysShow: true, description: 'Match whole word' }
+    const escapeRegexItem = { label: '$(regex)', description: 'Escape input for regular expression', alwaysShow: true }
+
+    quickPick.items = [
+      onSameLineItem,
+      inProvidedOrderItem,
+      matchAllNamingConventions,
+      matchCaseItem,
+      matchWholeWordItem,
+      escapeRegexItem,
+    ]
+    quickPick.selectedItems = [matchWholeWordItem, escapeRegexItem]
+
+    function getOnSameLine() {
+      return quickPick.selectedItems.some((item) => item.description === onSameLineItem.description)
+    }
+
+    function getInProvidedOrder() {
+      return quickPick.selectedItems.some((item) => item.description === inProvidedOrderItem.description)
+    }
+
+    function getMatchAllNamingConventions() {
+      return quickPick.selectedItems.some((item) => item.description === matchAllNamingConventions.description)
+    }
+
+    function getMatchCase() {
+      return quickPick.selectedItems.some((item) => item.description === matchCaseItem.description)
+    }
+
+    function getMatchWholeWord() {
+      return quickPick.selectedItems.some((item) => item.description === matchWholeWordItem.description)
+    }
+
+    function getEscapeRegex() {
+      return quickPick.selectedItems.some((item) => item.description === escapeRegexItem.description)
+    }
+
+    // TODO: allow matching words in any naming convention
+    function generateRegex(input: {
+      value: string
+      onSameLine: boolean
+      inProvidedOrder: boolean
+      matchAllNamingConventions: boolean
+      matchCase: boolean
+      matchWholeWord: boolean
+      escapeRegex: boolean
+    }) {
+      // Allow escaping whitespace
+      const words = input.value.split(' ')
+        .map(word => input.escapeRegex ? escapeRegex(word) : word)
+        .map(word => input.matchWholeWord ? `\\b${word}\\b` : word)
+        .map(word => input.matchAllNamingConventions
+          ? generateSimilarMatchesRegex({
+            value: word,
+            allowHyphens: true,
+            allowUnderscores: true,
+            allowWhitespace: false,
+            matchCase: false,
+            matchWholeWord: false,
+            escapeRegex: false,
+          }).searchString
+          : word)
+
+      const searchString = input.onSameLine
+        ? input.inProvidedOrder
+          ? patterns.findLinesWithAllWordsInProvidedOrder(words)
+          : patterns.findLinesWithAllWordsInAnyOrder(words)
+        : input.inProvidedOrder
+          ? patterns.findFilesWithAllWordsInProvidedOrder(words)
+          : patterns.findFilesWithAllWordsInAnyOrder(words)
+
+      return {
+        regex: `/${searchString}/${input.matchCase ? '' : 'i'}`,
+        searchString,
+      }
+    }
+
+    function refresh() {
+      quickPick.placeholder = 'Example: \'cats dogs\''
+
+      if (!quickPick.value.trim()) {
+        quickPick.title = 'Start typing...'
+        return
+      }
+
+      const { regex } = generateRegex({
+        value: quickPick.value,
+        onSameLine: getOnSameLine(),
+        inProvidedOrder: getInProvidedOrder(),
+        matchAllNamingConventions: getMatchAllNamingConventions(),
+        matchCase: getMatchCase(),
+        matchWholeWord: getMatchWholeWord(),
+        escapeRegex: getEscapeRegex(),
+      })
+
+      quickPick.title = regex
+    }
+
+    quickPick.onDidChangeSelection(() => refresh())
+    quickPick.onDidChangeValue(() => refresh())
+    quickPick.onDidAccept(async () => {
+      quickPick.dispose()
+
+      const { regex, searchString } = generateRegex({
+        value: quickPick.value,
+        onSameLine: getOnSameLine(),
+        inProvidedOrder: getInProvidedOrder(),
+        matchAllNamingConventions: getMatchAllNamingConventions(),
+        matchCase: getMatchCase(),
+        matchWholeWord: getMatchWholeWord(),
+        escapeRegex: getEscapeRegex(),
+      })
+
+      await promptToSearch({
+        searchString,
+        title: regex,
+        matchCase: getMatchCase(),
+      })
+    })
+
+    quickPick.show()
+    refresh()
+  })
 }

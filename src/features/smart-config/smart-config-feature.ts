@@ -8,12 +8,14 @@ import { unique } from '../../utils/unique'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getInspectKeyFromConfigurationTarget } from '../../config'
 import { GenerateConditionContext } from '../../generate-condition-context'
+import { RegisterCommand } from '../../register-command'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
+  registerCommand: RegisterCommand
   generateConditionContext: GenerateConditionContext,
 }) {
-  const { context, generateConditionContext } = input
+  const { context, registerCommand, generateConditionContext } = input
 
   const config = new SmartConfigConfig()
   const workspaceState = new SmartConfigWorkspaceState(context.workspaceState)
@@ -157,18 +159,16 @@ export function createSmartConfigFeature(input: {
   }
 
   // Command for toggle buttons in the status bar
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.smartConfig.toggle', async (toggle: string) => {
-      if (workspaceState.getEnabledToggles().includes(toggle)) {
-        workspaceState.setEnabledToggles(workspaceState.getEnabledToggles().filter(t => t !== toggle))
-      } else {
-        workspaceState.setEnabledToggles([...workspaceState.getEnabledToggles(), toggle])
-      }
+  registerCommand('streamline.smartConfig.toggle', async (toggle: string) => {
+    if (workspaceState.getEnabledToggles().includes(toggle)) {
+      workspaceState.setEnabledToggles(workspaceState.getEnabledToggles().filter(t => t !== toggle))
+    } else {
+      workspaceState.setEnabledToggles([...workspaceState.getEnabledToggles(), toggle])
+    }
 
-      scheduleRefresh()
-      await workspaceState.save()
-    }),
-  )
+    scheduleRefresh()
+    await workspaceState.save()
+  })
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {

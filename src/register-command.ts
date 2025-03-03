@@ -1,0 +1,1 @@
+export type RegisterCommand = (command: string, callback: (...args: any[]) => any) => void

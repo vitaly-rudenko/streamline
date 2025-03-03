@@ -28,6 +28,20 @@ const featureSchema = z.enum([
 type Feature = z.infer<typeof featureSchema>
 
 export function activate(context: vscode.ExtensionContext) {
+  function registerCommand(command: string, callback: (...args: any[]) => any) {
+    context.subscriptions.push(
+      vscode.commands.registerCommand(command, async (...args) => {
+        try {
+          await callback(...args)
+        } catch (error: any) {
+          console.warn(`[Streamline] Command "${command}" failed:`, error)
+          vscode.window.showWarningMessage(`Command "${command}" failed: ${error?.message}`)
+          throw error
+        }
+      })
+    )
+  }
+
 	const onDidChangeFileDecorationsEmitter = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>()
 
   const disabledFeatures = safeConfigGet(initialConfig, 'disabledFeatures', [], z.array(z.string()))
@@ -73,6 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
   smartConfigFeature = isFeatureEnabled('smartConfig')
     ? createSmartConfigFeature({
       context,
+      registerCommand,
       generateConditionContext,
     })
     : undefined
@@ -82,6 +97,7 @@ export function activate(context: vscode.ExtensionContext) {
   bookmarksFeature = isFeatureEnabled('bookmarks')
     ? createBookmarksFeature({
       context,
+      registerCommand,
       onChange: () => {
         onDidChangeFileDecorationsEmitter.fire(undefined)
         onDidChangeBookmarksEmitter.fire()
@@ -109,6 +125,7 @@ export function activate(context: vscode.ExtensionContext) {
   scopedPathsFeature = isFeatureEnabled('scopedPaths')
 		? createScopedPathsFeature({
 			context,
+      registerCommand,
 			onChange: () => {
         onDidChangeFileDecorationsEmitter.fire(undefined)
         smartConfigFeature?.scheduleRefresh()
@@ -117,10 +134,10 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 		: undefined
 
-	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context })
-	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context })
-  if (isFeatureEnabled('superSearch')) createSuperSearchFeature({ context })
-  if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, generateConditionContext })
+	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context, registerCommand })
+	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context, registerCommand })
+  if (isFeatureEnabled('superSearch')) createSuperSearchFeature({ context, registerCommand })
+  if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, registerCommand, generateConditionContext })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
@@ -157,14 +174,13 @@ export function activate(context: vscode.ExtensionContext) {
     )
   }
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.help.when', async () => {
-      await openHelp('docs/when.md')
-    }),
-    vscode.commands.registerCommand('streamline.help.quickRepl', async () => {
-      await openHelp('docs/quick-repl.md')
-    })
-  )
+  registerCommand('streamline.help.when', async () => {
+    await openHelp('docs/when.md')
+  })
+
+  registerCommand('streamline.help.quickRepl', async () => {
+    await openHelp('docs/quick-repl.md')
+  })
 
   async function openHelp(path: string) {
     const helpPath = context.asAbsolutePath(path)
