@@ -94,6 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
     dynamicScopeProviders.push({
       name: 'Bookmarks',
       iconPath: new vscode.ThemeIcon('bookmark'),
+      selectedIconPath: new vscode.ThemeIcon('bookmark'),
       isScopeMatching: (scope) => scope === '#bookmarks',
       getScopes: () => ['#bookmarks'],
       getScopedAndExcludedPaths: ({ uriToPath }) => (

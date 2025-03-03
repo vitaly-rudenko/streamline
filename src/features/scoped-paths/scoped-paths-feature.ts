@@ -36,6 +36,7 @@ export function createScopedPathsFeature(input: {
   dynamicScopeProviders.push({
     name: 'Quick Scope',
     iconPath: new vscode.ThemeIcon('folder'),
+    selectedIconPath: new vscode.ThemeIcon('folder-opened'),
     isScopeMatching: (scope) => isQuickScope(scope),
     getScopedAndExcludedPaths: ({ currentScope: scope }) => [scope.slice(1)],
     getScopes: () => getCurrentWorkspaceFoldersSnapshot().map(wf => generateQuickScope(wf.name)),
@@ -441,9 +442,13 @@ export function createScopedPathsFeature(input: {
         if (addedScopesSet.has(scope)) return
         addedScopesSet.add(scope)
 
+        const dynamicScopeProvider = dynamicScopeProviders.find(p => p.isScopeMatching(scope))
+        const iconPath = dynamicScopeProvider?.iconPath ?? new vscode.ThemeIcon('circle-large-outline')
+        const selectedIconPath = dynamicScopeProvider?.selectedIconPath ?? new vscode.ThemeIcon('pass-filled')
+
         scopeQuickPickItems.push({
           label: scope,
-          iconPath: dynamicScopeProviders.find(p => p.isScopeMatching(scope))?.iconPath ?? new vscode.ThemeIcon('folder'),
+          iconPath: scope === workspaceState.getCurrentScope() ? selectedIconPath : iconPath,
           description: scope === workspaceState.getCurrentScope() ? 'Current Scope' : undefined,
           scope,
         })
@@ -462,7 +467,7 @@ export function createScopedPathsFeature(input: {
       })
 
       scopeQuickPickItems.push({
-        label: 'Dynamic Scopes',
+        label: 'Dynamic scopes',
         kind: vscode.QuickPickItemKind.Separator,
       })
 
