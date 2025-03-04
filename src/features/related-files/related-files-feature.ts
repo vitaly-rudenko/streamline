@@ -6,7 +6,13 @@ import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { unique } from '../../utils/unique'
 import { getSmartBasename } from './toolkit/get-smart-basename'
 import { RegisterCommand } from '../../register-command'
-import { RelatedFilesFinder } from './related-files-finder'
+import { RelatedFile, RelatedFilesFinder } from './related-files-finder'
+import { collapseString } from '../../utils/collapse-string'
+import { basename } from 'path'
+
+const MAX_RELATED_FILES_IN_STATUS_BAR_TOOLTIP = 10
+const MAX_LABEL_LENGTH = 30
+const COLLAPSED_INDICATOR = '⸱⸱⸱'
 
 export function createRelatedFilesFeature(input: {
   context: vscode.ExtensionContext
@@ -18,14 +24,29 @@ export function createRelatedFilesFeature(input: {
   const relatedFilesFinder = new RelatedFilesFinder(config)
   const relatedFilesTreeDataProvider = new RelatedFilesTreeDataProvider(config, relatedFilesFinder)
 
-  const scheduleRefresh = createDebouncedFunction(() => relatedFilesTreeDataProvider.refresh(), 50)
-  const scheduleClearCacheAndRefresh = createDebouncedFunction(() => relatedFilesTreeDataProvider.clearCacheAndRefresh(), 500)
+  const relatedFilesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
+  relatedFilesStatusBarItem.name = 'Related Files'
 
-  const scheduleConfigLoad = createDebouncedFunction(() => {
+  const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
+  const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 500)
+
+  const scheduleConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
-    relatedFilesTreeDataProvider.clearCacheAndRefresh()
-    updateContextInBackground()
+    await hardRefresh()
   }, 500)
+
+  async function softRefresh() {
+    relatedFilesTreeDataProvider.refresh()
+    await updateStatusBarItemInBackground()
+    await updateContextInBackground()
+  }
+
+  async function hardRefresh() {
+    relatedFilesFinder.clearCache()
+    relatedFilesTreeDataProvider.refresh()
+    await updateStatusBarItemInBackground()
+    await updateContextInBackground()
+  }
 
   async function updateContextInBackground() {
     try {
@@ -33,6 +54,45 @@ export function createRelatedFilesFeature(input: {
       await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useGlobalSearch', config.getUseGlobalSearch())
     } catch (error) {
       console.warn('[ScopedPaths] Could not update context', error)
+    }
+  }
+
+  async function updateStatusBarItemInBackground() {
+    try {
+      const activeTextEditor = vscode.window.activeTextEditor
+      if (!activeTextEditor) {
+        relatedFilesStatusBarItem.hide()
+        return
+      }
+
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
+      const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder)
+      if (relatedFiles.length === 0) {
+        relatedFilesStatusBarItem.hide()
+        return
+      }
+
+      const [relatedFile, ...remainingRelatedFiles] = relatedFiles
+      relatedFilesStatusBarItem.text = `$(sparkle) ${(formatRelatedFileLabel(relatedFile))}${remainingRelatedFiles.length > 0 ? ` +${remainingRelatedFiles.length}` : ''}`
+      relatedFilesStatusBarItem.command = {
+        title: 'Open Related File',
+        command: 'vscode.open',
+        arguments: [relatedFile.uri],
+      }
+
+      const tooltip = new vscode.MarkdownString()
+      tooltip.isTrusted = true
+      tooltip.supportThemeIcons = true
+      tooltip.appendMarkdown(
+        remainingRelatedFiles
+          .slice(0, MAX_RELATED_FILES_IN_STATUS_BAR_TOOLTIP)
+          .map(rf => `$(file) [${formatRelatedFileLabel(rf)}](command:vscode.open?${encodeURIComponent(JSON.stringify(rf.uri))})  `)
+          .join('\n')
+      )
+      relatedFilesStatusBarItem.tooltip = tooltip
+      relatedFilesStatusBarItem.show()
+    } catch (error) {
+      console.warn('[ScopedPaths] Could not update status bar item', error)
     }
   }
 
@@ -55,9 +115,8 @@ export function createRelatedFilesFeature(input: {
   })
 
   // Reload "Related files" panel
-  registerCommand('streamline.relatedFiles.refresh', () => {
-    relatedFilesTreeDataProvider.clearCacheAndRefresh()
-    updateContextInBackground()
+  registerCommand('streamline.relatedFiles.refresh', async () => {
+    await hardRefresh()
   })
 
   // Open related file side-by-side (button in "Related files" panel)
@@ -76,49 +135,45 @@ export function createRelatedFilesFeature(input: {
         item.workspaceFolder.name,
       ])
     )
-
-    relatedFilesTreeDataProvider.clearCacheAndRefresh()
     config.saveInBackground()
+
+    await hardRefresh()
   })
 
   // Toggle "Use Excludes" option
-  registerCommand('streamline.relatedFiles.enableUseExcludes', () => {
+  registerCommand('streamline.relatedFiles.enableUseExcludes', async () => {
     config.setUseExcludes(true)
-    relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-    updateContextInBackground()
     config.saveInBackground()
+
+    await hardRefresh()
   })
 
-  registerCommand('streamline.relatedFiles.disableUseExcludes', () => {
+  registerCommand('streamline.relatedFiles.disableUseExcludes', async () => {
     config.setUseExcludes(false)
-    relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-    updateContextInBackground()
     config.saveInBackground()
+
+    await hardRefresh()
   })
 
   // Toggle "Use Global Search" option
-  registerCommand('streamline.relatedFiles.enableUseGlobalSearch', () => {
+  registerCommand('streamline.relatedFiles.enableUseGlobalSearch', async () => {
     config.setUseGlobalSearch(true)
-    relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-    updateContextInBackground()
     config.saveInBackground()
+
+    await hardRefresh()
   })
 
-  registerCommand('streamline.relatedFiles.disableUseGlobalSearch', () => {
+  registerCommand('streamline.relatedFiles.disableUseGlobalSearch', async () => {
     config.setUseGlobalSearch(false)
-    relatedFilesTreeDataProvider.clearCacheAndRefresh()
-
-    updateContextInBackground()
     config.saveInBackground()
+
+    await hardRefresh()
   })
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('search.exclude') || event.affectsConfiguration('files.exclude')) {
-        scheduleClearCacheAndRefresh()
+        scheduleHardRefresh()
       }
 
       if (event.affectsConfiguration('streamline.relatedFiles')) {
@@ -128,16 +183,21 @@ export function createRelatedFilesFeature(input: {
       }
     }),
     // Reload "Related files" panel when currently opened file changes
-    vscode.window.onDidChangeActiveTextEditor(() => scheduleRefresh()),
+    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh()),
     // Refresh when window state changes (e.g. focused, minimized)
-    vscode.window.onDidChangeWindowState(() => scheduleRefresh()),
+    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh()),
     // Clear files cache when files are created/deleted/renamed
-    vscode.workspace.onDidCreateFiles(() => scheduleClearCacheAndRefresh()),
-    vscode.workspace.onDidDeleteFiles(() => scheduleClearCacheAndRefresh()),
-    vscode.workspace.onDidRenameFiles(() => scheduleClearCacheAndRefresh()),
+    vscode.workspace.onDidCreateFiles(() => scheduleHardRefresh()),
+    vscode.workspace.onDidDeleteFiles(() => scheduleHardRefresh()),
+    vscode.workspace.onDidRenameFiles(() => scheduleHardRefresh()),
     // Clear files cache when workspace folders are added, renamed or deleted
-    vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleClearCacheAndRefresh()),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleHardRefresh()),
   )
 
   updateContextInBackground()
+  updateStatusBarItemInBackground()
+}
+
+function formatRelatedFileLabel(relatedFile: RelatedFile) {
+  return collapseString(relatedFile.label, basename(relatedFile.uri.path), MAX_LABEL_LENGTH, COLLAPSED_INDICATOR)
 }
