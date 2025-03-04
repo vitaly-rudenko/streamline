@@ -3,7 +3,7 @@ import path from 'path'
 import { TreeItem } from 'vscode'
 import { QuickReplConfig } from './quick-repl-config'
 import { QuickReplTreeDataProvider, FileTreeItem, FolderTreeItem } from './quick-repl-tree-data-provider'
-import { expandHomedir } from './toolkit/expand-homedir'
+import { expandHomedir } from '../../utils/expand-homedir'
 
 export class QuickReplDragAndDropController implements vscode.TreeDragAndDropController<TreeItem> {
   // MIMEs for dropping items into Quick Repl view

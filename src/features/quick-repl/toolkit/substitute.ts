@@ -1,7 +1,7 @@
 import { dirname, basename, relative } from 'path'
 import { adjectives } from './adjectives'
 import { nouns } from './nouns'
-import { collapseHomedir } from './collapse-homedir'
+import { collapseHomedir } from '../../../utils/collapse-homedir'
 
 export function substitute(
   input: {

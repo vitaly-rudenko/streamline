@@ -2,7 +2,7 @@ import wcmatch from 'wildcard-match'
 import * as vscode from 'vscode'
 import { QuickReplConfig } from './quick-repl-config'
 import { GenerateConditionContextInput } from '../../generate-condition-context'
-import { expandHomedir } from './toolkit/expand-homedir'
+import { expandHomedir } from '../../utils/expand-homedir'
 
 type TreeItem = FolderTreeItem | FileTreeItem | FailingFolderTreeItem
 

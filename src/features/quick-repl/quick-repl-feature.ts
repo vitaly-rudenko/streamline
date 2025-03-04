@@ -12,8 +12,8 @@ import { setupCommands, setupReplsPath, setupTemplates } from './setup'
 import { waitUntil } from '../../utils/wait-until'
 import { QuickReplDragAndDropController } from './quick-repl-drag-and-drop-controller'
 import { substitute } from './toolkit/substitute'
-import { expandHomedir } from './toolkit/expand-homedir'
-import { collapseHomedir } from './toolkit/collapse-homedir'
+import { expandHomedir } from '../../utils/expand-homedir'
+import { collapseHomedir } from '../../utils/collapse-homedir'
 import { RegisterCommand } from '../../register-command'
 
 // TODO: somehow automatically focus on created file/folder in the tree view

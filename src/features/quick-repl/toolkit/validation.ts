@@ -1,5 +1,5 @@
 import { Command, Template } from '../common'
-import { expandHomedir } from './expand-homedir'
+import { expandHomedir } from '../../../utils/expand-homedir'
 import { substitute } from './substitute'
 
 export function isCommandValid(command: Command) {

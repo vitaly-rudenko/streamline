@@ -1,15 +1,19 @@
 import * as vscode from 'vscode'
+import * as os from 'os'
 import { CurrentPathConfig } from './current-path-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { collapseString } from '../../utils/collapse-string'
 import { basename, extname } from 'path'
 import { RegisterCommand } from '../../register-command'
+import { collapseHomedir } from '../../utils/collapse-homedir'
 
 export function createCurrentPathFeature(input: {
   context: vscode.ExtensionContext
   registerCommand: RegisterCommand
 }) {
   const { context, registerCommand } = input
+
+  const homedir = os.homedir()
 
   const config = new CurrentPathConfig()
   const scheduleConfigLoad = createDebouncedFunction(() => {
@@ -31,7 +35,7 @@ export function createCurrentPathFeature(input: {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
       // Show relative path when possible
-      const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path)
+      const path = collapseHomedir(vscode.workspace.asRelativePath(activeTextEditor.document.uri.path), homedir)
       currentPathStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), config.getCollapsedIndicator())
       currentPathStatusBarItem.show()
     } else {
