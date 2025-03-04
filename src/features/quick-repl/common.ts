@@ -42,6 +42,7 @@ export const commandSchema = z.object({
   cwd: z.string(),
   command: z.union([z.string(), z.array(z.string())]),
   when: whenSchema.optional(),
+  confirm: z.boolean().optional(),
 })
 
 export type Command = z.infer<typeof commandSchema>

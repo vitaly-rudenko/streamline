@@ -133,7 +133,9 @@ export function createQuickReplFeature(input: {
     if (commands.length === 0) return
 
     // If only one command is available or if there is a matched default command, run it immediately
-    const defaultCommand = commands.length === 1 ? commands[0] : commands.find(command => command.default)
+    const defaultCommand = (commands.length === 1 && !commands[0].confirm)
+      ? commands[0]
+      : commands.find(command => command.default)
 
     console.debug('streamline.quickRepl.run', { defaultCommand })
 

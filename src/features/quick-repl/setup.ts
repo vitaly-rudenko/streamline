@@ -76,6 +76,7 @@ export const setupCommands: Command[] = [
     description: 'Runs "npm install" when package.json is selected',
     cwd: '$contextDirname',
     command: 'npm install',
+    confirm: true,
     when: [{ basename: 'package\.json$' }]
   },
   {
