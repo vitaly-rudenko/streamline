@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import { LRUCache } from 'lru-cache'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
 import type { RelatedFilesConfig } from './related-files-config'
 import { RelatedFile, RelatedFilesFinder } from './related-files-finder'
@@ -7,9 +6,6 @@ import { RelatedFile, RelatedFilesFinder } from './related-files-finder'
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem | WorkspaceFolderTreeItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
   onDidChangeTreeData = this._onDidChangeTreeData.event
-
-  // Cache related files in memory for recently opened files
-  private readonly _cache = new LRUCache<string, (RelatedFileTreeItem | WorkspaceFolderTreeItem)[]>({ max: 100 })
 
   constructor(
     private readonly config: RelatedFilesConfig,
@@ -19,11 +15,6 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   refresh(): void {
 		this._onDidChangeTreeData.fire()
 	}
-
-  clearCacheAndRefresh(): void {
-    this._cache.clear()
-    this.refresh()
-  }
 
   getTreeItem(element: RelatedFileTreeItem | WorkspaceFolderTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element
@@ -39,9 +30,6 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
 
     // There are no children for RelatedFile items
     if (element) return
-
-    const cache = this._cache.get(currentUri.path)
-    if (cache) return cache
 
     let children: (WorkspaceFolderTreeItem | RelatedFileTreeItem)[] = []
 
@@ -73,7 +61,6 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       children = (await this.relatedFilesFinder.find(currentUri, currentUriWorkspaceFolder)).map(createRelatedFileTreeItem)
     }
 
-    this._cache.set(currentUri.path, children)
     return children
   }
 }

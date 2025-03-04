@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { LRUCache } from 'lru-cache'
 import { collapseString } from '../../utils/collapse-string'
 import { formatPaths } from '../../utils/format-paths'
 import { getRelatedFilesQueries } from './toolkit/get-related-files-queries'
@@ -12,9 +13,16 @@ export type RelatedFile = {
 }
 
 export class RelatedFilesFinder {
+  // Cache related files in memory for recently opened files
+  private readonly _cache = new LRUCache<string, RelatedFile[]>({ max: 100 })
+
   constructor(private readonly config: RelatedFilesConfig) {}
 
   async find(currentUri: vscode.Uri, workspaceFolder?: vscode.WorkspaceFolder): Promise<RelatedFile[]> {
+    const cacheKey = `${workspaceFolder?.name ?? '#'}_${currentUri.path}`
+    const cached = this._cache.get(cacheKey)
+    if (cached) return cached
+
     const relativePath = vscode.workspace.asRelativePath(currentUri, false)
     const currentBasename = getSmartBasename(relativePath, this.config.getExcludedSuffixes())
 
@@ -82,7 +90,12 @@ export class RelatedFilesFinder {
       relatedFiles.push({ label, uri, isBestMatch: false })
     }
 
+    this._cache.set(cacheKey, relatedFiles)
     return relatedFiles
+  }
+
+  clearCache() {
+    this._cache.clear()
   }
 
   // TODO: Does not belong here? Also we do not need to regenerate it every time
