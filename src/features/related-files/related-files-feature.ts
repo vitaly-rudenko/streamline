@@ -6,6 +6,7 @@ import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { unique } from '../../utils/unique'
 import { getSmartBasename } from './toolkit/get-smart-basename'
 import { RegisterCommand } from '../../register-command'
+import { RelatedFilesFinder } from './related-files-finder'
 
 export function createRelatedFilesFeature(input: {
   context: vscode.ExtensionContext
@@ -14,7 +15,8 @@ export function createRelatedFilesFeature(input: {
   const { context, registerCommand } = input
 
   const config = new RelatedFilesConfig()
-  const relatedFilesTreeDataProvider = new RelatedFilesTreeDataProvider(config)
+  const relatedFilesFinder = new RelatedFilesFinder(config)
+  const relatedFilesTreeDataProvider = new RelatedFilesTreeDataProvider(config, relatedFilesFinder)
 
   const scheduleRefresh = createDebouncedFunction(() => relatedFilesTreeDataProvider.refresh(), 50)
   const scheduleClearCacheAndRefresh = createDebouncedFunction(() => relatedFilesTreeDataProvider.clearCacheAndRefresh(), 500)

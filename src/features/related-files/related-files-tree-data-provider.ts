@@ -1,13 +1,8 @@
 import * as vscode from 'vscode'
 import { LRUCache } from 'lru-cache'
 import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
-import { getRelatedFilesQueries } from './toolkit/get-related-files-queries'
 import type { RelatedFilesConfig } from './related-files-config'
-import { formatPaths } from '../../utils/format-paths'
-import { collapseString } from '../../utils/collapse-string'
-import { getSmartBasename } from './toolkit/get-smart-basename'
-
-// TODO: integration tests (decoupling from VSCode APIs will be required)
+import { RelatedFile, RelatedFilesFinder } from './related-files-finder'
 
 export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<RelatedFileTreeItem | WorkspaceFolderTreeItem> {
 	private readonly _onDidChangeTreeData = new vscode.EventEmitter<void>()
@@ -16,7 +11,10 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
   // Cache related files in memory for recently opened files
   private readonly _cache = new LRUCache<string, (RelatedFileTreeItem | WorkspaceFolderTreeItem)[]>({ max: 100 })
 
-  constructor(private readonly config: RelatedFilesConfig) {}
+  constructor(
+    private readonly config: RelatedFilesConfig,
+    private readonly relatedFilesFinder: RelatedFilesFinder
+  ) {}
 
   refresh(): void {
 		this._onDidChangeTreeData.fire()
@@ -64,7 +62,7 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
       const workspaceFolderChildrenList = await Promise.all(
         sortedWorkspaceFolders.map(async (workspaceFolder) => [
           workspaceFolder,
-          await this._getRelatedFilesChildren(currentUri, workspaceFolder)
+          (await this.relatedFilesFinder.find(currentUri, workspaceFolder)).map(createRelatedFileTreeItem)
         ] as const)
       )
 
@@ -72,91 +70,11 @@ export class RelatedFilesTreeDataProvider implements vscode.TreeDataProvider<Rel
         .filter(([_workspaceFolder, children]) => children.length > 0)
         .map(([workspaceFolder, children]) => new WorkspaceFolderTreeItem(workspaceFolder, children))
     } else { // Or only in current file's workspace folder
-      children = await this._getRelatedFilesChildren(currentUri, currentUriWorkspaceFolder)
+      children = (await this.relatedFilesFinder.find(currentUri, currentUriWorkspaceFolder)).map(createRelatedFileTreeItem)
     }
 
     this._cache.set(currentUri.path, children)
     return children
-  }
-
-  private async _getRelatedFilesChildren(currentUri: vscode.Uri, workspaceFolder?: vscode.WorkspaceFolder): Promise<RelatedFileTreeItem[]> {
-    const relativePath = vscode.workspace.asRelativePath(currentUri, false)
-    const currentBasename = getSmartBasename(relativePath, this.config.getExcludedSuffixes())
-
-    const relatedFilesQueries = getRelatedFilesQueries(relativePath, this.config.getExcludedSuffixes())
-
-    // Limit search to workspace folder when provided
-    const includes = workspaceFolder
-      ? relatedFilesQueries.map(query => new vscode.RelativePattern(workspaceFolder.uri, query))
-      : [...relatedFilesQueries]
-
-    // TODO: Use findFiles2() when API is stable
-    //       See https://github.com/microsoft/vscode/pull/203844
-    // TODO: Exclude files from search.exclude and files.exclude configurations
-    const excludePattern = this._generateExcludePattern()
-    const matchedUrisPerQuery = (
-      await Promise.all(
-        includes.map(include => vscode.workspace.findFiles(include, excludePattern, 10))
-      )
-    ).map(uris => {
-      // Sort files by name to stabilize list order
-      uris.sort((a, b) => a.path.localeCompare(b.path))
-
-      // Sort files by basename equality
-      uris.sort((a, b) => {
-        const basenameA = getSmartBasename(a.path, this.config.getExcludedSuffixes())
-        const basenameB = getSmartBasename(b.path, this.config.getExcludedSuffixes())
-        if (basenameA === currentBasename && basenameB !== currentBasename) return -1
-        if (basenameA !== currentBasename && basenameB === currentBasename) return 1
-        return 0
-      })
-
-      return uris
-    })
-
-    const children: RelatedFileTreeItem[] = []
-    const ignoredPaths = new Set([currentUri.path])
-
-    const uris = matchedUrisPerQuery.flat()
-    const pathLabels: Map<string, string> = new Map(
-      uris.map((uri) => [uri.path, vscode.workspace.asRelativePath(uri, false)])
-    )
-
-    // Format all paths beforehand for efficiency
-    const formattedPaths = formatPaths([...pathLabels.values()])
-    for (const [path, label] of pathLabels) {
-      pathLabels.set(path, formattedPaths.get(label)!)
-    }
-
-    // Treat first query in special way ("best match"), and "star" if related file's basename matches current file's one
-    for (const uri of matchedUrisPerQuery[0]) {
-      if (ignoredPaths.has(uri.path)) continue
-      ignoredPaths.add(uri.path)
-      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, this.config.getMaxLabelLength(), this.config.getCollapsedIndicator())
-      children.push(new RelatedFileTreeItem(label, uri, getSmartBasename(uri.path, this.config.getExcludedSuffixes()) === currentBasename))
-    }
-
-    for (const uri of matchedUrisPerQuery.slice(1).flat()) {
-      if (ignoredPaths.has(uri.path)) continue
-      ignoredPaths.add(uri.path)
-      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, this.config.getMaxLabelLength(), this.config.getCollapsedIndicator())
-      children.push(new RelatedFileTreeItem(label, uri, false))
-    }
-
-    return children
-  }
-
-  // TODO: Does not belong here? Also we do not need to regenerate it every time
-  private _generateExcludePattern() {
-    const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
-    const excludeEntries = Object.entries({
-      ...searchExcludes,
-      ...this.config.getUseExcludes() ? this.config.getCustomExcludes() : {},
-    })
-
-    return excludeEntries.length > 0
-      ? `{${excludeEntries.filter(([_, value]) => value === true).map(([key]) => key).join(',')}}`
-      : undefined
   }
 }
 
@@ -180,4 +98,8 @@ export class RelatedFileTreeItem extends vscode.TreeItem {
       title: 'Open file'
     }
   }
+}
+
+function createRelatedFileTreeItem(relatedFile: RelatedFile): RelatedFileTreeItem {
+  return new RelatedFileTreeItem(relatedFile.label, relatedFile.uri, relatedFile.isBestMatch)
 }
