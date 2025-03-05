@@ -12,16 +12,19 @@ export type RelatedFile = {
   isBestMatch: boolean
 }
 
+const MAX_LABEL_LENGTH = 80
+const COLLAPSED_INDICATOR = '⸱⸱⸱'
+
 export class RelatedFilesFinder {
   // Cache related files in memory for recently opened files
   private readonly _cache = new LRUCache<string, RelatedFile[]>({ max: 100 })
 
   constructor(private readonly config: RelatedFilesConfig) {}
 
-  async find(currentUri: vscode.Uri, workspaceFolder?: vscode.WorkspaceFolder): Promise<RelatedFile[]> {
+  async find(currentUri: vscode.Uri, workspaceFolder?: vscode.WorkspaceFolder, options?: { ignoreCache?: boolean }): Promise<RelatedFile[]> {
     const cacheKey = `${workspaceFolder?.name ?? '#'}_${currentUri.path}`
     const cached = this._cache.get(cacheKey)
-    if (cached) return cached
+    if (!options?.ignoreCache && cached) return cached
 
     const relativePath = vscode.workspace.asRelativePath(currentUri, false)
     const currentBasename = getSmartBasename(relativePath, this.config.getExcludedSuffixes())
@@ -75,7 +78,7 @@ export class RelatedFilesFinder {
     for (const uri of matchedUrisPerQuery[0]) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, this.config.getMaxLabelLength(), this.config.getCollapsedIndicator())
+      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, MAX_LABEL_LENGTH, COLLAPSED_INDICATOR)
       relatedFiles.push({
         uri,
         label,
@@ -86,7 +89,7 @@ export class RelatedFilesFinder {
     for (const uri of matchedUrisPerQuery.slice(1).flat()) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, this.config.getMaxLabelLength(), this.config.getCollapsedIndicator())
+      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, MAX_LABEL_LENGTH, COLLAPSED_INDICATOR)
       relatedFiles.push({ label, uri, isBestMatch: false })
     }
 
@@ -103,7 +106,7 @@ export class RelatedFilesFinder {
     const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
     const excludeEntries = Object.entries({
       ...searchExcludes,
-      ...this.config.getUseExcludes() ? this.config.getCustomExcludes() : {},
+      ...this.config.getCustomExcludes(),
     })
 
     return excludeEntries.length > 0

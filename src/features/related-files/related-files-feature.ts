@@ -1,14 +1,10 @@
 import * as vscode from 'vscode'
-import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
-import { RelatedFilesTreeDataProvider, type RelatedFileTreeItem, type WorkspaceFolderTreeItem } from './related-files-tree-data-provider'
 import { RelatedFilesConfig } from './related-files-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
-import { unique } from '../../utils/unique'
-import { getSmartBasename } from './toolkit/get-smart-basename'
 import { RegisterCommand } from '../../register-command'
 import { RelatedFile, RelatedFilesFinder } from './related-files-finder'
 import { collapseString } from '../../utils/collapse-string'
-import { basename } from 'path'
+import path, { basename } from 'path'
 
 const MAX_RELATED_FILES_IN_STATUS_BAR_TOOLTIP = 10
 const MAX_LABEL_LENGTH = 30
@@ -22,7 +18,6 @@ export function createRelatedFilesFeature(input: {
 
   const config = new RelatedFilesConfig()
   const relatedFilesFinder = new RelatedFilesFinder(config)
-  const relatedFilesTreeDataProvider = new RelatedFilesTreeDataProvider(config, relatedFilesFinder)
 
   const relatedFilesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
   relatedFilesStatusBarItem.name = 'Related Files'
@@ -36,25 +31,12 @@ export function createRelatedFilesFeature(input: {
   }, 500)
 
   async function softRefresh() {
-    relatedFilesTreeDataProvider.refresh()
     await updateStatusBarItemInBackground()
-    await updateContextInBackground()
   }
 
   async function hardRefresh() {
     relatedFilesFinder.clearCache()
-    relatedFilesTreeDataProvider.refresh()
     await updateStatusBarItemInBackground()
-    await updateContextInBackground()
-  }
-
-  async function updateContextInBackground() {
-    try {
-      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useExcludes', config.getUseExcludes())
-      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useGlobalSearch', config.getUseGlobalSearch())
-    } catch (error) {
-      console.warn('[ScopedPaths] Could not update context', error)
-    }
   }
 
   async function updateStatusBarItemInBackground() {
@@ -96,79 +78,32 @@ export function createRelatedFilesFeature(input: {
     }
   }
 
-  context.subscriptions.push(vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider))
-
-  // Open "Quick Open" modal with pre-filled search query for the related files of currently opened file
+  // Open "Quick Open" modal with list of all potentially related files
   registerCommand('streamline.relatedFiles.quickOpen', async (uri: vscode.Uri | undefined) => {
     uri ||= vscode.window.activeTextEditor?.document.uri
     if (!uri) return
 
-    const workspaceFolder = isMultiRootWorkspace() && !config.getUseGlobalSearch()
-      ? vscode.workspace.getWorkspaceFolder(uri)
-      : undefined
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri)
 
-    const basename = getSmartBasename(uri.path, config.getExcludedSuffixes()).replaceAll(/[-_]/g, ' ')
+    const relatedFiles = await relatedFilesFinder.find(uri, workspaceFolder, { ignoreCache: true })
+    if (relatedFiles.length === 0) {
+      await vscode.commands.executeCommand('workbench.action.quickOpen')
+      return
+    }
 
-    const query = workspaceFolder ? `${workspaceFolder.name}/${basename}` : basename
-
-    await vscode.commands.executeCommand('workbench.action.quickOpen', query)
-  })
-
-  // Reload "Related files" panel
-  registerCommand('streamline.relatedFiles.refresh', async () => {
-    await hardRefresh()
-  })
-
-  // Open related file side-by-side (button in "Related files" panel)
-  registerCommand('streamline.relatedFiles.openToSide', async (item?: RelatedFileTreeItem) => {
-    if (!item?.resourceUri) return
-    await vscode.commands.executeCommand('explorer.openToSide', item.resourceUri)
-  })
-
-  // Hide files from the selected workspace folder from the related files list (context menu item in "Related files" panel)
-  registerCommand('streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch', async (item?: WorkspaceFolderTreeItem) => {
-    if (!item) return
-
-    config.setHiddenWorkspaceFoldersInGlobalSearch(
-      unique([
-        ...config.getHiddenWorkspaceFoldersInGlobalSearch(),
-        item.workspaceFolder.name,
-      ])
+    const selected = await vscode.window.showQuickPick<vscode.QuickPickItem & { relatedFile: RelatedFile }>(
+      relatedFiles.map(relatedFile => ({
+        label: relatedFile.label,
+        description: path.relative(path.dirname(uri.path), relatedFile.uri.path),
+        relatedFile,
+        iconPath: relatedFile.isBestMatch ? new vscode.ThemeIcon('star-full') : new vscode.ThemeIcon('sparkle'),
+      }))
     )
-    config.saveInBackground()
+    if (!selected) return
 
-    await hardRefresh()
+    await vscode.commands.executeCommand('vscode.open', selected.relatedFile.uri)
   })
 
-  // Toggle "Use Excludes" option
-  registerCommand('streamline.relatedFiles.enableUseExcludes', async () => {
-    config.setUseExcludes(true)
-    config.saveInBackground()
-
-    await hardRefresh()
-  })
-
-  registerCommand('streamline.relatedFiles.disableUseExcludes', async () => {
-    config.setUseExcludes(false)
-    config.saveInBackground()
-
-    await hardRefresh()
-  })
-
-  // Toggle "Use Global Search" option
-  registerCommand('streamline.relatedFiles.enableUseGlobalSearch', async () => {
-    config.setUseGlobalSearch(true)
-    config.saveInBackground()
-
-    await hardRefresh()
-  })
-
-  registerCommand('streamline.relatedFiles.disableUseGlobalSearch', async () => {
-    config.setUseGlobalSearch(false)
-    config.saveInBackground()
-
-    await hardRefresh()
-  })
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
@@ -194,7 +129,6 @@ export function createRelatedFilesFeature(input: {
     vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleHardRefresh()),
   )
 
-  updateContextInBackground()
   updateStatusBarItemInBackground()
 }
 
