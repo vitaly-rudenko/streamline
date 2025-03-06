@@ -1,11 +1,12 @@
 import * as vscode from 'vscode'
 import * as os from 'os'
-import { CurrentPathConfig } from './current-path-config'
-import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { collapseString } from '../../utils/collapse-string'
 import { basename, extname } from 'path'
 import { RegisterCommand } from '../../register-command'
 import { collapseHomedir } from '../../utils/collapse-homedir'
+
+const MAX_LABEL_LENGTH = 60
+const COLLAPSED_INDICATOR = '⸱⸱⸱'
 
 export function createCurrentPathFeature(input: {
   context: vscode.ExtensionContext
@@ -14,13 +15,6 @@ export function createCurrentPathFeature(input: {
   const { context, registerCommand } = input
 
   const homedir = os.homedir()
-
-  const config = new CurrentPathConfig()
-  const scheduleConfigLoad = createDebouncedFunction(() => {
-    if (!config.load()) return
-    updateCurrentPathStatusBarItem()
-    updateCurrentSelectionStatusBarItem()
-  }, 500)
 
   const currentPathStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 999)
   currentPathStatusBarItem.name = 'Current Path'
@@ -36,7 +30,7 @@ export function createCurrentPathFeature(input: {
     if (activeTextEditor) {
       // Show relative path when possible
       const path = collapseHomedir(vscode.workspace.asRelativePath(activeTextEditor.document.uri.path), homedir)
-      currentPathStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), config.getCollapsedIndicator())
+      currentPathStatusBarItem.text = collapseString(path, basename(path, extname(path)), MAX_LABEL_LENGTH, COLLAPSED_INDICATOR)
       currentPathStatusBarItem.show()
     } else {
       currentPathStatusBarItem.hide()
@@ -109,13 +103,6 @@ export function createCurrentPathFeature(input: {
       updateCurrentSelectionStatusBarItem()
     }),
     vscode.window.onDidChangeTextEditorSelection(() => updateCurrentSelectionStatusBarItem()),
-    vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration('streamline.currentPath')) {
-        if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
-        }
-      }
-    }),
   )
 
   updateCurrentPathStatusBarItem()

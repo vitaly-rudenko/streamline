@@ -786,16 +786,6 @@
           },
           "description": "Highlight paths in explorer view that match these regular expression patterns"
         },
-        "streamline.currentPath.maxLabelLength": {
-          "type": "number",
-          "default": 60,
-          "description": "Smartly shorten current path label when exceeding certain length"
-        },
-        "streamline.currentPath.collapsedIndicator": {
-          "type": "string",
-          "default": "⸱⸱⸱",
-          "description": "Indicator that will be placed wherever label is shortened"
-        },
         "streamline.relatedFiles.exclude": {
           "type": "object",
           "default": {},
