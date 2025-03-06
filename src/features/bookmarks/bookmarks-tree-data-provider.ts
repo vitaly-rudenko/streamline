@@ -9,6 +9,16 @@ import { basename } from 'path'
 
 type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
+const MAX_LABEL_LENGTH = 60
+const MAX_DESCRIPTION_LENGTH = 60
+const MAX_TOOLTIP_SELECTION_VALUE_LINES = 15
+
+const noteThemeIcon = new vscode.ThemeIcon('note')
+const selectionThemeIcon = new vscode.ThemeIcon('selection')
+
+const activeListThemeIcon = new vscode.ThemeIcon('folder-active')
+const inactiveListThemeIcon = new vscode.ThemeIcon('folder')
+
 export class ArchivedListsTreeItem extends vscode.TreeItem {
   constructor(expanded: boolean) {
     super('Archive', expanded ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
@@ -126,9 +136,6 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
   }
 }
 
-const activeListThemeIcon = new vscode.ThemeIcon('folder-active')
-const inactiveListThemeIcon = new vscode.ThemeIcon('folder')
-
 export class ListTreeItem extends vscode.TreeItem {
   constructor(public readonly list: string, isCurrentList: boolean, isArchived: boolean) {
     super(list, isCurrentList ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
@@ -177,13 +184,6 @@ export class FileTreeItem extends vscode.TreeItem {
     }
   }
 }
-
-const MAX_LABEL_LENGTH = 64
-const MAX_DESCRIPTION_LENGTH = 64
-const MAX_TOOLTIP_SELECTION_VALUE_LINES = 15
-
-const noteThemeIcon = new vscode.ThemeIcon('note')
-const selectionThemeIcon = new vscode.ThemeIcon('selection')
 
 export class SelectionTreeItem extends vscode.TreeItem {
   public readonly type = 'selection'

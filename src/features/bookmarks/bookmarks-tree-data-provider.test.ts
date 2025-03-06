@@ -8,8 +8,6 @@ import { ArchivedListsTreeItem, BookmarksTreeDataProvider, FileTreeItem, FolderT
 import { Selection, Uri } from 'vscode'
 import assert from 'assert'
 
-// TODO: use better assertions
-
 suite('BookmarksTreeDataProvider', () => {
   let config: BookmarksConfig
   let workspaceState: BookmarksWorkspaceState
