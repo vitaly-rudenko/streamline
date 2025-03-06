@@ -37,7 +37,7 @@ export function createQuickReplFeature(input: {
 
   const scheduleUpdateContextInBackground = createDebouncedFunction(async () => {
     await updateContextInBackground()
-  }, 500)
+  }, 250)
 
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable, homedir)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
