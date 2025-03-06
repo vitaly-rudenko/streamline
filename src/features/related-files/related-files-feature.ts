@@ -22,7 +22,7 @@ export function createRelatedFilesFeature(input: {
   const relatedFilesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
   relatedFilesStatusBarItem.name = 'Related Files'
 
-  const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
+  const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 100)
   const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 500)
 
   const scheduleConfigLoad = createDebouncedFunction(async () => {
@@ -79,29 +79,57 @@ export function createRelatedFilesFeature(input: {
   }
 
   // Open "Quick Open" modal with list of all potentially related files
-  registerCommand('streamline.relatedFiles.quickOpen', async (uri: vscode.Uri | undefined) => {
-    uri ||= vscode.window.activeTextEditor?.document.uri
-    if (!uri) return
+  registerCommand('streamline.relatedFiles.quickOpen', async (argument: unknown) => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
 
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri)
+    const searchAllWorkspaceFolders = (
+      argument &&
+      typeof argument === 'object' &&
+      'searchAllWorkspaceFolders' in argument &&
+      typeof argument.searchAllWorkspaceFolders === 'boolean' &&
+      argument.searchAllWorkspaceFolders
+    )
 
-    const relatedFiles = await relatedFilesFinder.find(uri, workspaceFolder, { ignoreCache: true })
-    if (relatedFiles.length === 0) {
-      await vscode.commands.executeCommand('workbench.action.quickOpen')
+    const workspaceFolder = searchAllWorkspaceFolders
+      ? undefined
+      : vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
+
+    const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
+    if (!searchAllWorkspaceFolders && relatedFiles.length === 0) {
+      await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
       return
     }
 
-    const selected = await vscode.window.showQuickPick<vscode.QuickPickItem & { relatedFile: RelatedFile }>(
-      relatedFiles.map(relatedFile => ({
+    const selected = await vscode.window.showQuickPick<vscode.QuickPickItem & {
+      relatedFile?: RelatedFile
+      searchAllWorkspaceFolders?: boolean
+    }>([
+      ...searchAllWorkspaceFolders && relatedFiles.length === 0 ? [{
+        label: 'No related files found, try regular Quick Open?',
+        iconPath: new vscode.ThemeIcon('search-stop'),
+      }] : [],
+      ...relatedFiles.map(relatedFile => ({
         label: relatedFile.label,
-        description: path.relative(path.dirname(uri.path), relatedFile.uri.path),
+        description: path.relative(path.dirname(activeTextEditor.document.uri.path), relatedFile.uri.path),
         relatedFile,
         iconPath: relatedFile.isBestMatch ? new vscode.ThemeIcon('star-full') : new vscode.ThemeIcon('sparkle'),
-      }))
-    )
+      })),
+      ...searchAllWorkspaceFolders ? [] : [{
+        label: 'Search in all workspaces',
+        iconPath: new vscode.ThemeIcon('search'),
+        searchAllWorkspaceFolders: true,
+      }],
+    ])
     if (!selected) return
 
-    await vscode.commands.executeCommand('vscode.open', selected.relatedFile.uri)
+    if (selected.searchAllWorkspaceFolders) {
+      await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
+    } else if (selected.relatedFile) {
+      await vscode.commands.executeCommand('vscode.open', selected.relatedFile.uri)
+    } else {
+      await vscode.commands.executeCommand('workbench.action.quickOpen')
+    }
   })
 
 
