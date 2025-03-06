@@ -13,7 +13,6 @@ import { RegisterCommand } from '../../register-command'
 const UNDO_HISTORY_SIZE = 50
 
 // TODO: Deleting "virtual" file should suggest user to delete all selections inside of it (with confirmation)
-// TODO: optimize & cache new functionality
 
 export function createBookmarksFeature(input: {
   context: vscode.ExtensionContext
@@ -68,18 +67,22 @@ export function createBookmarksFeature(input: {
   }
 
   async function promptListSelection() {
-    const addNewListItem = '+ Add new list'
-
-    let selectedList = await vscode.window.showQuickPick(
+    let selected = await vscode.window.showQuickPick<vscode.QuickPickItem & { list?: string }>(
       [
-        ...cache.getCachedSortedUnarchivedLists(),
-        addNewListItem,
+        ...cache.getCachedSortedUnarchivedLists().map(list => ({
+          label: list,
+          iconPath: new vscode.ThemeIcon('bookmark'),
+          description: workspaceState.getCurrentList() === list ? 'Current List' : undefined,
+          list,
+        })),
+        { label: 'Add new list', iconPath: new vscode.ThemeIcon('add') }
       ],
       { title: 'Select Bookmarks List' }
     )
-    if (!selectedList) return undefined
+    if (!selected) return undefined
 
-    if (selectedList === addNewListItem) {
+    let selectedList = selected.list
+    if (!selectedList) {
       selectedList = await vscode.window.showInputBox({ prompt: 'Enter the name of new list' })
       if (!selectedList) return
     }
