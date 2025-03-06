@@ -492,17 +492,17 @@
         },
         {
           "command": "streamline.bookmarks.undo",
-          "group": "navigation@1",
+          "group": "info@1",
           "when": "view == bookmarks && !streamline.bookmarks.isUndoHistoryEmpty"
         },
         {
           "command": "streamline.bookmarks.exportAsJson",
-          "group": "navigation@2",
+          "group": "info@2",
           "when": "view == bookmarks"
         },
         {
           "command": "streamline.bookmarks.addList",
-          "group": "navigation@3",
+          "group": "navigation@1",
           "when": "view == bookmarks"
         },
         {
