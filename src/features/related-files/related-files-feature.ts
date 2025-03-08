@@ -20,10 +20,16 @@ export function createRelatedFilesFeature(input: {
   const relatedFilesFinder = new RelatedFilesFinder(config)
 
   const relatedFilesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
-  relatedFilesStatusBarItem.name = 'Related Files'
+  relatedFilesStatusBarItem.name = 'Related File'
 
-  const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 100)
-  const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 500)
+  const openToSideStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 997)
+  openToSideStatusBarItem.name = 'Open Related File to Side'
+  openToSideStatusBarItem.text = '$(split-horizontal)'
+  openToSideStatusBarItem.tooltip = new vscode.MarkdownString('Open Related File to Side')
+  openToSideStatusBarItem.show()
+
+  const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
+  const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 250)
 
   const scheduleConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
@@ -51,6 +57,7 @@ export function createRelatedFilesFeature(input: {
       const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder)
       if (relatedFiles.length === 0) {
         relatedFilesStatusBarItem.hide()
+        openToSideStatusBarItem.hide()
         return
       }
 
@@ -73,6 +80,13 @@ export function createRelatedFilesFeature(input: {
       )
       relatedFilesStatusBarItem.tooltip = tooltip
       relatedFilesStatusBarItem.show()
+
+      openToSideStatusBarItem.command = {
+        title: 'Open to Side',
+        command: 'explorer.openToSide',
+        arguments: [relatedFile.uri],
+      }
+      openToSideStatusBarItem.show()
     } catch (error) {
       console.warn('[ScopedPaths] Could not update status bar item', error)
     }
@@ -96,40 +110,54 @@ export function createRelatedFilesFeature(input: {
       : vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
 
     const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
-    if (!searchAllWorkspaceFolders && relatedFiles.length === 0) {
-      await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
-      return
-    }
 
-    const selected = await vscode.window.showQuickPick<vscode.QuickPickItem & {
+    const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & {
       relatedFile?: RelatedFile
       searchAllWorkspaceFolders?: boolean
-    }>([
-      ...searchAllWorkspaceFolders && relatedFiles.length === 0 ? [{
-        label: 'No related files found, try regular Quick Open?',
+    }>()
+
+    quickPick.items = [
+      ...relatedFiles.length === 0 ? [{
+        label: 'No related files found, trigger Quick Open?',
         iconPath: new vscode.ThemeIcon('search-stop'),
       }] : [],
       ...relatedFiles.map(relatedFile => ({
         label: relatedFile.label,
-        description: path.relative(path.dirname(activeTextEditor.document.uri.path), relatedFile.uri.path),
+        description: vscode.workspace.asRelativePath(relatedFile.uri, workspaceFolder ? false : true),
         relatedFile,
         iconPath: relatedFile.isBestMatch ? new vscode.ThemeIcon('star-full') : new vscode.ThemeIcon('sparkle'),
+        buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
       })),
       ...searchAllWorkspaceFolders ? [] : [{
-        label: 'Search in all workspaces',
+        label: 'Search in all workspace folders',
         iconPath: new vscode.ThemeIcon('search'),
         searchAllWorkspaceFolders: true,
       }],
-    ])
-    if (!selected) return
+    ]
 
-    if (selected.searchAllWorkspaceFolders) {
-      await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
-    } else if (selected.relatedFile) {
-      await vscode.commands.executeCommand('vscode.open', selected.relatedFile.uri)
-    } else {
-      await vscode.commands.executeCommand('workbench.action.quickOpen')
-    }
+    quickPick.show()
+
+    quickPick.onDidAccept(async () => {
+      const [selected] = quickPick.selectedItems
+      if (selected) {
+        if (selected.searchAllWorkspaceFolders) {
+          await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
+        } else if (selected.relatedFile) {
+          await vscode.commands.executeCommand('vscode.open', selected.relatedFile.uri)
+        } else {
+          await vscode.commands.executeCommand('workbench.action.quickOpen')
+        }
+      }
+
+      quickPick.dispose()
+    })
+
+    quickPick.onDidTriggerItemButton(async (e) => {
+      if (!e.item.relatedFile) return
+      await vscode.commands.executeCommand('explorer.openToSide', e.item.relatedFile?.uri)
+    })
+
+    quickPick.onDidHide(() => quickPick.dispose())
   })
 
 
