@@ -8,7 +8,6 @@ import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 import { createCurrentPathFeature } from './features/current-path/current-path-feature'
 import { initialConfig, safeConfigGet } from './config'
 import { createSmartConfigFeature } from './features/smart-config/smart-config-feature'
-import { createSuperSearchFeature } from './features/super-search/super-search-feature'
 import { createQuickReplFeature } from './features/quick-repl/quick-repl-feature'
 import { ConditionContext } from './common/when'
 import { GenerateConditionContextInput } from './generate-condition-context'
@@ -21,7 +20,6 @@ const featureSchema = z.enum([
   'relatedFiles',
   'scopedPaths',
   'smartConfig',
-  'superSearch',
   'quickRepl',
 ])
 
@@ -136,7 +134,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context, registerCommand })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context, registerCommand })
-  if (isFeatureEnabled('superSearch')) createSuperSearchFeature({ context, registerCommand })
   if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, registerCommand, generateConditionContext })
 
   if (scopedPathsFeature || highlightedPathsFeature) {

@@ -99,16 +99,6 @@
         "icon": "$(question)"
       },
       {
-        "command": "streamline.superSearch.findSimilarMatches",
-        "title": "Super Search: Find similar matches",
-        "icon": "$(search)"
-      },
-      {
-        "command": "streamline.superSearch.findWords",
-        "title": "Super Search: Find words",
-        "icon": "$(search)"
-      },
-      {
         "command": "streamline.scopedPaths.changeCurrentScope",
         "title": "Change Current Scope...",
         "icon": "$(chevron-down)"
@@ -748,7 +738,6 @@
               "relatedFiles",
               "scopedPaths",
               "smartConfig",
-              "superSearch",
               "quickRepl"
             ]
           },
