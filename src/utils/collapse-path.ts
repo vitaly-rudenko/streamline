@@ -11,13 +11,13 @@ export function collapsePath(path: string, maxLength: number) {
     return parts.join('/').length
   }
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+  while (parts.some(p => p.length > 0)) {
     if (getResultingLength() <= maxLength) break
 
     const maxPartLength = Math.max(...parts.map(p => p.length))
     if (maxPartLength === 0) break
 
-    const maxPartIndexLastPartPrioritized = parts[parts.length - 1].length > 0 ? parts.length - 1 : -1
+    const maxPartIndexLastPartPrioritized = parts[parts.length - 1].length > 0 && !isProbablyExtension(parts[parts.length -1]) ? parts.length - 1 : -1
     const maxPartIndexAlreadyCollapsed = parts.findIndex((p, i) => p.length === maxPartLength && collapsedCounts[i] > 0)
     const maxPartIndex = maxPartIndexLastPartPrioritized !== -1
       ? maxPartIndexLastPartPrioritized
@@ -39,12 +39,16 @@ export function collapsePath(path: string, maxLength: number) {
   return parts.map((part, index) => {
     if (collapsedCounts[index] > 0) {
       if (index === parts.length - 1) {
-        return '…' + part
+        return '⸱⸱⸱' + part
       } else {
-        return part + '…'
+        return part + '⸱⸱⸱'
       }
     }
 
     return part
   }).join('/')
+}
+
+function isProbablyExtension(part: string) {
+  return !part.includes('.') || part.lastIndexOf('.') === 0
 }
