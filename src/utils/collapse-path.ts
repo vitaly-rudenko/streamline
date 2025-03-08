@@ -17,7 +17,7 @@ export function collapsePath(path: string, maxLength: number) {
     const maxPartLength = Math.max(...parts.map(p => p.length))
     if (maxPartLength === 0) break
 
-    const maxPartIndexLastPartPrioritized = maxPartLength < 3 && parts[parts.length - 1].length > 0 ? parts.length - 1 : -1
+    const maxPartIndexLastPartPrioritized = parts[parts.length - 1].length > 0 ? parts.length - 1 : -1
     const maxPartIndexAlreadyCollapsed = parts.findIndex((p, i) => p.length === maxPartLength && collapsedCounts[i] > 0)
     const maxPartIndex = maxPartIndexLastPartPrioritized !== -1
       ? maxPartIndexLastPartPrioritized

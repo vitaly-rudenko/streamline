@@ -16,12 +16,12 @@ describe('collapsePath()', () => {
     // Prioritize collapsing the last part of the path (basename)
     expect(collapsePath('/path/to/file.service.mjs', 13)).toEqual('/path/to/….mjs')
     expect(collapsePath('/path/to/file.service.mjs', 12)).toEqual('/path/to/…mjs')
-    expect(collapsePath('/path/to/file.service.mjs', 10)).toEqual('/p…/to/…mjs')
+    expect(collapsePath('/path/to/file.service.mjs', 11)).toEqual('/path/to/…js')
+    expect(collapsePath('/path/to/file.service.mjs', 10)).toEqual('/path/to/…s')
+    expect(collapsePath('/path/to/file.service.mjs', 9)).toEqual('/path/to/…')
 
     // Collapse until everything is collapsed
-    expect(collapsePath('/path/to/file.service.mjs', 9)).toEqual('/p…/to/…mjs')
-    expect(collapsePath('/path/to/file.service.mjs', 8)).toEqual('/p…/to/…js')
-    expect(collapsePath('/path/to/file.service.mjs', 7)).toEqual('/p…/to/…s')
+    expect(collapsePath('/path/to/file.service.mjs', 8)).toEqual('/p…/to/…')
     expect(collapsePath('/path/to/file.service.mjs', 6)).toEqual('/p…/to/…')
     expect(collapsePath('/path/to/file.service.mjs', 5)).toEqual('/p…/…/…')
     expect(collapsePath('/path/to/file.service.mjs', 4)).toEqual('/p…/…/…')
