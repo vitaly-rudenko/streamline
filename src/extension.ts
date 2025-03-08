@@ -155,7 +155,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (isHighlighted || isParentOfScopedAndExcluded || isScoped || isExcluded || isBookmarked) {
           const badge = isScoped ? '•' : isExcluded ? '⨯' : isParentOfScopedAndExcluded ? '›' : undefined
-          const prefix = isBookmarked ? '†' : undefined
+          const prefix = isBookmarked ? '⭑' : undefined
 
           return new vscode.FileDecoration(
             (badge && prefix) ? `${prefix}${badge}` : badge ?? prefix,
