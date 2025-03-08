@@ -82,7 +82,7 @@ export function createScopedPathsFeature(input: {
     directoryReader.clearCache()
     await updateContextInBackground()
     await updateExcludesInBackground()
-  }, 250)
+  }, 500)
 
   const scheduleSoftRefresh = createDebouncedFunction(async () => {
     updateStatusBarItems()
@@ -462,6 +462,7 @@ export function createScopedPathsFeature(input: {
       }
     }
 
+    // TODO: add "delete", "clear" and "rename" buttons
     const selected = await vscode.window.showQuickPick(scopeQuickPickItems, { title: 'Select Scope' })
     if (!selected) return
 

@@ -454,6 +454,7 @@ export function createBookmarksFeature(input: {
     const uris = bookmarks.map(bookmark => bookmark.uri)
     const formattedPaths = formatPaths(uris.map(uri => uri.path))
 
+    // TODO: Add "open to side" button
     const selected = await vscode.window.showQuickPick(
       bookmarks.flatMap((bookmark, i) => {
         const label = formattedPaths.get(bookmark.uri.path)!
