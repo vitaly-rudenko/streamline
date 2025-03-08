@@ -1,12 +1,10 @@
 import * as vscode from 'vscode'
 import * as os from 'os'
-import { collapseString } from '../../utils/collapse-string'
-import { basename, extname } from 'path'
 import { RegisterCommand } from '../../register-command'
 import { collapseHomedir } from '../../utils/collapse-homedir'
+import { collapsePath } from '../../utils/collapse-path'
 
 const MAX_LABEL_LENGTH = 60
-const COLLAPSED_INDICATOR = '⸱⸱⸱'
 
 export function createCurrentPathFeature(input: {
   context: vscode.ExtensionContext
@@ -30,7 +28,7 @@ export function createCurrentPathFeature(input: {
     if (activeTextEditor) {
       // Show relative path when possible
       const path = collapseHomedir(vscode.workspace.asRelativePath(activeTextEditor.document.uri.path), homedir)
-      currentPathStatusBarItem.text = collapseString(path, basename(path, extname(path)), MAX_LABEL_LENGTH, COLLAPSED_INDICATOR)
+      currentPathStatusBarItem.text = collapsePath(path, MAX_LABEL_LENGTH)
       currentPathStatusBarItem.show()
     } else {
       currentPathStatusBarItem.hide()
@@ -89,9 +87,10 @@ export function createCurrentPathFeature(input: {
     const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path, false)
     await vscode.env.clipboard.writeText(path)
 
-    const copiedMessage = '⸱⸱⸱ copied!'
-    currentPathStatusBarItem.text = currentPathStatusBarItem.text.length > copiedMessage.length
-      ? currentPathStatusBarItem.text.slice(0, -copiedMessage.length) + copiedMessage
+    const copiedMessage = ' $(check) copied!'
+    const copiedMessageLength = copiedMessage.length - 6
+    currentPathStatusBarItem.text = currentPathStatusBarItem.text.length > copiedMessageLength
+      ? currentPathStatusBarItem.text.slice(0, -copiedMessageLength) + copiedMessage
       : copiedMessage
 
     setTimeout(() => updateCurrentPathStatusBarItem(), 1000)
