@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.930",
+  "version": "0.40.931",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -90,36 +90,37 @@
     "commands": [
       {
         "command": "streamline.help.when",
-        "title": "Streamline: Syntax for 'when' (Open Help)",
+        "title": "Streamline: Open Help for 'when' Syntax",
         "icon": "$(question)"
       },
       {
         "command": "streamline.help.quickRepl",
-        "title": "Streamline: Quick Repl (Open Help)",
+        "title": "Quick Repl: Open Help",
         "icon": "$(question)"
       },
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
-        "title": "Change Current Scope...",
+        "title": "Scoped Paths: Change Current Scope...",
         "icon": "$(chevron-down)"
       },
       {
         "command": "streamline.scopedPaths.toggleScope",
-        "title": "Toggle Current Scope"
+        "title": "Scoped Paths: Toggle Current Scope",
+        "icon": "$(activate-breakpoints)"
       },
       {
         "command": "streamline.scopedPaths.enableScope",
-        "title": "Enable Current Scope",
+        "title": "Scoped Paths: Enable Current Scope",
         "icon": "$(circle-large-outline)"
       },
       {
         "command": "streamline.scopedPaths.disableScope",
-        "title": "Disable Current Scope",
+        "title": "Scoped Paths: Disable Current Scope",
         "icon": "$(pass-filled)"
       },
       {
         "command": "streamline.scopedPaths.clearCurrentScope",
-        "title": "Clear Current Scope",
+        "title": "Scoped Paths: Clear Current Scope",
         "icon": "$(circle-slash)"
       },
       {
@@ -149,7 +150,17 @@
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
-        "title": "Quick Open Related File...",
+        "title": "Related Files: Quick Open...",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "streamline.relatedFiles.openBestMatch",
+        "title": "Related Files: Open Best Match",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "streamline.relatedFiles.openBestMatchToSide",
+        "title": "Related Files: Open Best Match to Side",
         "icon": "$(sparkle)"
       },
       {
@@ -159,7 +170,7 @@
       },
       {
         "command": "streamline.bookmarks.addFile",
-        "title": "Add File to Bookmarks",
+        "title": "Bookmarks: Add File to Bookmarks",
         "icon": "$(star)"
       },
       {
@@ -184,7 +195,7 @@
       },
       {
         "command": "streamline.bookmarks.deleteFile",
-        "title": "Delete File from Bookmarks",
+        "title": "Bookmarks: Delete File from Bookmarks",
         "icon": "$(star-full)"
       },
       {
@@ -197,13 +208,13 @@
         "title": "Move to List..."
       },
       {
-        "command": "streamline.bookmarks.revealInExplorer",
-        "title": "Reveal in Explorer",
+        "command": "streamline.bookmarks.revealInOS",
+        "title": "Reveal in OS",
         "icon": "$(eye)"
       },
       {
         "command": "streamline.bookmarks.changeCurrentList",
-        "title": "Change Current Bookmarks List...",
+        "title": "Bookmarks: Change Current List...",
         "icon": "$(issue-closed)"
       },
       {
@@ -213,47 +224,47 @@
       },
       {
         "command": "streamline.bookmarks.addList",
-        "title": "Add Bookmarks List...",
+        "title": "Bookmarks: Create List...",
         "icon": "$(add)"
       },
       {
         "command": "streamline.bookmarks.deleteList",
-        "title": "Delete",
+        "title": "Delete List",
         "icon": "$(trash)"
       },
       {
         "command": "streamline.bookmarks.renameList",
-        "title": "Rename...",
+        "title": "Rename List...",
         "icon": "$(edit)"
       },
       {
         "command": "streamline.bookmarks.archiveList",
-        "title": "Archive",
+        "title": "Archive List",
         "icon": "$(archive)"
       },
       {
         "command": "streamline.bookmarks.unarchiveList",
-        "title": "Unarchive",
+        "title": "Unarchive List",
         "icon": "$(archive)"
       },
       {
         "command": "streamline.bookmarks.undo",
-        "title": "Restore Deleted Bookmarks",
+        "title": "Restore Recently Deleted Bookmarks",
         "icon": "$(discard)"
       },
       {
         "command": "streamline.bookmarks.exportAsJson",
-        "title": "Export Bookmarks as JSON",
+        "title": "Bookmarks: Export as JSON",
         "icon": "$(cloud-download)"
       },
       {
         "command": "streamline.bookmarks.quickOpen",
-        "title": "Quick Open Bookmark from Current List...",
+        "title": "Bookmarks: Quick Open...",
         "icon": "$(bookmark)"
       },
       {
         "command": "streamline.currentPath.copy",
-        "title": "Copy Current Path",
+        "title": "Current Path: Copy Relative Path",
         "icon": "$(copy)"
       },
       {
@@ -262,12 +273,12 @@
       },
       {
         "command": "streamline.quickRepl.setup",
-        "title": "Quick Repl: Setup",
+        "title": "Quick Repl: Setup Wizard",
         "icon": "$(rocket)"
       },
       {
         "command": "streamline.quickRepl.run",
-        "title": "Quick Repl: Run",
+        "title": "Quick Repl: Run Command",
         "icon": "$(play)"
       },
       {
@@ -277,7 +288,7 @@
       },
       {
         "command": "streamline.quickRepl.openReplsInNewWindow",
-        "title": "Quick Repl: Open Repls in a New Window",
+        "title": "Quick Repl: Open Repls in a new Window",
         "icon": "$(empty-window)"
       },
       {
@@ -287,7 +298,7 @@
       },
       {
         "command": "streamline.quickRepl.openInNewWindow",
-        "title": "Open in a New Window",
+        "title": "Open in a new Window",
         "icon": "$(empty-window)"
       },
       {
@@ -312,7 +323,7 @@
       },
       {
         "command": "streamline.quickRepl.createQuickRepl",
-        "title": "Quick Repl: Create...",
+        "title": "Quick Repl: Create a Repl...",
         "icon": "$(plus)"
       },
       {
@@ -379,7 +390,7 @@
           "when": "false"
         },
         {
-          "command": "streamline.bookmarks.revealInExplorer",
+          "command": "streamline.bookmarks.revealInOS",
           "when": "false"
         },
         {
@@ -404,6 +415,22 @@
         },
         {
           "command": "streamline.bookmarks.move",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.add",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.addToList",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.addNote",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.addNoteToList",
           "when": "false"
         },
         {
@@ -528,7 +555,7 @@
       ],
       "view/item/context": [
         {
-          "command": "streamline.bookmarks.revealInExplorer",
+          "command": "streamline.bookmarks.revealInOS",
           "when": "view == bookmarks && (viewItem == file || viewItem == virtualFile || viewItem == folder)",
           "group": "inline@1"
         },

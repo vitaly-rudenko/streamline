@@ -334,8 +334,8 @@ export function createBookmarksFeature(input: {
   })
 
   // Reveal bookmark (file) in the file tree
-  registerCommand('streamline.bookmarks.revealInExplorer', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
-    await vscode.commands.executeCommand('revealInExplorer', item.uri)
+  registerCommand('streamline.bookmarks.revealInOS', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
+    await vscode.commands.executeCommand('revealInOS', item.uri)
   })
 
   // Deletes file from bookmarks (bookmarked selections are not deleted)

@@ -69,7 +69,7 @@ export function createSmartConfigFeature(input: {
       const toggleName = toggle.replaceAll(/\$\((.+)\)/g, (_, m: string) => m[0].toUpperCase() + m.slice(1).replaceAll(/-./g, (m: string) => ' ' + m[1].toUpperCase()))
 
       const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 11 + i)
-      item.name = `Toggle ${toggleName}`
+      item.name = `Smart Config: Toggle ${toggleName}`
       item.tooltip = `${enabledToggles.includes(toggle) ? 'Disable' : 'Enable'} ${toggleName}`
       item.text = `${enabledToggles.includes(toggle) ? '$(circle-filled)' : '$(circle-outline)'}${toggle}`
       item.command = {
