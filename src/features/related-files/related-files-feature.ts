@@ -107,15 +107,16 @@ export function createRelatedFilesFeature(input: {
       }],
     ]
 
-    quickPick.show()
-
     quickPick.onDidAccept(async () => {
       const [selected] = quickPick.selectedItems
       if (selected) {
         if (selected.searchAllWorkspaceFolders) {
           await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
         } else if (selected.relatedFile) {
-          await vscode.commands.executeCommand('vscode.open', selected.relatedFile.uri)
+          await vscode.window.showTextDocument(
+            selected.relatedFile.uri,
+            { preview: false }
+          )
         } else {
           await vscode.commands.executeCommand('workbench.action.quickOpen')
         }
@@ -124,12 +125,17 @@ export function createRelatedFilesFeature(input: {
       quickPick.dispose()
     })
 
-    quickPick.onDidTriggerItemButton(async (e) => {
-      if (!e.item.relatedFile) return
-      await vscode.commands.executeCommand('explorer.openToSide', e.item.relatedFile?.uri)
+    quickPick.onDidTriggerItemButton(async ({ item }) => {
+      if (!item.relatedFile) return
+      await vscode.window.showTextDocument(
+        item.relatedFile.uri,
+        { preview: false, viewColumn: vscode.ViewColumn.Beside }
+      )
     })
 
     quickPick.onDidHide(() => quickPick.dispose())
+
+    quickPick.show()
   })
 
   // Immediately open the best match file in the editor
@@ -138,10 +144,13 @@ export function createRelatedFilesFeature(input: {
     if (!activeTextEditor) return
 
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
-    const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
-    if (relatedFiles.length === 0) return
+    const [relatedFile] = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
+    if (!relatedFile) return
 
-    await vscode.commands.executeCommand('vscode.open', relatedFiles[0].uri)
+    await vscode.window.showTextDocument(
+      relatedFile.uri,
+      { preview: false }
+    )
   })
 
   // Immediately open the best match file in the editor to the side
@@ -150,10 +159,13 @@ export function createRelatedFilesFeature(input: {
     if (!activeTextEditor) return
 
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
-    const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
-    if (relatedFiles.length === 0) return
+    const [relatedFile] = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
+    if (!relatedFile) return
 
-    await vscode.commands.executeCommand('explorer.openToSide', relatedFiles[0].uri)
+    await vscode.window.showTextDocument(
+      relatedFile.uri,
+      { preview: false, viewColumn: vscode.ViewColumn.Beside }
+    )
   })
 
   context.subscriptions.push(

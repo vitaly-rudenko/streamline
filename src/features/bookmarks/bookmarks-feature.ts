@@ -475,12 +475,15 @@ export function createBookmarksFeature(input: {
     const currentList = workspaceState.getCurrentList()
 
     const bookmarks = config.getBookmarks()
+      // Filter by current list
       .filter(bookmark => bookmark.list === currentList)
+      // Only files & selections
       .filter(bookmark => bookmark.type === 'file' || bookmark.type === 'selection')
-      .sort((a, b) => a.type === 'selection' && b.type === 'selection'
-        ? a.selection.start.line - b.selection.start.line
-        : 0)
+      // Sort selections in files by line number
+      .sort((a, b) => a.type === 'selection' && b.type === 'selection' ? a.selection.start.line - b.selection.start.line : 0)
+      // Sort files to appear before selections inside them
       .sort((a, b) => a.type === b.type ? 0 : a.type === 'file' ? -1 : 1)
+      // Group files & selections by same path
       .sort((a, b) => a.uri.path.localeCompare(b.uri.path))
 
     if (bookmarks.length === 0) {
@@ -491,59 +494,86 @@ export function createBookmarksFeature(input: {
     const uris = bookmarks.map(bookmark => bookmark.uri)
     const formattedPaths = formatPaths(uris.map(uri => uri.path))
 
-    // TODO: Add "open to side" button
-    const selected = await vscode.window.showQuickPick(
-      bookmarks.flatMap((bookmark, i) => {
-        const label = formattedPaths.get(bookmark.uri.path)!
-        const results: (vscode.QuickPickItem & { bookmark: Bookmark })[] = []
+    const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { bookmark: Bookmark }>()
 
-        if (
-          (i === 0 || bookmarks[i - 1].uri.path !== bookmark.uri.path)
-          && !bookmarks.some(b => b.type === 'file' && b.uri.path === bookmark.uri.path)
-        ) {
-          results.push({
-            label,
-            description: vscode.workspace.asRelativePath(bookmark.uri.path),
-            iconPath: new vscode.ThemeIcon('file'),
-            bookmark: {
-              type: 'file',
-              list: bookmark.list,
-              uri: bookmark.uri,
-            },
-          })
-        }
+    quickPick.items = bookmarks.flatMap((bookmark, i) => {
+      const label = formattedPaths.get(bookmark.uri.path)!
+      const results: (vscode.QuickPickItem & { bookmark: Bookmark })[] = []
 
-        if (bookmark.type === 'selection') {
-          const preview = formatSelectionValue(bookmark.selection, bookmark.value)
-
-          results.push({
-            label: `$(${bookmark.note ? 'note' : 'selection'}) ${bookmark.note ? bookmark.note : preview}`,
-            description: bookmark.note ? preview : undefined,
-            bookmark,
-            iconPath: new vscode.ThemeIcon('indent'),
-          })
-        } else {
-          results.push({
-            label,
-            description: vscode.workspace.asRelativePath(bookmark.uri.path),
-            iconPath: new vscode.ThemeIcon('file'),
-            bookmark,
-          })
-        }
-
-        return results
-      })
-    )
-    if (!selected) return
-
-    await vscode.window.showTextDocument(
-      selected.bookmark.uri,
-      {
-        ...selected.bookmark.type === 'selection' && {
-          selection: selected.bookmark.selection,
-        },
+      if (
+        (i === 0 || bookmarks[i - 1].uri.path !== bookmark.uri.path)
+        && !bookmarks.some(b => b.type === 'file' && b.uri.path === bookmark.uri.path)
+      ) {
+        results.push({
+          label,
+          description: vscode.workspace.asRelativePath(bookmark.uri.path),
+          iconPath: new vscode.ThemeIcon('file'),
+          bookmark: {
+            type: 'file',
+            list: bookmark.list,
+            uri: bookmark.uri,
+          },
+          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+        })
       }
-    )
+
+      if (bookmark.type === 'selection') {
+        const preview = formatSelectionValue(bookmark.selection, bookmark.value)
+
+        results.push({
+          label: `$(${bookmark.note ? 'note' : 'selection'}) ${bookmark.note ? bookmark.note : preview}`,
+          description: bookmark.note ? preview : undefined,
+          bookmark,
+          iconPath: new vscode.ThemeIcon('indent'),
+          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+        })
+      } else {
+        results.push({
+          label,
+          description: vscode.workspace.asRelativePath(bookmark.uri.path),
+          iconPath: new vscode.ThemeIcon('file'),
+          bookmark,
+          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+        })
+      }
+
+      return results
+    })
+
+    quickPick.onDidAccept(async () => {
+      const [selected] = quickPick.selectedItems
+      if (selected) {
+        await vscode.window.showTextDocument(
+          selected.bookmark.uri,
+          {
+            preview: false,
+            ...selected.bookmark.type === 'selection' && {
+              selection: selected.bookmark.selection,
+            },
+          }
+        )
+      }
+
+      quickPick.dispose()
+    })
+
+    quickPick.onDidTriggerItemButton(async ({ item }) => {
+      if (!item) return
+      await vscode.window.showTextDocument(
+        item.bookmark.uri,
+        {
+          preview: false,
+          viewColumn: vscode.ViewColumn.Beside,
+          ...item.bookmark.type === 'selection' && {
+            selection: item.bookmark.selection,
+          },
+        }
+      )
+    })
+
+    quickPick.onDidHide(() => quickPick.dispose())
+
+    quickPick.show()
   })
 
   context.subscriptions.push(
