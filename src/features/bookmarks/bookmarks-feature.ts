@@ -209,7 +209,7 @@ export function createBookmarksFeature(input: {
     const newList = await promptListSelection()
     if (!newList) return
 
-    // Check if bookmark still exists
+    // Check if bookmark still exists after list selection
     const bookmarks = config.getBookmarks()
     const bookmarksToMove = bookmarks
       .filter(bookmark => items.some(item => bookmark.list === item.list && bookmark.uri.path === item.uri.path && bookmark.type === item.type))
@@ -334,8 +334,8 @@ export function createBookmarksFeature(input: {
   })
 
   // Reveal bookmark (file) in the file tree
-  registerCommand('streamline.bookmarks.revealInOS', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
-    await vscode.commands.executeCommand('revealInOS', item.uri)
+  registerCommand('streamline.bookmarks.revealInExplorer', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
+    await vscode.commands.executeCommand('revealInExplorer', item.uri)
   })
 
   // Deletes file from bookmarks (bookmarked selections are not deleted)
