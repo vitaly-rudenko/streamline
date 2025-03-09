@@ -4,9 +4,8 @@ import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { RegisterCommand } from '../../register-command'
 import { RelatedFile, RelatedFilesFinder } from './related-files-finder'
 import { collapseString } from '../../utils/collapse-string'
-import path, { basename } from 'path'
+import { basename } from 'path'
 
-const MAX_RELATED_FILES_IN_STATUS_BAR_TOOLTIP = 10
 const MAX_LABEL_LENGTH = 30
 const COLLAPSED_INDICATOR = '⸱⸱⸱'
 
@@ -19,17 +18,11 @@ export function createRelatedFilesFeature(input: {
   const config = new RelatedFilesConfig()
   const relatedFilesFinder = new RelatedFilesFinder(config)
 
-  const relatedFilesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
-  relatedFilesStatusBarItem.text = '$(sparkle)'
-  relatedFilesStatusBarItem.name = 'Open Related File'
-  relatedFilesStatusBarItem.tooltip = 'Open Related File'
-  relatedFilesStatusBarItem.hide()
-
-  const openToSideStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 997)
-  openToSideStatusBarItem.text = '$(split-horizontal)'
-  openToSideStatusBarItem.name = 'Open Related File to Side'
-  openToSideStatusBarItem.tooltip = 'Open Related File to Side'
-  openToSideStatusBarItem.show()
+  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
+  statusBarItem.text = '$(sparkle)'
+  statusBarItem.name = 'Related Files: Open Best Match to Side'
+  statusBarItem.tooltip = 'Open Best Match to Side'
+  statusBarItem.hide()
 
   const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
   const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 250)
@@ -52,44 +45,25 @@ export function createRelatedFilesFeature(input: {
     try {
       const activeTextEditor = vscode.window.activeTextEditor
       if (!activeTextEditor) {
-        relatedFilesStatusBarItem.hide()
+        statusBarItem.hide()
         return
       }
 
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
       const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder)
       if (relatedFiles.length === 0) {
-        relatedFilesStatusBarItem.hide()
-        openToSideStatusBarItem.hide()
+        statusBarItem.hide()
         return
       }
 
       const [relatedFile, ...remainingRelatedFiles] = relatedFiles
-      relatedFilesStatusBarItem.text = `$(sparkle) ${(formatRelatedFileLabel(relatedFile))}${remainingRelatedFiles.length > 0 ? ` +${remainingRelatedFiles.length}` : ''}`
-      relatedFilesStatusBarItem.command = {
-        title: 'Open Related File',
-        command: 'vscode.open',
-        arguments: [relatedFile.uri],
-      }
-
-      const relatedFilesStatusBarItemTooltip = new vscode.MarkdownString()
-      relatedFilesStatusBarItemTooltip.isTrusted = true
-      relatedFilesStatusBarItemTooltip.supportThemeIcons = true
-      relatedFilesStatusBarItemTooltip.appendMarkdown(
-        remainingRelatedFiles
-          .slice(0, MAX_RELATED_FILES_IN_STATUS_BAR_TOOLTIP)
-          .map(rf => `$(file) [${formatRelatedFileLabel(rf)}](command:vscode.open?${encodeURIComponent(JSON.stringify(rf.uri))})  `)
-          .join('\n')
-      )
-      relatedFilesStatusBarItem.tooltip = relatedFilesStatusBarItemTooltip
-      relatedFilesStatusBarItem.show()
-
-      openToSideStatusBarItem.command = {
-        title: 'Open to Side',
+      statusBarItem.text = `$(sparkle) ${(formatRelatedFileLabel(relatedFile))}${remainingRelatedFiles.length > 0 ? ` +${remainingRelatedFiles.length}` : ''}`
+      statusBarItem.command = {
+        title: 'Open Best Match to Side',
         command: 'explorer.openToSide',
         arguments: [relatedFile.uri],
       }
-      openToSideStatusBarItem.show()
+      statusBarItem.show()
     } catch (error) {
       console.warn('[ScopedPaths] Could not update status bar item', error)
     }
@@ -163,6 +137,29 @@ export function createRelatedFilesFeature(input: {
     quickPick.onDidHide(() => quickPick.dispose())
   })
 
+  // Immediately open the best match file in the editor
+  registerCommand('streamline.relatedFiles.openBestMatch', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
+    const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
+    if (relatedFiles.length === 0) return
+
+    await vscode.commands.executeCommand('vscode.open', relatedFiles[0].uri)
+  })
+
+  // Immediately open the best match file in the editor to the side
+  registerCommand('streamline.relatedFiles.openBestMatchToSide', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
+    const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
+    if (relatedFiles.length === 0) return
+
+    await vscode.commands.executeCommand('explorer.openToSide', relatedFiles[0].uri)
+  })
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
