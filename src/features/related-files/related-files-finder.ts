@@ -12,6 +12,7 @@ export type RelatedFile = {
 export class RelatedFilesFinder {
   // Cache related files in memory for recently opened files
   private readonly _cache = new LRUCache<string, RelatedFile[]>({ max: 100 })
+  private readonly _pAll = import('p-all').then((pAll) => pAll.default)
 
   constructor(private readonly config: RelatedFilesConfig) {}
 
@@ -30,8 +31,8 @@ export class RelatedFilesFinder {
 
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
+    const pAll = await this._pAll
     const excludePattern = this.generateExcludePattern()
-    const pAll = (await import('p-all')).default
     const matchedUrisPerQuery = (
       await pAll(
         includes.map(include => () => vscode.workspace.findFiles(include, excludePattern, 10)),
