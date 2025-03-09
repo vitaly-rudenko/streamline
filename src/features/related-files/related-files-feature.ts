@@ -102,7 +102,7 @@ export function createRelatedFilesFeature(input: {
         label: relatedFile.label,
         description: vscode.workspace.asRelativePath(relatedFile.uri, workspaceFolder ? false : true),
         relatedFile,
-        iconPath: relatedFile.isBestMatch ? new vscode.ThemeIcon('star-full') : new vscode.ThemeIcon('sparkle'),
+        iconPath: new vscode.ThemeIcon('sparkle'),
         buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
       })),
       ...searchAllWorkspaceFolders ? [] : [{

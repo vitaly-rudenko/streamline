@@ -19,7 +19,9 @@ export class ScopedPathsConfig extends FeatureConfig {
 
     let hasChanged = false
 
-    if (JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)) {
+    if (
+      JSON.stringify(this._scopesObject) !== JSON.stringify(scopesObject)
+    ) {
       this._scopesObject = scopesObject
 
       hasChanged = true

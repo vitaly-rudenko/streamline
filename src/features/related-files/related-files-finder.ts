@@ -1,19 +1,13 @@
 import * as vscode from 'vscode'
 import { LRUCache } from 'lru-cache'
-import { collapseString } from '../../utils/collapse-string'
 import { formatPaths } from '../../utils/format-paths'
-import { getRelatedFilesQueries } from './toolkit/get-related-files-queries'
-import { getSmartBasename } from './toolkit/get-smart-basename'
+import { generateRelatedFilesGlobs } from './toolkit/generate-related-files-globs'
 import { RelatedFilesConfig } from './related-files-config'
 
 export type RelatedFile = {
   uri: vscode.Uri
   label: string
-  isBestMatch: boolean
 }
-
-const MAX_LABEL_LENGTH = 80
-const COLLAPSED_INDICATOR = '⸱⸱⸱'
 
 export class RelatedFilesFinder {
   // Cache related files in memory for recently opened files
@@ -27,9 +21,7 @@ export class RelatedFilesFinder {
     if (!options?.ignoreCache && cached) return cached
 
     const relativePath = vscode.workspace.asRelativePath(currentUri, false)
-    const currentBasename = getSmartBasename(relativePath, this.config.getExcludedSuffixes())
-
-    const relatedFilesQueries = getRelatedFilesQueries(relativePath, this.config.getExcludedSuffixes())
+    const relatedFilesQueries = generateRelatedFilesGlobs(relativePath)
 
     // Limit search to workspace folder when provided
     const includes = workspaceFolder
@@ -43,21 +35,7 @@ export class RelatedFilesFinder {
       await Promise.all(
         includes.map(include => vscode.workspace.findFiles(include, excludePattern, 10))
       )
-    ).map(uris => {
-      // Sort files by name to stabilize list order
-      uris.sort((a, b) => a.path.localeCompare(b.path))
-
-      // Sort files by basename equality
-      uris.sort((a, b) => {
-        const basenameA = getSmartBasename(a.path, this.config.getExcludedSuffixes())
-        const basenameB = getSmartBasename(b.path, this.config.getExcludedSuffixes())
-        if (basenameA === currentBasename && basenameB !== currentBasename) return -1
-        if (basenameA !== currentBasename && basenameB === currentBasename) return 1
-        return 0
-      })
-
-      return uris
-    })
+    )
 
     const relatedFiles: RelatedFile[] = []
     const ignoredPaths = new Set([currentUri.path])
@@ -67,29 +45,16 @@ export class RelatedFilesFinder {
       uris.map((uri) => [uri.path, vscode.workspace.asRelativePath(uri, false)])
     )
 
-    // Format all paths beforehand for efficiency
+    // Format all paths beforehand
     const formattedPaths = formatPaths([...pathLabels.values()])
     for (const [path, label] of pathLabels) {
       pathLabels.set(path, formattedPaths.get(label)!)
     }
 
-    // Treat first query in special way ("best match"), and "star" if related file's basename matches current file's one
-    for (const uri of matchedUrisPerQuery[0]) {
+    for (const uri of matchedUrisPerQuery.flat()) {
       if (ignoredPaths.has(uri.path)) continue
       ignoredPaths.add(uri.path)
-      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, MAX_LABEL_LENGTH, COLLAPSED_INDICATOR)
-      relatedFiles.push({
-        uri,
-        label,
-        isBestMatch: getSmartBasename(uri.path, this.config.getExcludedSuffixes()) === currentBasename,
-      })
-    }
-
-    for (const uri of matchedUrisPerQuery.slice(1).flat()) {
-      if (ignoredPaths.has(uri.path)) continue
-      ignoredPaths.add(uri.path)
-      const label = collapseString(pathLabels.get(uri.path)!, currentBasename, MAX_LABEL_LENGTH, COLLAPSED_INDICATOR)
-      relatedFiles.push({ label, uri, isBestMatch: false })
+      relatedFiles.push({ label: pathLabels.get(uri.path)!, uri })
     }
 
     this._cache.set(cacheKey, relatedFiles)

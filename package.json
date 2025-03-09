@@ -810,18 +810,6 @@
           },
           "description": "Custom exclude patterns for Related Files view (in the same format as 'files.exclude')"
         },
-        "streamline.relatedFiles.excludedSuffixes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "spec",
-            "test",
-            "e2e-spec"
-          ],
-          "description": "Basename suffixes to exclude from related files search (e.g. 'test' and 'spec')"
-        },
         "streamline.bookmarks.archivedLists": {
           "type": "array",
           "default": [],
