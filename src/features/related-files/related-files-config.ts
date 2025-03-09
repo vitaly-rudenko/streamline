@@ -5,6 +5,7 @@ import z from 'zod'
 
 const defaultCustomExcludes = {
   '**/*.snap': true,
+  '**/*.map': true
 }
 
 export class RelatedFilesConfig extends FeatureConfig {

@@ -805,7 +805,8 @@
         "streamline.relatedFiles.exclude": {
           "type": "object",
           "default": {
-            "**/*.snap": true
+            "**/*.snap": true,
+            "**/*.map": true
           },
           "additionalProperties": {
             "type": "boolean"
