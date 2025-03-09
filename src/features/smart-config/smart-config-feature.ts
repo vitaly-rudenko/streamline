@@ -10,6 +10,8 @@ import { getInspectKeyFromConfigurationTarget } from '../../config'
 import { GenerateConditionContext } from '../../generate-condition-context'
 import { RegisterCommand } from '../../register-command'
 
+// TODO: Validate toggles and config names
+
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
   registerCommand: RegisterCommand

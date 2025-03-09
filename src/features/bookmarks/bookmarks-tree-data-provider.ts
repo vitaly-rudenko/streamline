@@ -1,11 +1,11 @@
 import * as vscode from 'vscode'
+import { basename } from 'path'
 import { formatPaths } from '../../utils/format-paths'
 import type { BookmarksConfig } from './bookmarks-config'
 import type { Bookmark } from './common'
 import { stripIndent, stripIndents } from 'common-tags'
 import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
-import { basename } from 'path'
 
 export type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 

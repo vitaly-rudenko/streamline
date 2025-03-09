@@ -1,6 +1,6 @@
 import z from 'zod'
 import * as vscode from 'vscode'
-import { pathToUri } from '../../utils/uri'
+import { pathToUri } from '../../utils/path-to-uri'
 import { unique } from '../../utils/unique'
 import { ScopedPathsConfig } from './scoped-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
@@ -21,11 +21,10 @@ const SCOPED_PATHS_KEY = '__set_by_streamline__'
 /** Safely save workspace folders snapshot while this cooldown is active */
 const APPLY_WORKSPACE_FOLDERS_COOLDOWN_MS = 3000
 
-/*
-From VS Code documentation:
-- "Note: it is not valid to call updateWorkspaceFolders() multiple times without waiting for the onDidChangeWorkspaceFolders() to fire."
-*/
-
+/**
+ * From VS Code documentation:
+ * - "Note: it is not valid to call updateWorkspaceFolders() multiple times without waiting for the onDidChangeWorkspaceFolders() to fire."
+ */
 export function createScopedPathsFeature(input: {
   context: vscode.ExtensionContext
   registerCommand: RegisterCommand

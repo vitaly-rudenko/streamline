@@ -3,11 +3,6 @@ import { RelatedFilesConfig } from './related-files-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { RegisterCommand } from '../../register-command'
 import { RelatedFile, RelatedFilesFinder } from './related-files-finder'
-import { collapseString } from '../../utils/collapse-string'
-import { basename } from 'path'
-
-const MAX_LABEL_LENGTH = 30
-const COLLAPSED_INDICATOR = '⸱⸱⸱'
 
 export function createRelatedFilesFeature(input: {
   context: vscode.ExtensionContext
@@ -57,7 +52,7 @@ export function createRelatedFilesFeature(input: {
       }
 
       const [relatedFile, ...remainingRelatedFiles] = relatedFiles
-      statusBarItem.text = `$(sparkle) ${(formatRelatedFileLabel(relatedFile))}${remainingRelatedFiles.length > 0 ? ` +${remainingRelatedFiles.length}` : ''}`
+      statusBarItem.text = `$(sparkle) ${relatedFile.label}${remainingRelatedFiles.length > 0 ? ` +${remainingRelatedFiles.length}` : ''}`
       statusBarItem.command = {
         title: 'Open Best Match to Side',
         command: 'explorer.openToSide',
@@ -186,8 +181,4 @@ export function createRelatedFilesFeature(input: {
   )
 
   updateStatusBarItemInBackground()
-}
-
-function formatRelatedFileLabel(relatedFile: RelatedFile) {
-  return collapseString(relatedFile.label, basename(relatedFile.uri.path), MAX_LABEL_LENGTH, COLLAPSED_INDICATOR)
 }

@@ -1,8 +1,8 @@
+import z from 'zod'
 import { ConfigurationTarget } from 'vscode'
 import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { FeatureConfig } from '../feature-config'
-import z from 'zod'
 
 export class HighlightedPathsConfig extends FeatureConfig {
   private _patterns: string[] = []

@@ -1,5 +1,5 @@
 import z from 'zod'
-import { conditionSchema, whenSchema } from '../../common/when'
+import { whenSchema } from '../../common/when'
 
 export type Config = Record<string, unknown>
 

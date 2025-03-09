@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.934",
+  "version": "0.40.935",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -56,6 +56,7 @@
     "common-tags": "^1.8.2",
     "json-beautify": "^1.1.1",
     "lru-cache": "^10.2.2",
+    "p-all": "^5.0.0",
     "wildcard-match": "^5.1.4",
     "zod": "^3.24.1"
   },
@@ -560,24 +561,24 @@
           "group": "inline@1"
         },
         {
+          "command": "streamline.bookmarks.addFile",
+          "when": "view == bookmarks && viewItem == virtualFile",
+          "group": "1_info@1"
+        },
+        {
           "command": "streamline.bookmarks.editNote",
           "when": "view == bookmarks && viewItem == selection",
-          "group": "info@1"
+          "group": "2_info@1"
         },
         {
           "command": "streamline.bookmarks.move",
           "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == virtualFile || viewItem == selection)",
-          "group": "info@2"
-        },
-        {
-          "command": "streamline.bookmarks.addFile",
-          "when": "view == bookmarks && viewItem == virtualFile",
-          "group": "info@3"
+          "group": "2_info@2"
         },
         {
           "command": "streamline.bookmarks.delete",
           "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == virtualFile || viewItem == selection)",
-          "group": "info@3"
+          "group": "2_info@3"
         },
         {
           "command": "streamline.bookmarks.setListAsCurrent",

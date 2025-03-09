@@ -1,5 +1,3 @@
-const MAX_ATTEMPTS = 100
-
 export function collapsePath(path: string, maxLength: number) {
   if (path.length <= maxLength) return path
   if (maxLength === 0) throw new Error('Invalid maxLength: 0')

@@ -49,6 +49,6 @@ export type Command = z.infer<typeof commandSchema>
 
 export class QuickReplNotSetUpError extends Error {
   constructor() {
-    super('Quick Repl is not set up')
+    super('Quick Repl is not set up, use "Quick Repl: Start Setup Wizard" command')
   }
 }

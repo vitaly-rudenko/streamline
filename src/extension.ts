@@ -3,7 +3,6 @@ import * as vscode from 'vscode'
 import { createHighlightedPathsFeature } from './features/highlighted-paths/highlighted-paths-feature'
 import { createScopedPathsFeature } from './features/scoped-paths/scoped-paths-feature'
 import { createRelatedFilesFeature } from './features/related-files/related-files-feature'
-import { uriToPath } from './utils/uri'
 import { createBookmarksFeature } from './features/bookmarks/bookmarks-feature'
 import { createCurrentPathFeature } from './features/current-path/current-path-feature'
 import { initialConfig, safeConfigGet } from './config'
@@ -12,6 +11,7 @@ import { createQuickReplFeature } from './features/quick-repl/quick-repl-feature
 import { ConditionContext } from './common/when'
 import { GenerateConditionContextInput } from './generate-condition-context'
 import { DynamicScopeProvider } from './features/scoped-paths/dynamic-scope-provider'
+import { uriToPath } from './utils/uri-to-path'
 
 const featureSchema = z.enum([
   'bookmarks',

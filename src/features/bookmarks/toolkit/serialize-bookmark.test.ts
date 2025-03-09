@@ -1,8 +1,7 @@
 import assert from 'assert'
 import { suite } from 'mocha'
-import { deserializeBookmark } from './deserialize-bookmark'
 import { Uri, Selection } from 'vscode'
-import { Bookmark, SerializedBookmark } from '../common'
+import { Bookmark } from '../common'
 import { join } from 'path'
 import { serializeBookmark } from './serialize-bookmark'
 

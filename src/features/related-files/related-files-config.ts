@@ -1,7 +1,7 @@
-import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
+import z from 'zod'
+import { getConfig, initialConfig, safeConfigGet } from '../../config'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { FeatureConfig } from '../feature-config'
-import z from 'zod'
 
 const defaultCustomExcludes = {
   '**/*.snap': true,

@@ -119,7 +119,7 @@ export class FileTreeItem extends vscode.TreeItem {
 }
 
 // Prompt to setup Quick Repl
-export class SetupTreeItem extends vscode.TreeItem {
+class SetupTreeItem extends vscode.TreeItem {
   constructor() {
     super(
       'Click here to setup Quick Repl',
@@ -136,7 +136,7 @@ export class SetupTreeItem extends vscode.TreeItem {
   }
 }
 // Placeholder for empty root folder
-export class EmptyReplsFolderTreeItem extends vscode.TreeItem {
+class EmptyReplsFolderTreeItem extends vscode.TreeItem {
   constructor() {
     super(
       'Click "+" to create your first Quick Repl',
@@ -149,7 +149,7 @@ export class EmptyReplsFolderTreeItem extends vscode.TreeItem {
 }
 
 // Placeholder for folder that failed to read
-export class FailingFolderTreeItem extends vscode.TreeItem {
+class FailingFolderTreeItem extends vscode.TreeItem {
   constructor(uri: vscode.Uri, errorMessage: string) {
     super(
       `Failed to read folder: ${uri.path}`,

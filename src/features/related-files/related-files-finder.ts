@@ -31,9 +31,11 @@ export class RelatedFilesFinder {
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
     const excludePattern = this.generateExcludePattern()
+    const pAll = (await import('p-all')).default
     const matchedUrisPerQuery = (
-      await Promise.all(
-        includes.map(include => vscode.workspace.findFiles(include, excludePattern, 10))
+      await pAll(
+        includes.map(include => () => vscode.workspace.findFiles(include, excludePattern, 10)),
+        { concurrency: 6 }
       )
     )
 

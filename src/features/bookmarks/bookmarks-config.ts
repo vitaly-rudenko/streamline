@@ -1,3 +1,4 @@
+import z from 'zod'
 import * as vscode from 'vscode'
 import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { serializedBookmarkSchema, type Bookmark, type SerializedBookmark } from './common'
@@ -5,7 +6,6 @@ import { FeatureConfig } from '../feature-config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { serializeBookmark } from './toolkit/serialize-bookmark'
 import { deserializeBookmark } from './toolkit/deserialize-bookmark'
-import z from 'zod'
 
 export class BookmarksConfig extends FeatureConfig {
   public onChange?: Function
