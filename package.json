@@ -981,10 +981,6 @@
               }
             }
           }
-        },
-        "streamline.quickRepl.terminalName": {
-          "type": "string",
-          "default": "Quick Repl: $contextShortPath"
         }
       }
     }

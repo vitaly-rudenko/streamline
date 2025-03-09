@@ -205,7 +205,6 @@ Available when the context is a file with a non-empty selection:
 - `$contextSelection` - `// My\n// Selection`
 
 These variables can be used in:
-- `streamline.quickRepl.terminalName`
 - `streamline.quickRepl.commands[].command.cwd`
 - `streamline.quickRepl.commands[].command.command`
 - `streamline.quickRepl.templates[].template.defaultPath`
