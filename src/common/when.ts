@@ -47,12 +47,12 @@ export type ConditionContext = {
   selection?: boolean | undefined
 }
 
-export function testWhen(ctx: ConditionContext, when: When): boolean {
-  return when.length === 0 || when.some(condition => testCondition(ctx, condition))
+export function testWhen(ctx: ConditionContext, when: When, options?: { supportedToggles?: string[] }): boolean {
+  return when.length === 0 || when.some(condition => testCondition(ctx, condition, options))
 }
 
 /** Match specific condition against the provided context */
-function testCondition(ctx: ConditionContext, condition: Condition): boolean {
+function testCondition(ctx: ConditionContext, condition: Condition, options?: { supportedToggles?: string[] }): boolean {
   const checks: boolean[] = []
 
   if (condition.path !== undefined) {
@@ -68,7 +68,17 @@ function testCondition(ctx: ConditionContext, condition: Condition): boolean {
   }
 
   if (condition.toggle !== undefined) {
-    checks.push(toArray(condition.toggle).some(i => ctx.toggles.includes(i)))
+    const toggles = toArray(condition.toggle)
+
+    const supportedToggles = options?.supportedToggles
+    if (supportedToggles) {
+      const unsupportedToggles = toggles.filter(toggle => !supportedToggles.includes(toggle))
+      if (unsupportedToggles.length > 0) {
+        throw new UnsupportedTogglesError(unsupportedToggles)
+      }
+    }
+
+    checks.push(toggles.some(i => ctx.toggles.includes(i)))
   }
 
   if (condition.colorThemeKind !== undefined) {
@@ -100,7 +110,7 @@ function testCondition(ctx: ConditionContext, condition: Condition): boolean {
   }
 
   if (condition.not !== undefined) {
-    checks.push(!testCondition(ctx, condition.not))
+    checks.push(!testCondition(ctx, condition.not, options))
   }
 
   return checks.length > 0 && checks.every(check => check === true)
@@ -108,4 +118,16 @@ function testCondition(ctx: ConditionContext, condition: Condition): boolean {
 
 function toArray<T>(item: T | T[]): T[] {
   return Array.isArray(item) ? item : [item]
+}
+
+export class UnsupportedTogglesError extends Error {
+  constructor(public readonly toggles: string[]) {
+    super(`Toggle${
+      toggles.length > 1 ? 's' : ''
+    } "${
+      toggles.map(toggle => `"${toggle}"`).join(', ')
+    }" ${
+      toggles.length > 1 ? 'are' : 'is'
+    } not defined in "streamline.smartConfig.toggles" configuration section`)
+  }
 }

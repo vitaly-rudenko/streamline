@@ -228,6 +228,20 @@ describe('testWhen()', () => {
     }, [])).toBe(true)
   })
 
+  it('fails when unsupported toggle is used', () => {
+    expect(
+      () => testWhen({
+        colorThemeKind: 'dark',
+        scopeEnabled: false,
+        toggles: []
+      }, [{
+        toggle: 'Unsupported Toggle'
+      }], {
+        supportedToggles: ['Supported Toggle']
+      })
+  ).toThrow()
+  })
+
   it('validates "when" (schema)', () => {
     expect(whenSchema.safeParse([]).success).toBe(true)
     expect(whenSchema.safeParse([{ basename: 'file.mjs' }]).success).toBe(true)
