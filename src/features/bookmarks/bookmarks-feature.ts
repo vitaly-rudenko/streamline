@@ -457,10 +457,13 @@ export function createBookmarksFeature(input: {
 
   // Export all bookmarks as serialized JSON (opens the data in a new tab)
   registerCommand('streamline.bookmarks.exportAsJson', async () => {
-    const serializedBookmarksAsJson = JSON.stringify(config.getSerializedBookmarks(), null, 2)
+    const serializedJsonExport = JSON.stringify({
+      bookmarks: config.getSerializedBookmarks(),
+      archivedLists: config.getArchivedLists(),
+    }, null, 2)
 
     const document = await vscode.workspace.openTextDocument({
-      content: serializedBookmarksAsJson,
+      content: serializedJsonExport,
       language: 'json',
     })
 
