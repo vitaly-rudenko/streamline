@@ -20,12 +20,15 @@ export function createRelatedFilesFeature(input: {
   const relatedFilesFinder = new RelatedFilesFinder(config)
 
   const relatedFilesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
-  relatedFilesStatusBarItem.name = 'Related File'
+  relatedFilesStatusBarItem.text = '$(sparkle)'
+  relatedFilesStatusBarItem.name = 'Open Related File'
+  relatedFilesStatusBarItem.tooltip = 'Open Related File'
+  relatedFilesStatusBarItem.hide()
 
   const openToSideStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 997)
-  openToSideStatusBarItem.name = 'Open Related File to Side'
   openToSideStatusBarItem.text = '$(split-horizontal)'
-  openToSideStatusBarItem.tooltip = new vscode.MarkdownString('Open Related File to Side')
+  openToSideStatusBarItem.name = 'Open Related File to Side'
+  openToSideStatusBarItem.tooltip = 'Open Related File to Side'
   openToSideStatusBarItem.show()
 
   const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
@@ -69,16 +72,16 @@ export function createRelatedFilesFeature(input: {
         arguments: [relatedFile.uri],
       }
 
-      const tooltip = new vscode.MarkdownString()
-      tooltip.isTrusted = true
-      tooltip.supportThemeIcons = true
-      tooltip.appendMarkdown(
+      const relatedFilesStatusBarItemTooltip = new vscode.MarkdownString()
+      relatedFilesStatusBarItemTooltip.isTrusted = true
+      relatedFilesStatusBarItemTooltip.supportThemeIcons = true
+      relatedFilesStatusBarItemTooltip.appendMarkdown(
         remainingRelatedFiles
           .slice(0, MAX_RELATED_FILES_IN_STATUS_BAR_TOOLTIP)
           .map(rf => `$(file) [${formatRelatedFileLabel(rf)}](command:vscode.open?${encodeURIComponent(JSON.stringify(rf.uri))})  `)
           .join('\n')
       )
-      relatedFilesStatusBarItem.tooltip = tooltip
+      relatedFilesStatusBarItem.tooltip = relatedFilesStatusBarItemTooltip
       relatedFilesStatusBarItem.show()
 
       openToSideStatusBarItem.command = {

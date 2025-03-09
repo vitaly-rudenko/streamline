@@ -16,11 +16,13 @@ export function createCurrentPathFeature(input: {
 
   const currentPathStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 999)
   currentPathStatusBarItem.name = 'Current Path'
+  currentPathStatusBarItem.tooltip = 'Copy Relative Current Path'
   currentPathStatusBarItem.command = 'streamline.currentPath.copy'
   context.subscriptions.push(currentPathStatusBarItem)
 
   const currentSelectionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 999)
   currentSelectionStatusBarItem.name = 'Current Selection'
+  currentSelectionStatusBarItem.tooltip = 'Current Selection (C = Characters, L = Lines)'
   context.subscriptions.push(currentSelectionStatusBarItem)
 
   function updateCurrentPathStatusBarItem() {
@@ -35,6 +37,7 @@ export function createCurrentPathFeature(input: {
     }
   }
 
+  // TODO: add support for multiple selections
   function updateCurrentSelectionStatusBarItem() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {

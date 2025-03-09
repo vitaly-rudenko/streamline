@@ -49,12 +49,14 @@ export function createScopedPathsFeature(input: {
 
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 2)
   textStatusBarItem.name = 'Change Current Scope...'
+  textStatusBarItem.tooltip = 'Change Current Scope...'
   textStatusBarItem.command = 'streamline.scopedPaths.changeCurrentScope'
   context.subscriptions.push(textStatusBarItem)
   textStatusBarItem.show()
 
   const buttonStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1)
   buttonStatusBarItem.name = 'Toggle Current Scope'
+  buttonStatusBarItem.tooltip = 'Toggle Current Scope'
   context.subscriptions.push(buttonStatusBarItem)
   buttonStatusBarItem.show()
 

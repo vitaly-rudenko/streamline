@@ -7,7 +7,7 @@ import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
 import { basename } from 'path'
 
-type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
+export type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
 
 const MAX_LABEL_LENGTH = 60
 const MAX_DESCRIPTION_LENGTH = 60
