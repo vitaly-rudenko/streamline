@@ -1,5 +1,5 @@
 import { basename } from 'path'
-import z, { ZodSchema, ZodType } from 'zod'
+import z, { ZodType } from 'zod'
 
 const colorThemeKindSlugSchema = z.enum(['dark', 'light', 'high-contrast', 'high-contrast-light'])
 type ColorThemeKindSlug = z.infer<typeof colorThemeKindSlugSchema>
@@ -51,6 +51,7 @@ export function testWhen(ctx: ConditionContext, when: When, options?: { supporte
   return when.length === 0 || when.some(condition => testCondition(ctx, condition, options))
 }
 
+// TODO: Add support for glob patterns instead of regex
 /** Match specific condition against the provided context */
 function testCondition(ctx: ConditionContext, condition: Condition, options?: { supportedToggles?: string[] }): boolean {
   const checks: boolean[] = []

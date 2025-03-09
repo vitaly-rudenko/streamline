@@ -358,6 +358,11 @@
         "command": "streamline.relatedFiles.quickOpen",
         "key": "alt+p",
         "when": "resourceScheme == file"
+      },
+      {
+        "command": "streamline.currentPath.copy",
+        "key": "shift+cmd+c",
+        "when": "resourceScheme == file"
       }
     ],
     "menus": {

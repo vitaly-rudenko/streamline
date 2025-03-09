@@ -17,7 +17,6 @@ import { collapseHomedir } from '../../utils/collapse-homedir'
 import { RegisterCommand } from '../../register-command'
 
 // TODO: Somehow automatically reveal created file/directory in the Quick Repl view
-// TODO: CHANGELOG & README
 
 export function createQuickReplFeature(input: {
   context: vscode.ExtensionContext
