@@ -418,7 +418,7 @@ export function createQuickReplFeature(input: {
     quickReplTreeDataProvider.refresh()
   })
 
-  // Setup wizard
+  // Start setup wizard
   registerCommand('streamline.quickRepl.setup', async () => {
     const currentShortReplsPath = config.getShortReplsPath()
 

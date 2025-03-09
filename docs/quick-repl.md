@@ -5,7 +5,7 @@ You can create templates, prepare commands and view all of your scripts in a sep
 
 ## Setup
 
-To setup Quick Repl, run `Quick Repl: Setup` command.  
+To setup Quick Repl, run `Quick Repl: Start Setup Wizard` command.  
 It will walk you through the initial configuration and prepare some default templates for you.
 
 ## Templates

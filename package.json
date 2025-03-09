@@ -273,7 +273,7 @@
       },
       {
         "command": "streamline.quickRepl.setup",
-        "title": "Quick Repl: Setup Wizard",
+        "title": "Quick Repl: Start Setup Wizard",
         "icon": "$(rocket)"
       },
       {
