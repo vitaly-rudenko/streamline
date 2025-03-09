@@ -124,9 +124,9 @@ export class UnsupportedTogglesError extends Error {
   constructor(public readonly toggles: string[]) {
     super(`Toggle${
       toggles.length > 1 ? 's' : ''
-    } "${
+    } ${
       toggles.map(toggle => `"${toggle}"`).join(', ')
-    }" ${
+    } ${
       toggles.length > 1 ? 'are' : 'is'
     } not defined in "streamline.smartConfig.toggles" configuration section`)
   }

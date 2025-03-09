@@ -4,11 +4,11 @@ import { ConditionContext, testWhen } from '../../../common/when'
 // TODO: Add support for glob
 
 /** Matches rules against the provided context, at least one condition must match per rule */
-export function getMatchingConfigNames(ctx: ConditionContext, rules: Rule[]): string[] {
+export function getMatchingConfigNames(ctx: ConditionContext, rules: Rule[], supportedToggles: string[]): string[] {
   const configNames: string[] = []
 
   for (const rule of rules) {
-    if (testWhen(ctx, rule.when)) {
+    if (testWhen(ctx, rule.when, { supportedToggles })) {
       configNames.push(...rule.apply)
     }
   }

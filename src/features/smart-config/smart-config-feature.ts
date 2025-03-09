@@ -9,8 +9,7 @@ import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { getInspectKeyFromConfigurationTarget } from '../../config'
 import { GenerateConditionContext } from '../../generate-condition-context'
 import { RegisterCommand } from '../../register-command'
-
-// TODO: Validate toggles and config names
+import { UnsupportedTogglesError } from '../../common/when'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
@@ -46,6 +45,7 @@ export function createSmartConfigFeature(input: {
   let cachedMergedToggles: string[] = []
   let cachedEnabledToggles: string[] = []
   let cachedMatchingConfigNames: string[] = []
+
   function clearCache() {
     cachedMergedToggles = []
     cachedEnabledToggles = []
@@ -57,7 +57,11 @@ export function createSmartConfigFeature(input: {
     const mergedToggles = config.getMergedToggles()
     const enabledToggles = workspaceState.getEnabledToggles()
 
-    if (areArraysShallowEqual(cachedEnabledToggles, enabledToggles) && areArraysShallowEqual(cachedMergedToggles, mergedToggles)) return
+    if (
+      areArraysShallowEqual(cachedEnabledToggles, enabledToggles)
+      && areArraysShallowEqual(cachedMergedToggles, mergedToggles)
+    ) return
+
     cachedMergedToggles = mergedToggles
     cachedEnabledToggles = enabledToggles
 
@@ -88,32 +92,41 @@ export function createSmartConfigFeature(input: {
 
   /** Applies matching configs for each configuration target */
   async function applyMatchingConfigsInBackground() {
-    const conditionContext = generateConditionContext(vscode.window.activeTextEditor)
-    const matchingConfigNames = getMatchingConfigNames(conditionContext, config.getMergedRules())
+    try {
+      const conditionContext = generateConditionContext(vscode.window.activeTextEditor)
+      const matchingConfigNames = getMatchingConfigNames(conditionContext, config.getMergedRules(), config.getMergedToggles())
 
-    if (areArraysShallowEqual(cachedMatchingConfigNames, matchingConfigNames)) return
-    cachedMatchingConfigNames = matchingConfigNames
+      if (areArraysShallowEqual(cachedMatchingConfigNames, matchingConfigNames)) return
+      cachedMatchingConfigNames = matchingConfigNames
 
-    await applyMatchingConfigsForConfigurationTarget(
-      config.getInspectedDefaults()?.globalValue,
-      config.getInspectedConfigs()?.globalValue,
-      matchingConfigNames,
-      vscode.ConfigurationTarget.Global
-    )
+      await applyMatchingConfigsForConfigurationTarget(
+        config.getInspectedDefaults()?.globalValue,
+        config.getInspectedConfigs()?.globalValue,
+        matchingConfigNames,
+        vscode.ConfigurationTarget.Global
+      )
 
-    await applyMatchingConfigsForConfigurationTarget(
-      config.getInspectedDefaults()?.workspaceValue,
-      config.getInspectedConfigs()?.workspaceValue,
-      matchingConfigNames,
-      vscode.ConfigurationTarget.Workspace
-    )
+      await applyMatchingConfigsForConfigurationTarget(
+        config.getInspectedDefaults()?.workspaceValue,
+        config.getInspectedConfigs()?.workspaceValue,
+        matchingConfigNames,
+        vscode.ConfigurationTarget.Workspace
+      )
 
-    await applyMatchingConfigsForConfigurationTarget(
-      config.getInspectedDefaults()?.workspaceFolderValue,
-      config.getInspectedConfigs()?.workspaceFolderValue,
-      matchingConfigNames,
-      vscode.ConfigurationTarget.WorkspaceFolder
-    )
+      await applyMatchingConfigsForConfigurationTarget(
+        config.getInspectedDefaults()?.workspaceFolderValue,
+        config.getInspectedConfigs()?.workspaceFolderValue,
+        matchingConfigNames,
+        vscode.ConfigurationTarget.WorkspaceFolder
+      )
+    } catch (error: any) {
+      if (error instanceof UnsupportedTogglesError) {
+        console.warn('[SmartConfig] Unsupported toggles:', error.toggles)
+        vscode.window.showWarningMessage(error.message)
+      } else {
+        throw error
+      }
+    }
   }
 
   /** Apply sections from all matching configs in a given configuration target and remove all other sections */
