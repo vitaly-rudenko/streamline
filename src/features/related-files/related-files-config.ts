@@ -1,8 +1,11 @@
 import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
-import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { areObjectsShallowEqual } from '../../utils/are-objects-shallow-equal'
 import { FeatureConfig } from '../feature-config'
 import z from 'zod'
+
+const defaultCustomExcludes = {
+  '**/*.snap': true,
+}
 
 export class RelatedFilesConfig extends FeatureConfig {
   private _customExcludes: Record<string, unknown> = {}
@@ -13,7 +16,7 @@ export class RelatedFilesConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
-    const customExcludes = safeConfigGet(config, 'relatedFiles.exclude', {}, z.record(z.unknown()))
+    const customExcludes = safeConfigGet(config, 'relatedFiles.exclude', defaultCustomExcludes, z.record(z.unknown()))
 
     let hasChanged = false
 

@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.933",
+  "version": "0.40.934",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -804,7 +804,9 @@
         },
         "streamline.relatedFiles.exclude": {
           "type": "object",
-          "default": {},
+          "default": {
+            "**/*.snap": true
+          },
           "additionalProperties": {
             "type": "boolean"
           },
