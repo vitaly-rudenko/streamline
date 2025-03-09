@@ -36,7 +36,7 @@ export class ScopedPathsCache {
       dynamicScopeProvider
         ? dynamicScopeProvider.getScopedAndExcludedPaths({
           currentScope,
-          // TODO: extract & add tests
+          // TODO: Extract & add tests
           uriToPath: (uri) => {
             const exactWorkspaceFolder = currentWorkspaceFolders.find(wf => wf.uri.path === uri.path)
             if (exactWorkspaceFolder) return exactWorkspaceFolder.name

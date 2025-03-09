@@ -80,7 +80,7 @@
         },
         {
           "id": "quickRepl",
-          "name": "Quick Repls",
+          "name": "Quick Repl",
           "visibility": "visible",
           "icon": "$(code)",
           "when": "streamline.quickRepl.enabled"
@@ -248,7 +248,7 @@
       },
       {
         "command": "streamline.bookmarks.quickOpen",
-        "title": "Quick Open Bookmark from Current List",
+        "title": "Quick Open Bookmark from Current List...",
         "icon": "$(bookmark)"
       },
       {

@@ -37,7 +37,7 @@ export function createCurrentPathFeature(input: {
     }
   }
 
-  // TODO: add support for multiple selections
+  // TODO: Add support for multiple selections
   function updateCurrentSelectionStatusBarItem() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {

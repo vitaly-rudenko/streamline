@@ -16,7 +16,7 @@ import { expandHomedir } from '../../utils/expand-homedir'
 import { collapseHomedir } from '../../utils/collapse-homedir'
 import { RegisterCommand } from '../../register-command'
 
-// TODO: somehow automatically focus on created file/folder in the tree view
+// TODO: Somehow automatically reveal created file/directory in the Quick Repl view
 // TODO: CHANGELOG & README
 
 export function createQuickReplFeature(input: {
@@ -237,7 +237,6 @@ export function createQuickReplFeature(input: {
       const fileUri = vscode.Uri.joinPath(parentUri, basename)
       await vscode.workspace.fs.writeFile(fileUri, new Uint8Array())
       await vscode.window.showTextDocument(fileUri)
-      // TODO: reveal file
 
       quickReplTreeDataProvider.refresh()
     }
@@ -248,7 +247,6 @@ export function createQuickReplFeature(input: {
 
       const directoryUri = vscode.Uri.joinPath(parentUri, basename)
       await vscode.workspace.fs.createDirectory(directoryUri)
-      // TODO: reveal directory
 
       quickReplTreeDataProvider.refresh()
     }
@@ -342,7 +340,6 @@ export function createQuickReplFeature(input: {
       const fileUri = vscode.Uri.joinPath(defaultDirectory ? vscode.Uri.file(defaultDirectory) : replsUri, basename)
       await vscode.workspace.fs.writeFile(fileUri, new TextEncoder().encode(templateContent))
       await vscode.window.showTextDocument(fileUri)
-      // TODO: reveal file
     }
 
     if (template.type === 'directory') {
@@ -387,9 +384,6 @@ export function createQuickReplFeature(input: {
         }))
 
         await vscode.window.showTextDocument(fileToOpenUri)
-        // TODO: reveal file
-      } else {
-        // TODO: reveal directory
       }
     }
 
@@ -698,7 +692,7 @@ export function createQuickReplFeature(input: {
         }
       }
     }),
-    // TODO: Not triggered when file language changes (manually or by VS Code)
+    // Note: Not triggered when file language changes (manually or by VS Code)
     vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
     vscode.window.onDidChangeTextEditorOptions(() => updateContextInBackground()),
     // Slower refresh rate to avoid performance issues

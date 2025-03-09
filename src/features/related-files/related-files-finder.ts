@@ -38,8 +38,7 @@ export class RelatedFilesFinder {
 
     // TODO: Use findFiles2() when API is stable
     //       See https://github.com/microsoft/vscode/pull/203844
-    // TODO: Exclude files from search.exclude and files.exclude configurations
-    const excludePattern = this._generateExcludePattern()
+    const excludePattern = this.generateExcludePattern()
     const matchedUrisPerQuery = (
       await Promise.all(
         includes.map(include => vscode.workspace.findFiles(include, excludePattern, 10))
@@ -101,8 +100,7 @@ export class RelatedFilesFinder {
     this._cache.clear()
   }
 
-  // TODO: Does not belong here? Also we do not need to regenerate it every time
-  private _generateExcludePattern() {
+  private generateExcludePattern() {
     const searchExcludes = vscode.workspace.getConfiguration('search').get<Record<string, unknown>>('exclude')
     const excludeEntries = Object.entries({
       ...searchExcludes,

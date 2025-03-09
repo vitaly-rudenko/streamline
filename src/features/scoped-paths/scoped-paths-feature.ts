@@ -48,7 +48,7 @@ export function createScopedPathsFeature(input: {
   })
 
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 2)
-  textStatusBarItem.name = 'Change Current Scope...'
+  textStatusBarItem.name = 'Change Current Scope'
   textStatusBarItem.tooltip = 'Change Current Scope...'
   textStatusBarItem.command = 'streamline.scopedPaths.changeCurrentScope'
   context.subscriptions.push(textStatusBarItem)
@@ -464,7 +464,7 @@ export function createScopedPathsFeature(input: {
       }
     }
 
-    // TODO: add "delete", "clear" and "rename" buttons
+    // TODO: Add "delete", "clear" and "rename" buttons
     const selected = await vscode.window.showQuickPick(scopeQuickPickItems, { title: 'Select Scope' })
     if (!selected) return
 
