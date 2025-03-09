@@ -27,12 +27,12 @@ export function createSmartConfigFeature(input: {
     updateStatusBarItems()
   }, 500)
 
-  const scheduleRefresh = createDebouncedFunction(() => {
+  const scheduleSoftRefresh = createDebouncedFunction(() => {
     applyMatchingConfigsInBackground()
     updateStatusBarItems()
   }, 100)
 
-  const scheduleSlowerRefresh = createDebouncedFunction(() => {
+  const scheduleHardRefresh = createDebouncedFunction(() => {
     applyMatchingConfigsInBackground()
     updateStatusBarItems()
   }, 500)
@@ -65,8 +65,12 @@ export function createSmartConfigFeature(input: {
     // Create new toggle buttons
     toggleItems = []
     for (const [i, toggle] of mergedToggles.entries()) {
+      // 'Enable $(split-horizontal)' -> 'Enable Split Horizontal'
+      const toggleName = toggle.replaceAll(/\$\((.+)\)/g, (_, m: string) => m[0].toUpperCase() + m.slice(1).replaceAll(/-./g, (m: string) => ' ' + m[1].toUpperCase()))
+
       const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 11 + i)
-      item.name = `Toggle "${toggle}"`
+      item.name = `Toggle ${toggleName}`
+      item.tooltip = `${enabledToggles.includes(toggle) ? 'Disable' : 'Enable'} ${toggleName}`
       item.text = `${enabledToggles.includes(toggle) ? '$(circle-filled)' : '$(circle-outline)'}${toggle}`
       item.command = {
         command: 'streamline.smartConfig.toggle',
@@ -166,7 +170,7 @@ export function createSmartConfigFeature(input: {
       workspaceState.setEnabledToggles([...workspaceState.getEnabledToggles(), toggle])
     }
 
-    scheduleRefresh()
+    scheduleSoftRefresh()
     await workspaceState.save()
   })
 
@@ -179,17 +183,17 @@ export function createSmartConfigFeature(input: {
       }
     }),
     // Context to match rules against relies on currently active document and color theme
-    vscode.window.onDidChangeActiveTextEditor(() => scheduleRefresh()),
-    vscode.window.onDidChangeActiveColorTheme(() => scheduleRefresh()),
-    vscode.window.onDidChangeWindowState(() => scheduleRefresh()),
+    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh()),
+    vscode.window.onDidChangeActiveColorTheme(() => scheduleSoftRefresh()),
+    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh()),
     // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => scheduleSlowerRefresh()),
+    vscode.window.onDidChangeTextEditorSelection(() => scheduleHardRefresh()),
   )
 
-  scheduleRefresh()
+  scheduleSoftRefresh()
 
   return {
-    scheduleRefresh,
+    scheduleRefresh: scheduleSoftRefresh,
     getEnabledToggles: () => workspaceState.getEnabledToggles(),
   }
 }
