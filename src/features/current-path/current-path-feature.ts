@@ -22,7 +22,7 @@ export function createCurrentPathFeature(input: {
 
   const currentSelectionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 999)
   currentSelectionStatusBarItem.name = 'Current Path: Current Selection'
-  currentSelectionStatusBarItem.tooltip = 'Current Selection (C = Characters, L = Lines)'
+  currentSelectionStatusBarItem.tooltip = 'Current Selection (S = Selections, L = Lines, C = Characters)'
   context.subscriptions.push(currentSelectionStatusBarItem)
 
   function updateCurrentPathStatusBarItem() {
@@ -37,7 +37,6 @@ export function createCurrentPathFeature(input: {
     }
   }
 
-  // TODO: Add support for multiple selections
   function updateCurrentSelectionStatusBarItem() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
@@ -70,9 +69,11 @@ export function createCurrentPathFeature(input: {
           ? `${end.character - start.character}C`
           : `${end.line - start.line + 1}L ${activeTextEditor.document.getText(activeTextEditor.selection).length}C`
 
+        const multiSelectionStats = activeTextEditor.selections.length > 1 ? `${activeTextEditor.selections.length}S ` : ''
+
         currentSelectionStatusBarItem.text = isSingleLine
-          ? `${line(start)}:${col(start)}-${col(end)} (${stats})`
-          : `${line(start)}:${col(start)}-${line(end)}:${col(end)} (${stats})`
+          ? `${line(start)}:${col(start)}-${col(end)} (${multiSelectionStats}${stats})`
+          : `${line(start)}:${col(start)}-${line(end)}:${col(end)} (${multiSelectionStats}${stats})`
       }
 
       currentSelectionStatusBarItem.show()
