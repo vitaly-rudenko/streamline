@@ -52,7 +52,7 @@ type ProjectTemplate = {
 ### Snippets
 
 Example of a snippet template:
-```json
+```jsonc
 {
   "name": "JavaScript Script",
   "description": "Opens an Untitled JavaScript file with predefined script template",
@@ -62,6 +62,7 @@ Example of a snippet template:
     "content": [
       "console.log('Hello, World!');"
     ]
+    // ^ optionally add code to the newly created script
   }
 }
 ```
@@ -75,6 +76,7 @@ Example of a file template:
   "description": "Creates an empty JavaScript file",
   "type": "file",
   "defaultPath": "$replsPath/playground/$datetime_$randomNoun.mjs"
+  // ^ set default path and default name for the created file
 }
 ```
 
@@ -91,6 +93,7 @@ Example of a project template:
     "path": "$replsPath/templates/javascript-project",
     "fileToOpen": "src/app.js"
   }
+  // ^ specify which folder to use as a template and (optionally) which file to open after creation
 }
 ```
 
@@ -109,10 +112,11 @@ type Command = {
   default?: boolean
   cwd: string
   command: string | string[]
-  // see docs/when.md for 'When' syntax documentation
   when?: When
 }
 ```
+
+> Run `Streamline: Open Help for 'when' Syntax` command to show all possible conditions and examples for `"when"` field.
 
 ### Examples
 
@@ -127,10 +131,7 @@ Run selected JavaScript snippet:
     "$contextSelection",
     "QUICKREPL"
   ],
-  "when": [
-    [{ "selection": true }, { "languageId": "typescript" }],
-    [{ "selection": true }, { "languageId": "javascript" }]
-  ],
+  "when": [{ "selection": true, "languageId": ["typescript", "javascript"] }],
 }
 ```
 
@@ -145,14 +146,11 @@ Run a JavaScript file (Untitled):
     "$contextContent",
     "QUICKREPL"
   ],
-  "when": [
-    [{ "untitled": true }, { "languageId": "typescript" }],
-    [{ "untitled": true }, { "languageId": "javascript" }]
-  ],
+  "when": [{ "untitled": true, "languageId": ["typescript", "javascript"] }],
 }
 ```
 
-Run a JavaScript file (saved):
+Run a JavaScript file:
 ```json
 {
   "name": "Run File (JavaScript)",
@@ -160,8 +158,8 @@ Run a JavaScript file (saved):
   "cwd": "$contextDirname",
   "command": "node $contextBasename",
   "when": [
-    [{ "untitled": false }, { "languageId": "javascript" }],
-    [{ "basename": "\\.(c|m)?js$" }],
+    { "untitled": false, "languageId": "javascript" },
+    { "basename": "\\.(c|m)?js$" },
   ],
 }
 ```
@@ -177,7 +175,7 @@ Run a JavaScript project:
 }
 ```
 
-## Substitution (variables)
+## Substitution variables
 
 > Implementation: [src/features/quick-repl/toolkit/substitute.ts](../src/features/quick-repl/toolkit/substitute.ts)
 

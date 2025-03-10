@@ -1,6 +1,8 @@
 # Syntax for 'when'
 
-> Implementation: [src/common/when.ts](../src/common/when.ts)
+> Implementation: [src/common/when.ts](https://github.com/vitaly-rudenko/streamline/blob/main/src/common/when.ts)
+
+This syntax is supported in `streamline.smartConfig.rules[].when` and in `streamline.quickRepl.commands[].when` configuration sections.
 
 ## Supported conditions
 

@@ -179,6 +179,10 @@ export function activate(context: vscode.ExtensionContext) {
     await openHelp('docs/quick-repl.md')
   })
 
+  registerCommand('streamline.help.smartConfig', async () => {
+    await openHelp('docs/smart-config.md')
+  })
+
   async function openHelp(path: string) {
     const helpPath = context.asAbsolutePath(path)
     if (!helpPath) return

@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.936",
+  "version": "0.40.938",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -97,6 +97,11 @@
       {
         "command": "streamline.help.quickRepl",
         "title": "Quick Repl: Open Help",
+        "icon": "$(question)"
+      },
+      {
+        "command": "streamline.help.smartConfig",
+        "title": "Smart Config: Open Help",
         "icon": "$(question)"
       },
       {

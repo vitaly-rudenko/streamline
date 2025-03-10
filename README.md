@@ -23,7 +23,7 @@ Useful in large projects and monorepos to focus on modules that you're currently
 > This feature is achieved by analyzing your project files and modifying `files.exclude` accordingly.
 > Due to VS Code limitations in multi-folder workspaces, not all files are guaranteed to be hidden.
 
-![Demo](docs/scoped_paths.gif)
+![Demo](docs/demos/scoped-paths.gif)
 
 ## Bookmarks
 
@@ -32,7 +32,7 @@ Bookmarks can contain notes and lists can be archived.
 
 > Use `Bookmarks: Quick Open...` to quickly open a bookmark from current list.
 
-![Demo](docs/bookmarks.gif)
+![Demo](docs/demos/bookmarks.gif)
 
 ## Quick Repl
 
@@ -42,18 +42,18 @@ Templates and commands are fully customizable.
 > Run `Quick Repl: Start Setup Wizard` command to setup Quick Repl.  
 > For help, run `Quick Repl: Open Help` command.
 
-![Demo](docs/quick_repl.gif)
+![Demo](docs/demos/quick-repl.gif)
 
 ## Smart Config
 
 Automatically apply configuration presets when certain conditions are met (such as current path, language or color theme).  
 
 > You can create custom toggles in the status bar to apply configuration presets manually.  
-> Run `Streamline: Open Help for 'when' Syntax` command to show tips for writing `"when"` conditions.
+> For help, run `Quick Repl: Open Help` command.
 
-![Demo](docs/smart_config.gif)
+![Demo](docs/demos/smart-config.png)
 
-Configuration example for enabling Copilot in test files and when manually toggled in status bar:
+Here's a functional example for automatically enabling Copilot completions in test files or when manually toggled in status bar:
 ```json
 "streamline.smartConfig.defaults": {
     "github.copilot.editor.enableAutoCompletions": false
@@ -84,7 +84,7 @@ Related files are sorted by "best match", depending on their parent folder and b
 > Best match is shown in status bar, and opens the related file to the side upon click.  
 > All related files can be accessed with `Related Files: Quick Open...` command.
 
-![Demo](docs/related_files.gif)
+![Demo](docs/demos/related-files.gif)
 
 ## Current Path
 
