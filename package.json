@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.939",
+  "version": "0.40.940",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -539,8 +539,13 @@
           "when": "view == bookmarks"
         },
         {
-          "command": "streamline.bookmarks.addList",
+          "command": "streamline.bookmarks.undo",
           "group": "navigation@1",
+          "when": "view == bookmarks && streamline.bookmarks.showProminentUndoButton"
+        },
+        {
+          "command": "streamline.bookmarks.addList",
+          "group": "navigation@2",
           "when": "view == bookmarks"
         },
         {

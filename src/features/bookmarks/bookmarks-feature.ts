@@ -20,6 +20,8 @@ export function createBookmarksFeature(input: {
 }) {
   const { context, registerCommand, onChange } = input
 
+  let sessionUndoHistoryCount = 0
+
   const config = new BookmarksConfig()
   const workspaceState = new BookmarksWorkspaceState(context.workspaceState)
   const cache = new BookmarksCache(config, workspaceState)
@@ -52,6 +54,7 @@ export function createBookmarksFeature(input: {
         ? cache.getCachedBookmarkedPathsInCurrentBookmarksListSet().has(vscode.window.activeTextEditor.document.uri.path)
         : false
 
+      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.showProminentUndoButton', sessionUndoHistoryCount > 0)
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isActiveTextEditorBookmarked', isActiveTextEditorBookmarked)
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isUndoHistoryEmpty', workspaceState.getUndoHistory().length === 0)
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.bookmarkedPaths', cache.getCachedBookmarkedPathsInCurrentBookmarksList())
@@ -449,6 +452,8 @@ export function createBookmarksFeature(input: {
     workspaceState.setUndoHistory([...workspaceState.getUndoHistory(), allBookmarksToDelete].slice(0, UNDO_HISTORY_SIZE))
     config.setBookmarks(config.getBookmarks().filter(bookmark => !allBookmarksToDelete.includes(bookmark)))
 
+    sessionUndoHistoryCount++
+
     bookmarksTreeDataProvider.refresh()
     updateContextInBackground()
     config.saveInBackground()
@@ -473,6 +478,8 @@ export function createBookmarksFeature(input: {
 
     config.setBookmarks([...config.getBookmarks(), ...bookmarksToRestore])
     workspaceState.setUndoHistory(workspaceState.getUndoHistory().slice(0, -1))
+
+    if (sessionUndoHistoryCount > 0) sessionUndoHistoryCount--
 
     bookmarksTreeDataProvider.refresh()
     updateContextInBackground()
