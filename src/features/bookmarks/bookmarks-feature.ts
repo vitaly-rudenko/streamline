@@ -2,7 +2,6 @@ import * as vscode from 'vscode'
 import { BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, formatSelectionValue, ListTreeItem, SelectionTreeItem, TreeItem } from './bookmarks-tree-data-provider'
 import { BookmarksConfig } from './bookmarks-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
-import { filter } from '../../utils/filter'
 import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
 import { Bookmark, defaultCurrentList } from './common'
@@ -11,6 +10,8 @@ import { formatPaths } from '../../utils/format-paths'
 import { RegisterCommand } from '../../register-command'
 
 const UNDO_HISTORY_SIZE = 50
+
+// TODO: deduplicate bookmarks
 
 export function createBookmarksFeature(input: {
   context: vscode.ExtensionContext
@@ -47,18 +48,13 @@ export function createBookmarksFeature(input: {
 
   async function updateContextInBackground() {
     try {
-      const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
-      const isActiveTextEditorBookmarked = activeTextEditorUri
-        ? cache.getCachedBookmarkedFilePathsInCurrentBookmarksListSet().has(activeTextEditorUri.path)
+      const isActiveTextEditorBookmarked = vscode.window.activeTextEditor
+        ? cache.getCachedBookmarkedPathsInCurrentBookmarksListSet().has(vscode.window.activeTextEditor.document.uri.path)
         : false
 
-      const bookmarkedPaths = config.getBookmarks()
-        .filter(bookmark => bookmark.list === workspaceState.getCurrentList())
-        .map(bookmark => bookmark.uri.path)
-
-      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.activeTextEditorBookmarked', isActiveTextEditorBookmarked)
+      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isActiveTextEditorBookmarked', isActiveTextEditorBookmarked)
       await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isUndoHistoryEmpty', workspaceState.getUndoHistory().length === 0)
-      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.bookmarkedPaths', bookmarkedPaths satisfies string[])
+      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.bookmarkedPaths', cache.getCachedBookmarkedPathsInCurrentBookmarksList())
     } catch (error) {
       console.warn('[Bookmarks] Could not update context', error)
     }
@@ -149,6 +145,22 @@ export function createBookmarksFeature(input: {
         await vscode.commands.executeCommand('streamline.bookmarks.add', activeTextEditorUri, [activeTextEditorUri])
       }
     }
+  })
+
+  // Bookmark current selection
+  registerCommand('streamline.bookmarks.addSelection', async () => {
+    const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
+    if (!activeTextEditorUri) return
+
+    await vscode.commands.executeCommand('streamline.bookmarks.add')
+  })
+
+  // Bookmark current selection with a note
+  registerCommand('streamline.bookmarks.addSelectionWithNote', async () => {
+    const activeTextEditorUri = vscode.window.activeTextEditor?.document.uri
+    if (!activeTextEditorUri) return
+
+    await vscode.commands.executeCommand('streamline.bookmarks.addNote')
   })
 
   // Bookmark to a custom list
@@ -354,8 +366,7 @@ export function createBookmarksFeature(input: {
     const targetItems = getTargetItemsForCommand(item, selectedItems)
     if (targetItems.length === 0) return
 
-    let finalUpdatedBookmarks = config.getBookmarks()
-    const allRemovedBookmarks: Bookmark[] = []
+    let allBookmarksToDelete: Bookmark[] = []
 
     // All target items must either be Uris (Explorer View) or TreeItems (Bookmarks View)
     if (targetItems.some(item => item instanceof vscode.Uri) && targetItems.some(item => !(item instanceof vscode.Uri))) {
@@ -363,27 +374,22 @@ export function createBookmarksFeature(input: {
       throw new Error('Unexpected target items mismatch')
     }
 
-    // Case 1: Deleting bookmarks from Explorer View
+    // Case 1: Deleting bookmarks from Explorer View or using Bookmark button on top of the Editor
     if (targetItems.every(item => item instanceof vscode.Uri)) {
       const listToDeleteFrom = workspaceState.getCurrentList()
 
       const pathsToDelete = new Set(targetItems.map(item => item.path))
-      const [updatedBookmarks, removedBookmarks] = filter(
-        config.getBookmarks(),
-        (bookmark) => !(bookmark.list === listToDeleteFrom && pathsToDelete.has(bookmark.uri.path))
-      )
+      const bookmarksToDelete = config.getBookmarks()
+        .filter((bookmark) => bookmark.list === listToDeleteFrom && pathsToDelete.has(bookmark.uri.path))
 
-      allRemovedBookmarks.push(...removedBookmarks)
-      finalUpdatedBookmarks = updatedBookmarks
+      allBookmarksToDelete.push(...bookmarksToDelete)
     }
     // Case 2: Deleting bookmarks lists
     else if (targetItems.every(item => item instanceof ListTreeItem)) {
       const listsToDeleteFrom = targetItems.map(item => item.list)
 
-      const [updatedBookmarks, removedBookmarks] = filter(
-        config.getBookmarks(),
-        (bookmark) => !(listsToDeleteFrom.includes(bookmark.list))
-      )
+      const bookmarksToDelete = config.getBookmarks()
+        .filter((bookmark) => listsToDeleteFrom.includes(bookmark.list))
 
       // Remove 'archived' tag from the deleted lists
       config.setArchivedLists(config.getArchivedLists().filter(list => !listsToDeleteFrom.includes(list)))
@@ -393,47 +399,55 @@ export function createBookmarksFeature(input: {
         workspaceState.setCurrentList(defaultCurrentList)
       }
 
-      allRemovedBookmarks.push(...removedBookmarks)
-      finalUpdatedBookmarks = updatedBookmarks
+      allBookmarksToDelete.push(...bookmarksToDelete)
     }
-    // Case 3: Deleting bookmarked files, folders and selections
+    // Case 3: Deleting bookmarked files, folders and selections in Bookmarks View
     else if (targetItems.every(item => item instanceof vscode.TreeItem)) {
-      const shouldDeleteAllSelectionsInVirtualFiles = targetItems.every(item => item.contextValue !== 'selection')
-
       for (const targetItem of targetItems) {
-        const [updatedBookmarks, removedBookmarks] = filter(
-          finalUpdatedBookmarks,
-          (bookmark) => {
+        const bookmarksToDelete = config.getBookmarks()
+          .filter((bookmark) => {
             if (targetItem instanceof FolderTreeItem) {
-              return !(bookmark.type === 'folder' && bookmark.list === targetItem.list && bookmark.uri.path === targetItem.uri.path)
+              return bookmark.type === 'folder' && bookmark.list === targetItem.list && bookmark.uri.path === targetItem.uri.path
             }
 
             if (targetItem instanceof FileTreeItem) {
-              return !(
-                (bookmark.type === 'file' && bookmark.list === targetItem.list && bookmark.uri.path === targetItem.uri.path) ||
-                (shouldDeleteAllSelectionsInVirtualFiles && targetItem.contextValue === 'virtualFile' && bookmark.type === 'selection' && bookmark.list === targetItem.list && bookmark.uri.path === targetItem.uri.path)
-              )
+              return bookmark.list === targetItem.list && bookmark.uri.path === targetItem.uri.path
             }
 
             if (targetItem instanceof SelectionTreeItem) {
-              return !(bookmark.type === 'selection' && bookmark.list === targetItem.list && bookmark.uri.path === targetItem.uri.path && bookmark.selection.isEqual(targetItem.selection))
+              return bookmark.type === 'selection' && bookmark.list === targetItem.list && bookmark.uri.path === targetItem.uri.path && bookmark.selection.isEqual(targetItem.selection)
             }
 
             console.error('[Bookmarks] Unexpected target item type', targetItem)
             throw new Error('Unexpected target item type')
-          }
-        )
+          })
 
-        allRemovedBookmarks.push(...removedBookmarks)
-        finalUpdatedBookmarks = updatedBookmarks
+        allBookmarksToDelete.push(...bookmarksToDelete)
       }
     }
 
-    if (allRemovedBookmarks.length === 0) return // None were removed
+    const selectionsToDeleteCount = allBookmarksToDelete.filter(bookmark => bookmark.type === 'selection').length
+    if (
+      selectionsToDeleteCount > 0 &&
+      !targetItems.every(item => item instanceof SelectionTreeItem || item instanceof FileTreeItem && item.contextValue === 'virtualFile')
+    ) {
+      const result = await vscode.window.showWarningMessage(
+        `File${targetItems.length > 1 ? 's': ''} contain${targetItems.length > 1 ? '' : 's'} ${selectionsToDeleteCount} bookmarked selections. Do you want to delete them too?`,
+        'No, keep selections',
+        'Yes, delete all',
+        'Cancel'
+      )
+      if (!result || result === 'Cancel') return
+      if (result !== 'Yes, delete all') {
+        allBookmarksToDelete = allBookmarksToDelete.filter(bookmark => bookmark.type !== 'selection')
+      }
+    }
+
+    if (allBookmarksToDelete.length === 0) return // None were removed
 
     // Save deleted bookmarks in workspace state to be able to revert the deletion
-    workspaceState.setUndoHistory([...workspaceState.getUndoHistory(), allRemovedBookmarks].slice(0, UNDO_HISTORY_SIZE))
-    config.setBookmarks(finalUpdatedBookmarks)
+    workspaceState.setUndoHistory([...workspaceState.getUndoHistory(), allBookmarksToDelete].slice(0, UNDO_HISTORY_SIZE))
+    config.setBookmarks(config.getBookmarks().filter(bookmark => !allBookmarksToDelete.includes(bookmark)))
 
     bookmarksTreeDataProvider.refresh()
     updateContextInBackground()

@@ -180,6 +180,21 @@
         "icon": "$(star)"
       },
       {
+        "command": "streamline.bookmarks.deleteFile",
+        "title": "Bookmarks: Delete File from Bookmarks",
+        "icon": "$(star-full)"
+      },
+      {
+        "command": "streamline.bookmarks.addSelection",
+        "title": "Bookmarks: Add Selection to Bookmarks",
+        "icon": "$(star)"
+      },
+      {
+        "command": "streamline.bookmarks.addSelectionWithNote",
+        "title": "Bookmarks: Add Selection to Bookmarks (with Note)",
+        "icon": "$(star)"
+      },
+      {
         "command": "streamline.bookmarks.addToList",
         "title": "Add Bookmark to List...",
         "icon": "$(star)"
@@ -197,11 +212,6 @@
       {
         "command": "streamline.bookmarks.delete",
         "title": "Delete Bookmark",
-        "icon": "$(star-full)"
-      },
-      {
-        "command": "streamline.bookmarks.deleteFile",
-        "title": "Bookmarks: Delete File from Bookmarks",
         "icon": "$(star-full)"
       },
       {
@@ -744,12 +754,12 @@
         },
         {
           "command": "streamline.bookmarks.addFile",
-          "when": "resourceScheme == file && !streamline.bookmarks.activeTextEditorBookmarked",
+          "when": "resourceScheme == file && !streamline.bookmarks.isActiveTextEditorBookmarked",
           "group": "navigation@3"
         },
         {
           "command": "streamline.bookmarks.deleteFile",
-          "when": "resourceScheme == file && streamline.bookmarks.activeTextEditorBookmarked",
+          "when": "resourceScheme == file && streamline.bookmarks.isActiveTextEditorBookmarked",
           "group": "navigation@3"
         }
       ]
