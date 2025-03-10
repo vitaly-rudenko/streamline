@@ -453,6 +453,17 @@ export function createBookmarksFeature(input: {
     updateContextInBackground()
     config.saveInBackground()
     await workspaceState.save()
+
+    if (allBookmarksToDelete.length > 5) {
+      const result = await vscode.window.showInformationMessage(
+        `Deleted ${allBookmarksToDelete.length} bookmarks`,
+        'OK',
+        'Undo',
+      )
+      if (result === 'Undo') {
+        await vscode.commands.executeCommand('streamline.bookmarks.undo')
+      }
+    }
   })
 
   // Reverts bookmarks deletion (stored in workspace state)
