@@ -11,7 +11,7 @@ import { RegisterCommand } from '../../register-command'
 
 const UNDO_HISTORY_SIZE = 50
 
-// TODO: deduplicate bookmarks
+// TODO: Deduplicate bookmarks
 
 export function createBookmarksFeature(input: {
   context: vscode.ExtensionContext
