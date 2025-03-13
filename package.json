@@ -265,7 +265,7 @@
       },
       {
         "command": "streamline.bookmarks.undo",
-        "title": "Restore Recently Deleted Bookmarks",
+        "title": "Bookmarks: Restore Deleted Bookmarks",
         "icon": "$(discard)"
       },
       {
@@ -500,10 +500,6 @@
         },
         {
           "command": "streamline.quickRepl.revealInOS",
-          "when": "false"
-        },
-        {
-          "command": "streamline.bookmarks.undo",
           "when": "false"
         }
       ],
