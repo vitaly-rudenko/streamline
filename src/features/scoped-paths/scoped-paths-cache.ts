@@ -4,6 +4,7 @@ import { unique } from '../../utils/unique'
 import { DynamicScopeProvider } from './dynamic-scope-provider'
 import { ScopedPathsConfig } from './scoped-paths-config'
 import { ScopedPathsWorkspaceState } from './scoped-paths-workspace-state'
+import { createScopedUriToPath } from './toolkit/create-scoped-uri-to-path'
 
 export class ScopedPathsCache {
   private _cachedCurrentlyScopedAndExcludedPaths: string[] = []
@@ -31,21 +32,11 @@ export class ScopedPathsCache {
       console.warn('[ScopedPaths] More than one DynamicScopeProvider is matching the current scope')
     }
 
-    const currentWorkspaceFolders = this.getCurrentWorkspaceFoldersSnapshot()
     this._cachedCurrentlyScopedAndExcludedPaths = unique(
       dynamicScopeProvider
         ? dynamicScopeProvider.getScopedAndExcludedPaths({
           currentScope,
-          // TODO: Extract & add tests
-          uriToPath: (uri) => {
-            const exactWorkspaceFolder = currentWorkspaceFolders.find(wf => wf.uri.path === uri.path)
-            if (exactWorkspaceFolder) return exactWorkspaceFolder.name
-
-            const workspaceFolder = currentWorkspaceFolders.find(wf => uri.path.startsWith(wf.uri.path + '/'))
-            if (!workspaceFolder) return undefined
-
-            return workspaceFolder.name + uri.path.slice(workspaceFolder.uri.path.length)
-          }
+          uriToPath: createScopedUriToPath(this.getCurrentWorkspaceFoldersSnapshot()),
         })
         : (this.config.getScopesObject()[currentScope] ?? [])
     )
