@@ -13,11 +13,18 @@ export function createRelatedFilesFeature(input: {
   const config = new RelatedFilesConfig()
   const relatedFilesFinder = new RelatedFilesFinder(config)
 
-  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
-  statusBarItem.text = '$(sparkle)'
-  statusBarItem.name = 'Related Files: Open Best Match to Side'
-  statusBarItem.tooltip = 'Open Best Match to Side'
-  statusBarItem.hide()
+  const bestMatchStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
+  bestMatchStatusBarItem.text = '$(sparkle)'
+  bestMatchStatusBarItem.name = 'Related Files: Open Best Match to Side'
+  bestMatchStatusBarItem.tooltip = 'Related Files: Open Best Match to Side'
+  bestMatchStatusBarItem.hide()
+
+  const remainingMatchesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 997)
+  remainingMatchesStatusBarItem.text = '+1'
+  remainingMatchesStatusBarItem.name = 'Related Files: View Remaining Matches'
+  remainingMatchesStatusBarItem.tooltip = 'Related Files: View Remaining Matches...'
+  remainingMatchesStatusBarItem.command = 'streamline.relatedFiles.quickOpen'
+  remainingMatchesStatusBarItem.hide()
 
   const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
   const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 250)
@@ -40,25 +47,32 @@ export function createRelatedFilesFeature(input: {
     try {
       const activeTextEditor = vscode.window.activeTextEditor
       if (!activeTextEditor) {
-        statusBarItem.hide()
+        bestMatchStatusBarItem.hide()
+        remainingMatchesStatusBarItem.hide()
         return
       }
 
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
-      const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder)
-      if (relatedFiles.length === 0) {
-        statusBarItem.hide()
-        return
+      const [relatedFile, ...remainingRelatedFiles] = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder)
+
+      if (relatedFile) {
+        bestMatchStatusBarItem.text = `$(sparkle) ${relatedFile.label}`
+        bestMatchStatusBarItem.command = {
+          title: 'Open Best Match to Side',
+          command: 'explorer.openToSide',
+          arguments: [relatedFile.uri],
+        }
+        bestMatchStatusBarItem.show()
+      } else {
+        bestMatchStatusBarItem.hide()
       }
 
-      const [relatedFile, ...remainingRelatedFiles] = relatedFiles
-      statusBarItem.text = `$(sparkle) ${relatedFile.label}${remainingRelatedFiles.length > 0 ? ` +${remainingRelatedFiles.length}` : ''}`
-      statusBarItem.command = {
-        title: 'Open Best Match to Side',
-        command: 'explorer.openToSide',
-        arguments: [relatedFile.uri],
+      if (remainingRelatedFiles.length > 0) {
+        remainingMatchesStatusBarItem.text = `+${remainingRelatedFiles.length}`
+        remainingMatchesStatusBarItem.show()
+      } else {
+        remainingMatchesStatusBarItem.hide()
       }
-      statusBarItem.show()
     } catch (error) {
       console.warn('[ScopedPaths] Could not update status bar item', error)
     }
