@@ -525,7 +525,6 @@ export function createBookmarksFeature(input: {
     const formattedPaths = formatPaths(uris.map(uri => uri.path))
 
     const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { bookmark: Bookmark }>()
-
     quickPick.items = bookmarks.flatMap((bookmark, i) => {
       const label = formattedPaths.get(bookmark.uri.path)!
       const results: (vscode.QuickPickItem & { bookmark: Bookmark })[] = []
@@ -572,23 +571,24 @@ export function createBookmarksFeature(input: {
 
     quickPick.onDidAccept(async () => {
       const [selected] = quickPick.selectedItems
-      if (selected) {
-        await vscode.window.showTextDocument(
-          selected.bookmark.uri,
-          {
-            preview: false,
-            ...selected.bookmark.type === 'selection' && {
-              selection: selected.bookmark.selection,
-            },
-          }
-        )
-      }
+      if (!selected) return quickPick.dispose()
+
+      await vscode.window.showTextDocument(
+        selected.bookmark.uri,
+        {
+          preview: false,
+          ...selected.bookmark.type === 'selection' && {
+            selection: selected.bookmark.selection,
+          },
+        }
+      )
 
       quickPick.dispose()
     })
 
     quickPick.onDidTriggerItemButton(async ({ item }) => {
-      if (!item) return
+      if (!item) return quickPick.dispose()
+
       await vscode.window.showTextDocument(
         item.bookmark.uri,
         {
@@ -599,10 +599,11 @@ export function createBookmarksFeature(input: {
           },
         }
       )
+
+      quickPick.dispose()
     })
 
     quickPick.onDidHide(() => quickPick.dispose())
-
     quickPick.show()
   })
 

@@ -97,11 +97,7 @@ export function createRelatedFilesFeature(input: {
 
     const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
 
-    const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & {
-      relatedFile?: RelatedFile
-      searchAllWorkspaceFolders?: boolean
-    }>()
-
+    const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { relatedFile?: RelatedFile; searchAllWorkspaceFolders?: boolean }>()
     quickPick.items = [
       ...relatedFiles.length === 0 ? [{
         label: 'No related files found, trigger Quick Open?',
@@ -123,32 +119,34 @@ export function createRelatedFilesFeature(input: {
 
     quickPick.onDidAccept(async () => {
       const [selected] = quickPick.selectedItems
-      if (selected) {
-        if (selected.searchAllWorkspaceFolders) {
-          await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
-        } else if (selected.relatedFile) {
-          await vscode.window.showTextDocument(
-            selected.relatedFile.uri,
-            { preview: false }
-          )
-        } else {
-          await vscode.commands.executeCommand('workbench.action.quickOpen')
-        }
+      if (!selected) return quickPick.dispose()
+
+      if (selected.searchAllWorkspaceFolders) {
+        await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
+      } else if (selected.relatedFile) {
+        await vscode.window.showTextDocument(
+          selected.relatedFile.uri,
+          { preview: false }
+        )
+      } else {
+        await vscode.commands.executeCommand('workbench.action.quickOpen')
       }
 
       quickPick.dispose()
     })
 
     quickPick.onDidTriggerItemButton(async ({ item }) => {
-      if (!item.relatedFile) return
+      if (!item.relatedFile) return quickPick.dispose()
+
       await vscode.window.showTextDocument(
         item.relatedFile.uri,
         { preview: false, viewColumn: vscode.ViewColumn.Beside }
       )
+
+      quickPick.dispose()
     })
 
     quickPick.onDidHide(() => quickPick.dispose())
-
     quickPick.show()
   })
 
