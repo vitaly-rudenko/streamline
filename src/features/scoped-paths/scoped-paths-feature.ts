@@ -436,29 +436,24 @@ export function createScopedPathsFeature(input: {
       const iconPath = dynamicScopeProvider?.iconPath ?? new vscode.ThemeIcon('circle-large-outline')
 
       // TODO: the same code in cache, extract
-      const scopedAndExcludedPaths = unique(
+      const pathsInScope = unique(
         dynamicScopeProvider
           ? dynamicScopeProvider.getScopedAndExcludedPaths({
             currentScope: scope,
             uriToPath: createScopedUriToPath(getCurrentWorkspaceFoldersSnapshot()),
           })
           : (config.getScopesObject()[scope] ?? [])
-      )
+      ).map(path => path.startsWith('!') ? path.slice(1) : path)
 
-      const workspaceFolderNames = unique(
-        scopedAndExcludedPaths
-          .filter(path => !path.startsWith('!'))
-          .map(path => path.split('/')[0])
-      )
-
+      const workspaceFolderNames = unique(pathsInScope.map(path => path.split('/')[0]))
       const stats = workspaceFolderNames.length > 0
         ? workspaceFolderNames.map(workspaceFolderName => {
-          if (scopedAndExcludedPaths.includes(workspaceFolderName)) {
+          if (pathsInScope.includes(workspaceFolderName)) {
             return workspaceFolderName
           }
 
-          const items = scopedAndExcludedPaths.filter(path => path.startsWith(workspaceFolderName + '/'))
-          return `${workspaceFolderName} (${items.length})`
+          const pathsInWorkspaceFolder = pathsInScope.filter(path => path.startsWith(workspaceFolderName + '/'))
+          return `${workspaceFolderName} (${pathsInWorkspaceFolder.length})`
         }).join(', ')
         : 'empty'
 
@@ -475,6 +470,11 @@ export function createScopedPathsFeature(input: {
           ]
         }
       })
+    }
+
+    // Edge case when all scopes are deleted
+    if (!config.getScopesObject()[workspaceState.getCurrentScope()]) {
+      addScopeQuickPickItem(workspaceState.getCurrentScope())
     }
 
     for (const scope of Object.keys(config.getScopesObject())) {
