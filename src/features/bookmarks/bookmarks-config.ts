@@ -6,6 +6,7 @@ import { FeatureConfig } from '../feature-config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { serializeBookmark } from './toolkit/serialize-bookmark'
 import { deserializeBookmark } from './toolkit/deserialize-bookmark'
+import { deduplicateBookmarks } from './toolkit/deduplicate-bookmarks'
 
 export class BookmarksConfig extends FeatureConfig {
   public onChange?: Function
@@ -83,7 +84,7 @@ export class BookmarksConfig extends FeatureConfig {
   }
 
   setBookmarks(value: Bookmark[]) {
-    this._bookmarks = value
+    this._bookmarks = deduplicateBookmarks(value)
     this._serializedBookmarks = this._bookmarks.map((bookmark) => serializeBookmark(bookmark))
     this.onChange?.()
   }
