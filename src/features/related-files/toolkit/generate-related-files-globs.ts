@@ -8,6 +8,12 @@ import * as pathUtil from 'path'
 // - **/file.service*
 // - **/to/file*
 // - **/file*
+// - **/to/*file.service.test*
+// - **/*file.service.test*
+// - **/to/*file.service*
+// - **/*file.service*
+// - **/to/*file*
+// - **/*file*
 export function generateRelatedFilesGlobs(path: string): string[] {
   const basename = pathUtil.basename(path)
   const parentFolder = pathUtil.basename(pathUtil.dirname(path))
@@ -20,11 +26,17 @@ export function generateRelatedFilesGlobs(path: string): string[] {
 
   const queries: string[] = []
   for (let i = basenameParts.length - 1; i >= 1; i--) {
-    if (parentFolder !== '') {
-      queries.push(`**/${parentFolder}/${basenameParts.slice(0, i).join('.')}*`)
-    }
+    const partialBasename = basenameParts.slice(0, i).join('.')
 
-    queries.push(`**/${basenameParts.slice(0, i).join('.')}*`)
+    if (parentFolder !== '') queries.push(`**/${parentFolder}/${partialBasename}*`)
+    queries.push(`**/${partialBasename}*`)
+  }
+
+  for (let i = basenameParts.length - 1; i >= 1; i--) {
+    const partialBasename = basenameParts.slice(0, i).join('.')
+
+    if (parentFolder !== '') queries.push(`**/${parentFolder}/*${partialBasename}*`)
+    queries.push(`**/*${partialBasename}*`)
   }
 
   return queries
