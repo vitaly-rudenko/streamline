@@ -10,30 +10,28 @@ export class RelatedFilesFinder {
     const relatedFilesQueries = generateRelatedFilesGlobs(relativePath)
 
     // Limit search to workspace folder when provided
-    console.log('workspaceFolder', workspaceFolder)
     const includes = workspaceFolder
       ? relatedFilesQueries.map(query => new vscode.RelativePattern(workspaceFolder.uri, query))
       : [...relatedFilesQueries]
 
     const excludePattern = this.generateExcludePattern()
 
-    const matches: vscode.Uri[] = []
-    const ignoredPaths = new Set([currentUri.path])
+    const handledPaths = new Set([currentUri.path])
 
     for (const include of includes) {
       // TODO: Use findFiles2() when API is stable
       //       See https://github.com/microsoft/vscode/pull/203844
-      const matchedUris = await vscode.workspace.findFiles(include, excludePattern, limit)
+      const matchedUris = await vscode.workspace.findFiles(include, excludePattern, limit + handledPaths.size) // +handledPaths.size to avoid already handled files
 
       const batch: vscode.Uri[] = []
       for (const uri of matchedUris) {
-        if (ignoredPaths.has(uri.path)) continue
-        ignoredPaths.add(uri.path)
+        if (handledPaths.has(uri.path)) continue
+        handledPaths.add(uri.path)
         batch.push(uri)
       }
 
       if (batch.length > 0) yield batch
-      if (matches.length >= limit) break
+      if (handledPaths.size >= limit + 1) break // +1 to ignore currentUri
     }
   }
 
@@ -42,7 +40,6 @@ export class RelatedFilesFinder {
     for await (const batch of this.stream(currentUri, workspaceFolder, limit)) {
       matches.push(...batch)
     }
-
     return matches
   }
 

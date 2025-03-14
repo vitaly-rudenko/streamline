@@ -21,13 +21,6 @@ export function createRelatedFilesFeature(input: {
   bestMatchStatusBarItem.tooltip = 'Related Files: Open Best Match to Side'
   bestMatchStatusBarItem.hide()
 
-  const remainingMatchesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 997)
-  remainingMatchesStatusBarItem.text = '+1'
-  remainingMatchesStatusBarItem.name = 'Related Files: View Remaining Matches'
-  remainingMatchesStatusBarItem.tooltip = 'Related Files: View Remaining Matches...'
-  remainingMatchesStatusBarItem.command = 'streamline.relatedFiles.quickOpen'
-  remainingMatchesStatusBarItem.hide()
-
   const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
   const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 250)
 
@@ -68,7 +61,7 @@ export function createRelatedFilesFeature(input: {
 
       if (bestMatch) {
         const formattedPaths = formatPaths([bestMatch.path, activeTextEditor.document.uri.path])
-        bestMatchStatusBarItem.text = `$(sparkle) ${formattedPaths.get(bestMatch.path)}`
+        bestMatchStatusBarItem.text = `$(sparkle) ${formattedPaths.get(bestMatch.path)}${hasMore ? ' +1' : ''}`
         bestMatchStatusBarItem.command = {
           title: 'Related Files: Open Best Match to Side',
           command: 'explorer.openToSide',
@@ -77,12 +70,6 @@ export function createRelatedFilesFeature(input: {
         bestMatchStatusBarItem.show()
       } else {
         bestMatchStatusBarItem.hide()
-      }
-
-      if (hasMore) {
-        remainingMatchesStatusBarItem.show()
-      } else {
-        remainingMatchesStatusBarItem.hide()
       }
     } catch (error) {
       console.warn('[ScopedPaths] Could not update status bar item', error)
@@ -150,13 +137,13 @@ export function createRelatedFilesFeature(input: {
           iconPath: new vscode.ThemeIcon('search'),
         }]: [],
         ...!isLoading && matches.length === 0 ? [{
-          label: 'No related files found',
+          label: `No related files found in ${workspaceFolder ? workspaceFolder.name : 'workspace'}`,
           iconPath: new vscode.ThemeIcon('search-stop'),
         }] : [],
         ...matches.map(match => ({
           match,
           label: formattedPaths.get(match.path)!,
-          description: vscode.workspace.asRelativePath(match, workspaceFolder ? false : true),
+          description: vscode.workspace.asRelativePath(match, searchAllWorkspaceFolders ? true : false),
           iconPath: new vscode.ThemeIcon('sparkle'),
           buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
         })),
