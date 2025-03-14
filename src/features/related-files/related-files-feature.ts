@@ -2,7 +2,9 @@ import * as vscode from 'vscode'
 import { RelatedFilesConfig } from './related-files-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { RegisterCommand } from '../../register-command'
-import { RelatedFile, RelatedFilesFinder } from './related-files-finder'
+import { RelatedFilesFinder } from './related-files-finder'
+import { LRUCache } from 'lru-cache'
+import { formatPaths } from '../../utils/format-paths'
 
 export function createRelatedFilesFeature(input: {
   context: vscode.ExtensionContext
@@ -39,36 +41,45 @@ export function createRelatedFilesFeature(input: {
   }
 
   async function hardRefresh() {
-    relatedFilesFinder.clearCache()
+    bestMatchCache.clear()
     await updateStatusBarItemInBackground()
+  }
+
+  type BestMatchResult = { bestMatch: vscode.Uri | undefined; hasMore: boolean }
+  const bestMatchCache = new LRUCache<string, BestMatchResult>({ max: 100 })
+  async function findBestMatch(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder | undefined): Promise<BestMatchResult> {
+    const cacheKey = `${workspaceFolder?.name ?? '#'}_${uri.path}`
+    const cached = bestMatchCache.get(cacheKey)
+    if (cached) return cached
+
+    const [bestMatch, secondBestMatch] = await relatedFilesFinder.find(uri, workspaceFolder, 2)
+    bestMatchCache.set(cacheKey, { bestMatch, hasMore: Boolean(secondBestMatch) })
+
+    return { bestMatch, hasMore: Boolean(secondBestMatch) }
   }
 
   async function updateStatusBarItemInBackground() {
     try {
       const activeTextEditor = vscode.window.activeTextEditor
-      if (!activeTextEditor) {
-        bestMatchStatusBarItem.hide()
-        remainingMatchesStatusBarItem.hide()
-        return
-      }
+      if (!activeTextEditor) return
 
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
-      const [relatedFile, ...remainingRelatedFiles] = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder)
+      const { bestMatch, hasMore } = await findBestMatch(activeTextEditor.document.uri, workspaceFolder)
 
-      if (relatedFile) {
-        bestMatchStatusBarItem.text = `$(sparkle) ${relatedFile.label}`
+      if (bestMatch) {
+        const formattedPaths = formatPaths([bestMatch.path, activeTextEditor.document.uri.path])
+        bestMatchStatusBarItem.text = `$(sparkle) ${formattedPaths.get(bestMatch.path)}`
         bestMatchStatusBarItem.command = {
-          title: 'Open Best Match to Side',
+          title: 'Related Files: Open Best Match to Side',
           command: 'explorer.openToSide',
-          arguments: [relatedFile.uri],
+          arguments: [bestMatch],
         }
         bestMatchStatusBarItem.show()
       } else {
         bestMatchStatusBarItem.hide()
       }
 
-      if (remainingRelatedFiles.length > 0) {
-        remainingMatchesStatusBarItem.text = `+${remainingRelatedFiles.length}`
+      if (hasMore) {
         remainingMatchesStatusBarItem.show()
       } else {
         remainingMatchesStatusBarItem.hide()
@@ -95,27 +106,8 @@ export function createRelatedFilesFeature(input: {
       ? undefined
       : vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
 
-    const relatedFiles = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
-
-    const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { relatedFile?: RelatedFile; searchAllWorkspaceFolders?: boolean }>()
-    quickPick.items = [
-      ...relatedFiles.length === 0 ? [{
-        label: 'No related files found, trigger Quick Open?',
-        iconPath: new vscode.ThemeIcon('search-stop'),
-      }] : [],
-      ...relatedFiles.map(relatedFile => ({
-        label: relatedFile.label,
-        description: vscode.workspace.asRelativePath(relatedFile.uri, workspaceFolder ? false : true),
-        relatedFile,
-        iconPath: new vscode.ThemeIcon('sparkle'),
-        buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
-      })),
-      ...searchAllWorkspaceFolders ? [] : [{
-        label: 'Search in all workspace folders',
-        iconPath: new vscode.ThemeIcon('search'),
-        searchAllWorkspaceFolders: true,
-      }],
-    ]
+    type QuickPickItem = vscode.QuickPickItem & { match?: vscode.Uri; searchAllWorkspaceFolders?: boolean }
+    const quickPick = vscode.window.createQuickPick<QuickPickItem>()
 
     quickPick.onDidAccept(async () => {
       const [selected] = quickPick.selectedItems
@@ -123,11 +115,8 @@ export function createRelatedFilesFeature(input: {
 
       if (selected.searchAllWorkspaceFolders) {
         await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
-      } else if (selected.relatedFile) {
-        await vscode.window.showTextDocument(
-          selected.relatedFile.uri,
-          { preview: false }
-        )
+      } else if (selected.match) {
+        await vscode.window.showTextDocument(selected.match, { preview: false })
       } else {
         await vscode.commands.executeCommand('workbench.action.quickOpen')
       }
@@ -136,10 +125,10 @@ export function createRelatedFilesFeature(input: {
     })
 
     quickPick.onDidTriggerItemButton(async ({ item }) => {
-      if (!item.relatedFile) return quickPick.dispose()
+      if (!item.match) return quickPick.dispose()
 
       await vscode.window.showTextDocument(
-        item.relatedFile.uri,
+        item.match,
         { preview: false, viewColumn: vscode.ViewColumn.Beside }
       )
 
@@ -148,6 +137,49 @@ export function createRelatedFilesFeature(input: {
 
     quickPick.onDidHide(() => quickPick.dispose())
     quickPick.show()
+
+    let isLoading = true
+    const matches: vscode.Uri[] = []
+
+    function refreshQuickPickItems() {
+      const formattedPaths = formatPaths(matches.map(match => match.path))
+
+      quickPick.items = [
+        ...isLoading ? [{
+          label: 'Searching...',
+          iconPath: new vscode.ThemeIcon('search'),
+        }]: [],
+        ...!isLoading && matches.length === 0 ? [{
+          label: 'No related files found',
+          iconPath: new vscode.ThemeIcon('search-stop'),
+        }] : [],
+        ...matches.map(match => ({
+          match,
+          label: formattedPaths.get(match.path)!,
+          description: vscode.workspace.asRelativePath(match, workspaceFolder ? false : true),
+          iconPath: new vscode.ThemeIcon('sparkle'),
+          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+        })),
+        ...(searchAllWorkspaceFolders || isLoading) ? [] : [{
+          label: 'More options',
+          kind: vscode.QuickPickItemKind.Separator,
+        }, {
+          label: 'Search in all workspace folders',
+          iconPath: new vscode.ThemeIcon('search'),
+          searchAllWorkspaceFolders: true,
+        }],
+      ]
+    }
+
+    refreshQuickPickItems()
+
+    for await (const batch of relatedFilesFinder.stream(activeTextEditor.document.uri, workspaceFolder, 10)) {
+      matches.push(...batch)
+      refreshQuickPickItems()
+    }
+
+    isLoading = false
+    refreshQuickPickItems()
   })
 
   // Immediately open the best match file in the editor
@@ -156,11 +188,11 @@ export function createRelatedFilesFeature(input: {
     if (!activeTextEditor) return
 
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
-    const [relatedFile] = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
-    if (!relatedFile) return
+    const { bestMatch } = await findBestMatch(activeTextEditor.document.uri, workspaceFolder)
+    if (!bestMatch) return
 
     await vscode.window.showTextDocument(
-      relatedFile.uri,
+      bestMatch,
       { preview: false }
     )
   })
@@ -171,11 +203,11 @@ export function createRelatedFilesFeature(input: {
     if (!activeTextEditor) return
 
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
-    const [relatedFile] = await relatedFilesFinder.find(activeTextEditor.document.uri, workspaceFolder, { ignoreCache: true })
-    if (!relatedFile) return
+    const { bestMatch } = await findBestMatch(activeTextEditor.document.uri, workspaceFolder)
+    if (!bestMatch) return
 
     await vscode.window.showTextDocument(
-      relatedFile.uri,
+      bestMatch,
       { preview: false, viewColumn: vscode.ViewColumn.Beside }
     )
   })
