@@ -22,8 +22,8 @@ describe('generateRelatedFilesGlobs()', () => {
       generateRelatedFilesGlobs('/file.service.ts'),
     ).toEqual([
       '**/file.service*',
-      '**/file*',
       '**/*file.service*',
+      '**/file*',
       '**/*file*',
     ])
 
@@ -32,14 +32,14 @@ describe('generateRelatedFilesGlobs()', () => {
     ).toEqual([
       '**/to/file.service.test*',
       '**/file.service.test*',
-      '**/to/file.service*',
-      '**/file.service*',
-      '**/to/file*',
-      '**/file*',
       '**/to/*file.service.test*',
       '**/*file.service.test*',
+      '**/to/file.service*',
+      '**/file.service*',
       '**/to/*file.service*',
       '**/*file.service*',
+      '**/to/file*',
+      '**/file*',
       '**/to/*file*',
       '**/*file*',
     ])
@@ -51,14 +51,14 @@ describe('generateRelatedFilesGlobs()', () => {
     ).toEqual([
       '**/.to/.file.service.test*',
       '**/.file.service.test*',
-      '**/.to/.file.service*',
-      '**/.file.service*',
-      '**/.to/.file*',
-      '**/.file*',
       '**/.to/*.file.service.test*',
       '**/*.file.service.test*',
+      '**/.to/.file.service*',
+      '**/.file.service*',
       '**/.to/*.file.service*',
       '**/*.file.service*',
+      '**/.to/.file*',
+      '**/.file*',
       '**/.to/*.file*',
       '**/*.file*',
     ])
