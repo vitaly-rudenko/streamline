@@ -18,6 +18,8 @@ Minor features:
 Quickly scope into selected files and folders, hiding everything else.  
 Useful in large projects and monorepos to focus on modules that you're currently working on.
 
+> Use `Scoped Paths: Change Current Scope...` to manage your scopes.
+
 > When scoped, Workspace Folder is removed if it does not contain any scoped files.
 
 > This feature is achieved by analyzing your project files and modifying `files.exclude` accordingly.
@@ -49,7 +51,7 @@ Templates and commands are fully customizable.
 Automatically apply configuration presets when certain conditions are met (such as current path, language or color theme).  
 
 > You can create custom toggles in the status bar to apply configuration presets manually.  
-> For help, run `Quick Repl: Open Help` command.
+> For help, run `Smart Config: Open Help` command.
 
 ![Demo](docs/demos/smart-config.png)
 
