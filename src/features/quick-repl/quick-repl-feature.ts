@@ -16,6 +16,7 @@ import { expandHomedir } from '../../utils/expand-homedir'
 import { collapseHomedir } from '../../utils/collapse-homedir'
 import { RegisterCommand } from '../../register-command'
 
+// TODO: Quickly saved current untitled file to the repls folder
 // TODO: Somehow automatically reveal created file/directory in the Quick Repl view
 
 export function createQuickReplFeature(input: {
