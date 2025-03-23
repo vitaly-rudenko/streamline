@@ -51,7 +51,10 @@ Single condition:
   ]
 }
 ```
-> `file.languageId === 'javascript'`
+
+> ```js
+> file.languageId === 'javascript'
+> ```
 
 Multiple conditions (OR):
 ```json
@@ -62,7 +65,10 @@ Multiple conditions (OR):
   ]
 }
 ```
-> `file.languageId === 'javascript' || file.languageId === 'javascript'`
+
+> ```js
+> file.languageId === 'javascript' || file.languageId === 'javascript'
+> ```
 
 Shorthand syntax for the same condition:
 ```json
@@ -72,7 +78,10 @@ Shorthand syntax for the same condition:
   ]
 }
 ```
-> `file.languageId === 'javascript' || file.languageId === 'javascript'`
+
+> ```js
+> file.languageId === 'javascript' || file.languageId === 'javascript'
+> ```
 
 Multiple conditions (AND):
 ```json
@@ -82,7 +91,10 @@ Multiple conditions (AND):
   ]
 }
 ```
-> `file.isUntitled && file.languageId === 'javascript'`
+
+> ```js
+> file.isUntitled && file.languageId === 'javascript'
+> ```
 
 Multiple conditions (complex):
 ```json
@@ -93,7 +105,11 @@ Multiple conditions (complex):
   ]
 }
 ```
-> `/\.m?js$/.test(file.basename) || (file.isUntitled && file.languageId === 'javascript')`
+
+> ```js
+>    /\.m?js$/.test(file.basename)
+> || (file.isUntitled && file.languageId === 'javascript')
+> ```
 
 Negating the condition:
 ```json
@@ -103,7 +119,10 @@ Negating the condition:
   ]
 }
 ```
-> `!/\.js$/.test(file.basename)`
+
+> ```js
+> !/\.js$/.test(file.basename)
+> ```
 
 Negating the condition (complex):
 ```json
@@ -114,4 +133,8 @@ Negating the condition (complex):
   ]
 }
 ```
-> `(/\/repls/.test(file.path) && !/\/playground/.test(file.path)) || (file.languageId === 'javascript' && !/\.cjs$/.test(file.basename))`
+
+> ```js
+>    (/\/repls/.test(file.path)        && !/\/playground/.test(file.path))
+> || (file.languageId === 'javascript' && !/\.cjs$/.test(file.basename))
+> ```
