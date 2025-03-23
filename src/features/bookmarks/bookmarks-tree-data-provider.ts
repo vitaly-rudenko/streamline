@@ -140,7 +140,7 @@ export class ListTreeItem extends vscode.TreeItem {
   constructor(public readonly list: string, isCurrentList: boolean, isArchived: boolean, childCount: number) {
     super(list, isCurrentList ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 
-    this.description = `${childCount} item${childCount === 1 ? '' : 's'}`
+    this.description = childCount > 0 ? `${childCount} item${childCount === 1 ? '' : 's'}` : 'empty'
     this.iconPath = isCurrentList ? activeListThemeIcon : inactiveListThemeIcon
     this.contextValue = isArchived
       ? isCurrentList ? 'archivedActiveList' : 'archivedList'
