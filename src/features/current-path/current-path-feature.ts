@@ -22,7 +22,13 @@ export function createCurrentPathFeature(input: {
 
   const currentSelectionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 999)
   currentSelectionStatusBarItem.name = 'Current Path: Current Selection'
-  currentSelectionStatusBarItem.tooltip = 'Current Selection (S = Selections, L = Lines, C = Characters)'
+  currentSelectionStatusBarItem.tooltip = new vscode.MarkdownString([
+    '**Current Selection**',
+    '- **S** - selections',
+    '- **L** - lines in first selection',
+    '- **C** - characters in first selection',
+    '- **T** - total characters in all selections',
+  ].join('  \n'))
   context.subscriptions.push(currentSelectionStatusBarItem)
 
   function updateCurrentPathStatusBarItem() {
@@ -40,7 +46,7 @@ export function createCurrentPathFeature(input: {
   function updateCurrentSelectionStatusBarItem() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
-      const { start, end, isEmpty, isSingleLine } = activeTextEditor.selection
+      const { start, end, isSingleLine } = activeTextEditor.selection
 
       const tabSize = Number(vscode.workspace.getConfiguration('editor').get('tabSize', 4))
 
@@ -62,18 +68,23 @@ export function createCurrentPathFeature(input: {
         return column + 1
       }
 
-      if (isEmpty) {
-        currentSelectionStatusBarItem.text = `${line(start)}:${col(start)}`
+      if (activeTextEditor.selections.every(selection => selection.isEmpty)) {
+        const multiSelectionStats = activeTextEditor.selections.length > 1 ? ` (${activeTextEditor.selections.length}S)` : ''
+
+        currentSelectionStatusBarItem.text = `${line(start)}:${col(start)}${multiSelectionStats}`
       } else {
         const stats = isSingleLine
           ? `${end.character - start.character}C`
           : `${end.line - start.line + 1}L ${activeTextEditor.document.getText(activeTextEditor.selection).length}C`
 
         const multiSelectionStats = activeTextEditor.selections.length > 1 ? `${activeTextEditor.selections.length}S ` : ''
+        const totalCharactersState = activeTextEditor.selections.length > 1
+          ? ` ${activeTextEditor.selections.reduce((acc, curr) => acc + activeTextEditor.document.getText(curr).length, 0)}T`
+          : ''
 
         currentSelectionStatusBarItem.text = isSingleLine
-          ? `${line(start)}:${col(start)}-${col(end)} (${multiSelectionStats}${stats})`
-          : `${line(start)}:${col(start)}-${line(end)}:${col(end)} (${multiSelectionStats}${stats})`
+          ? `${line(start)}:${col(start)}-${col(end)} (${multiSelectionStats}${stats}${totalCharactersState})`
+          : `${line(start)}:${col(start)}-${line(end)}:${col(end)} (${multiSelectionStats}${stats}${totalCharactersState})`
       }
 
       currentSelectionStatusBarItem.show()
