@@ -44,7 +44,7 @@ type When = Condition[]
 ## Examples
 
 Single condition:
-```json
+```jsonc
 {
   "when": [
     { "languageId": "javascript" }
@@ -57,7 +57,7 @@ Single condition:
 > ```
 
 Multiple conditions (OR):
-```json
+```jsonc
 {
   "when": [
     { "languageId": "javascript" },
@@ -71,7 +71,7 @@ Multiple conditions (OR):
 > ```
 
 Shorthand syntax for the same condition:
-```json
+```jsonc
 {
   "when": [
     { "languageId": ["javascript", "typescript"] }
@@ -84,7 +84,7 @@ Shorthand syntax for the same condition:
 > ```
 
 Multiple conditions (AND):
-```json
+```jsonc
 {
   "when": [
     { "untitled": true, "languageId": "javascript" }
@@ -97,7 +97,7 @@ Multiple conditions (AND):
 > ```
 
 Multiple conditions (complex):
-```json
+```jsonc
 {
   "when": [
     { "basename": "\\.m?js$" },
@@ -112,7 +112,7 @@ Multiple conditions (complex):
 > ```
 
 Negating the condition:
-```json
+```jsonc
 {
   "when": [
     { "not": { "basename": "\\.js$" } }
@@ -125,7 +125,7 @@ Negating the condition:
 > ```
 
 Negating the condition (complex):
-```json
+```jsonc
 {
   "when": [
     { "path": "\\/repls", "not": { "path": "\\/playground" } },

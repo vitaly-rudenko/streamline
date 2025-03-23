@@ -58,7 +58,7 @@ Automatically apply configuration presets when certain conditions are met (such 
 ![Demo](docs/demos/smart-config.png)
 
 Here's a functional example for automatically enabling Copilot completions in test files or when manually toggled in status bar:
-```json
+```jsonc
 "streamline.smartConfig.defaults": {
     "github.copilot.editor.enableAutoCompletions": false
 },
@@ -101,7 +101,7 @@ Highlight certain files in Explorer View based on a regular expression.
 Useful for highlighting tests or build files.
 
 Configuration example for highlighting test files:
-```json
+```jsonc
 "streamline.highlightedPaths.patterns": [
     "\\.(test|spec|snap|mock|e2e-spec)",
     "__(tests|mocks|snapshots)__",
