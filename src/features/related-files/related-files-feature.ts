@@ -38,17 +38,17 @@ export function createRelatedFilesFeature(input: {
     await updateStatusBarItemInBackground()
   }
 
-  type BestMatchResult = { bestMatch: vscode.Uri | undefined; hasMore: boolean }
+  type BestMatchResult = { bestMatch: vscode.Uri | undefined }
   const bestMatchCache = new LRUCache<string, BestMatchResult>({ max: 100 })
   async function findBestMatch(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder | undefined): Promise<BestMatchResult> {
     const cacheKey = `${workspaceFolder?.name ?? '#'}_${uri.path}`
     const cached = bestMatchCache.get(cacheKey)
     if (cached) return cached
 
-    const [bestMatch, secondBestMatch] = await relatedFilesFinder.find(uri, workspaceFolder, 2)
-    bestMatchCache.set(cacheKey, { bestMatch, hasMore: Boolean(secondBestMatch) })
+    const [bestMatch] = await relatedFilesFinder.find(uri, workspaceFolder, 1)
+    bestMatchCache.set(cacheKey, { bestMatch })
 
-    return { bestMatch, hasMore: Boolean(secondBestMatch) }
+    return { bestMatch }
   }
 
   async function updateStatusBarItemInBackground() {
@@ -57,11 +57,11 @@ export function createRelatedFilesFeature(input: {
       if (!activeTextEditor) return
 
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
-      const { bestMatch, hasMore } = await findBestMatch(activeTextEditor.document.uri, workspaceFolder)
+      const { bestMatch } = await findBestMatch(activeTextEditor.document.uri, workspaceFolder)
 
       if (bestMatch) {
         const formattedPaths = formatPaths([bestMatch.path, activeTextEditor.document.uri.path])
-        bestMatchStatusBarItem.text = `$(sparkle) ${formattedPaths.get(bestMatch.path)}${hasMore ? ' +1' : ''}`
+        bestMatchStatusBarItem.text = `$(sparkle) ${formattedPaths.get(bestMatch.path)}`
         bestMatchStatusBarItem.command = {
           title: 'Related Files: Open Best Match to Side',
           command: 'explorer.openToSide',
@@ -125,18 +125,14 @@ export function createRelatedFilesFeature(input: {
     quickPick.onDidHide(() => quickPick.dispose())
     quickPick.show()
 
-    let isLoading = true
+    let loadingState: 'loading-first-batch' | 'loading-remaining-batches' | 'loaded' = 'loading-first-batch'
     const matches: vscode.Uri[] = []
 
     function refreshQuickPickItems() {
       const formattedPaths = formatPaths(matches.map(match => match.path))
 
       quickPick.items = [
-        ...isLoading ? [{
-          label: 'Searching...',
-          iconPath: new vscode.ThemeIcon('search'),
-        }]: [],
-        ...!isLoading && matches.length === 0 ? [{
+        ...loadingState === 'loaded' && matches.length === 0 ? [{
           label: `No related files found in ${workspaceFolder ? workspaceFolder.name : 'workspace'}`,
           iconPath: new vscode.ThemeIcon('search-stop'),
         }] : [],
@@ -147,7 +143,11 @@ export function createRelatedFilesFeature(input: {
           iconPath: new vscode.ThemeIcon('sparkle'),
           buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
         })),
-        ...(searchAllWorkspaceFolders || isLoading) ? [] : [{
+        ...loadingState === 'loading-first-batch' ? [{
+          label: 'Searching...',
+          iconPath: new vscode.ThemeIcon('sparkle'),
+        }]: [],
+        ...searchAllWorkspaceFolders ? [] : [{
           label: 'More options',
           kind: vscode.QuickPickItemKind.Separator,
         }, {
@@ -162,10 +162,12 @@ export function createRelatedFilesFeature(input: {
 
     for await (const batch of relatedFilesFinder.stream(activeTextEditor.document.uri, workspaceFolder, 10)) {
       matches.push(...batch)
+      loadingState = 'loading-remaining-batches'
+
       refreshQuickPickItems()
     }
 
-    isLoading = false
+    loadingState = 'loaded'
     refreshQuickPickItems()
   })
 
