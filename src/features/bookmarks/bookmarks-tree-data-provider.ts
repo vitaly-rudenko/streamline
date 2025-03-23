@@ -52,7 +52,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (element === undefined) {
       const children: TreeItem[] = this.cache.getCachedSortedUnarchivedLists()
-        .map(list => new ListTreeItem(list, this.workspaceState.getCurrentList() === list, false))
+        .map(list => new ListTreeItem(list, this.workspaceState.getCurrentList() === list, false, this.cache.getCachedBookmarksCountInList(list)))
 
       if (this.config.getArchivedLists().length > 0) {
         children.push(
@@ -67,7 +67,7 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 
     if (element instanceof ArchivedListsTreeItem) {
       return this.cache.getCachedSortedArchivedLists()
-        .map(list => new ListTreeItem(list, this.workspaceState.getCurrentList() === list, true))
+        .map(list => new ListTreeItem(list, this.workspaceState.getCurrentList() === list, true, this.cache.getCachedBookmarksCountInList(list)))
     }
 
     const listBookmarks = this.config.getBookmarks().filter(bookmark => bookmark.list === element.list)
@@ -137,9 +137,10 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
 }
 
 export class ListTreeItem extends vscode.TreeItem {
-  constructor(public readonly list: string, isCurrentList: boolean, isArchived: boolean) {
+  constructor(public readonly list: string, isCurrentList: boolean, isArchived: boolean, childCount: number) {
     super(list, isCurrentList ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
 
+    this.description = `${childCount} item${childCount === 1 ? '' : 's'}`
     this.iconPath = isCurrentList ? activeListThemeIcon : inactiveListThemeIcon
     this.contextValue = isArchived
       ? isCurrentList ? 'archivedActiveList' : 'archivedList'

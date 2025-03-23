@@ -13,6 +13,8 @@ export class BookmarksCache {
   private _cachedBookmarkedPathsInCurrentBookmarksListSet: Set<string> = new Set()
   private _cachedBookmarksInCurrentBookmarksList: Bookmark[] = []
 
+  private _cachedBookmarksCountPerList: Record<string, number | undefined> = {}
+
   constructor(
     private readonly config: BookmarksConfig,
     private readonly workspaceState: BookmarksWorkspaceState,
@@ -29,6 +31,11 @@ export class BookmarksCache {
     this._cachedBookmarkedPathsInCurrentBookmarksList = this.config.getBookmarks().filter(b => b.list === this.workspaceState.getCurrentList()).map(b => b.uri.path)
     this._cachedBookmarkedPathsInCurrentBookmarksListSet = new Set(this._cachedBookmarkedPathsInCurrentBookmarksList)
     this._cachedBookmarksInCurrentBookmarksList = this.config.getBookmarks().filter(b => b.list === this.workspaceState.getCurrentList())
+
+    this._cachedBookmarksCountPerList = this.config.getBookmarks().reduce((acc, bookmark) => {
+      acc[bookmark.list] = (acc[bookmark.list] ?? 0) + 1
+      return acc
+    }, {} as Record<string, number | undefined>)
   }
 
   getCachedSortedArchivedLists() {
@@ -56,5 +63,9 @@ export class BookmarksCache {
 
   getCachedBookmarksInCurrentBookmarksList() {
     return this._cachedBookmarksInCurrentBookmarksList
+  }
+
+  getCachedBookmarksCountInList(list: string) {
+    return this._cachedBookmarksCountPerList[list] ?? 0
   }
 }
