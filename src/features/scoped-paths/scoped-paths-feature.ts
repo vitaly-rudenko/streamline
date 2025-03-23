@@ -106,10 +106,13 @@ export function createScopedPathsFeature(input: {
   function getScopedWorkspaceFolders(): vscode.WorkspaceFolder[] {
     const currentWorkspaceFoldersSnapshot = getCurrentWorkspaceFoldersSnapshot()
     const scopedWorkspaceFolderNames = cache.getCachedCurrentlyScopedWorkspaceFolderNames()
+    const excludedWorkspaceFolderNames = cache.getCachedCurrentlyExcludedWorkspaceFolderNames()
 
     return scopedWorkspaceFolderNames.length > 0
       ? currentWorkspaceFoldersSnapshot.filter(wf => scopedWorkspaceFolderNames.includes(wf.name))
-      : currentWorkspaceFoldersSnapshot // Avoid removing all workspace folders if none are scoped
+      : excludedWorkspaceFolderNames.length > 0
+        ? currentWorkspaceFoldersSnapshot.filter(wf => !excludedWorkspaceFolderNames.includes(wf.name))
+        : currentWorkspaceFoldersSnapshot // Avoid removing all workspace folders if none are scoped
   }
 
   /** Stores timestamp of latest workspace folders change by the extension, used for cooldown */
