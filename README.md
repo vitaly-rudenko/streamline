@@ -13,6 +13,8 @@ Minor features:
 - **Current Path** – show current path and current selection in status bar (click to copy relative path)
 - **Highlighted Paths** – highlight certain files in Explorer View based on a regular expression
 
+> Note: The extension doesn't work properly on Windows yet.
+
 ## Scoped Paths
 
 Quickly scope into selected files and folders, hiding everything else.  
