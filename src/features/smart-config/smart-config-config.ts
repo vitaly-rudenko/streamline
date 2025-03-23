@@ -4,8 +4,9 @@ import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { unique } from '../../utils/unique'
 import { FeatureConfig } from '../feature-config'
 import { Config, Rule, ruleSchema } from './common'
+import { validateConfigs } from './toolkit/validate-configs'
 
-type Inspected<T> = {
+export type Inspected<T> = {
   globalValue?: T
   workspaceValue?: T
   workspaceFolderValue?: T
@@ -56,6 +57,10 @@ export class SmartConfigConfig extends FeatureConfig {
       this._mergedRules = mergedRules
 
       hasChanged = true
+    }
+
+    if (hasChanged) {
+      validateConfigs(this._mergedRules, this._inspectedConfigs)
     }
 
     console.debug('[SmartConfig] Config has been loaded', { hasChanged, inspectedDefaults, inspectedConfigs, mergedToggles, mergedRules })

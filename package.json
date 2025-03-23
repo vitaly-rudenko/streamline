@@ -2,9 +2,9 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.40.902",
+  "version": "0.50.0",
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.97.0"
   },
   "categories": [
     "Other"
@@ -35,7 +35,7 @@
     "@types/jest": "^29.5.14",
     "@types/mocha": "^10.0.6",
     "@types/node": "^18.19.68",
-    "@types/vscode": "^1.96.0",
+    "@types/vscode": "^1.97.0",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vscode/test-cli": "^0.0.8",
@@ -54,55 +54,78 @@
   },
   "dependencies": {
     "common-tags": "^1.8.2",
+    "json-beautify": "^1.1.1",
     "lru-cache": "^10.2.2",
+    "wildcard-match": "^5.1.4",
     "zod": "^3.24.1"
   },
   "contributes": {
-    "views": {
-      "explorer": [
+    "viewsContainers": {
+      "activitybar": [
         {
-          "id": "relatedFiles",
-          "name": "Related files",
-          "contextualTitle": "Related files",
-          "visibility": "collapsed",
-          "icon": "$(sparkle)"
-        },
+          "id": "streamline",
+          "icon": "$(arrow-up)",
+          "title": "Streamline"
+        }
+      ]
+    },
+    "views": {
+      "streamline": [
         {
           "id": "bookmarks",
           "name": "Bookmarks",
-          "contextualTitle": "Bookmarks",
-          "visibility": "collapsed",
-          "icon": "$(bookmark)"
+          "visibility": "visible",
+          "icon": "$(bookmark)",
+          "when": "streamline.bookmarks.enabled"
+        },
+        {
+          "id": "quickRepl",
+          "name": "Quick Repl",
+          "visibility": "visible",
+          "icon": "$(code)",
+          "when": "streamline.quickRepl.enabled"
         }
       ]
     },
     "commands": [
       {
-        "command": "streamline.superSearch.findSimilarMatches",
-        "title": "Find similar matches"
+        "command": "streamline.help.when",
+        "title": "Streamline: Open Help for 'when' Syntax",
+        "icon": "$(question)"
       },
       {
-        "command": "streamline.superSearch.findWords",
-        "title": "Find words"
+        "command": "streamline.help.quickRepl",
+        "title": "Quick Repl: Open Help",
+        "icon": "$(question)"
+      },
+      {
+        "command": "streamline.help.smartConfig",
+        "title": "Smart Config: Open Help",
+        "icon": "$(question)"
       },
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
-        "title": "Change Current Scope...",
+        "title": "Scoped Paths: Change Current Scope...",
         "icon": "$(chevron-down)"
       },
       {
+        "command": "streamline.scopedPaths.toggleScope",
+        "title": "Scoped Paths: Toggle Current Scope",
+        "icon": "$(activate-breakpoints)"
+      },
+      {
         "command": "streamline.scopedPaths.enableScope",
-        "title": "Enable Scope",
+        "title": "Scoped Paths: Enable Current Scope",
         "icon": "$(circle-large-outline)"
       },
       {
         "command": "streamline.scopedPaths.disableScope",
-        "title": "Disable Scope",
+        "title": "Scoped Paths: Disable Current Scope",
         "icon": "$(pass-filled)"
       },
       {
         "command": "streamline.scopedPaths.clearCurrentScope",
-        "title": "Clear Current Scope",
+        "title": "Scoped Paths: Clear Current Scope",
         "icon": "$(circle-slash)"
       },
       {
@@ -131,44 +154,19 @@
         "icon": "$(eye)"
       },
       {
-        "command": "streamline.relatedFiles.refresh",
-        "title": "Refresh",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "streamline.relatedFiles.enableUseExcludes",
-        "title": "Enable Excludes",
-        "icon": "$(gear)"
-      },
-      {
-        "command": "streamline.relatedFiles.disableUseExcludes",
-        "title": "Disable Excludes",
-        "icon": "$(exclude)"
-      },
-      {
-        "command": "streamline.relatedFiles.enableUseGlobalSearch",
-        "title": "Enable Global Search",
-        "icon": "$(compass)"
-      },
-      {
-        "command": "streamline.relatedFiles.disableUseGlobalSearch",
-        "title": "Disable Global Search",
-        "icon": "$(compass-dot)"
-      },
-      {
         "command": "streamline.relatedFiles.quickOpen",
-        "title": "Quick Open Related File...",
+        "title": "Related Files: Quick Open...",
         "icon": "$(sparkle)"
       },
       {
-        "command": "streamline.relatedFiles.openToSide",
-        "title": "Open to the Side",
-        "icon": "$(split-horizontal)"
+        "command": "streamline.relatedFiles.openBestMatch",
+        "title": "Related Files: Open Best Match",
+        "icon": "$(sparkle)"
       },
       {
-        "command": "streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch",
-        "title": "Hide Workspace Folder",
-        "icon": "$(close)"
+        "command": "streamline.relatedFiles.openBestMatchToSide",
+        "title": "Related Files: Open Best Match to Side",
+        "icon": "$(sparkle)"
       },
       {
         "command": "streamline.bookmarks.add",
@@ -177,7 +175,22 @@
       },
       {
         "command": "streamline.bookmarks.addFile",
-        "title": "Add File to Bookmarks",
+        "title": "Bookmarks: Add File to Bookmarks",
+        "icon": "$(star)"
+      },
+      {
+        "command": "streamline.bookmarks.deleteFile",
+        "title": "Bookmarks: Delete File from Bookmarks",
+        "icon": "$(star-full)"
+      },
+      {
+        "command": "streamline.bookmarks.addSelection",
+        "title": "Bookmarks: Add Selection to Bookmarks",
+        "icon": "$(star)"
+      },
+      {
+        "command": "streamline.bookmarks.addSelectionWithNote",
+        "title": "Bookmarks: Add Selection to Bookmarks (with Note)",
         "icon": "$(star)"
       },
       {
@@ -197,12 +210,7 @@
       },
       {
         "command": "streamline.bookmarks.delete",
-        "title": "Delete",
-        "icon": "$(star-full)"
-      },
-      {
-        "command": "streamline.bookmarks.deleteFile",
-        "title": "Delete File from Bookmarks",
+        "title": "Delete Bookmark",
         "icon": "$(star-full)"
       },
       {
@@ -221,7 +229,7 @@
       },
       {
         "command": "streamline.bookmarks.changeCurrentList",
-        "title": "Change Current Bookmarks List...",
+        "title": "Bookmarks: Change Current List...",
         "icon": "$(issue-closed)"
       },
       {
@@ -231,42 +239,47 @@
       },
       {
         "command": "streamline.bookmarks.addList",
-        "title": "Add Bookmarks List...",
+        "title": "Bookmarks: Create List...",
         "icon": "$(add)"
       },
       {
         "command": "streamline.bookmarks.deleteList",
-        "title": "Delete",
+        "title": "Delete List",
         "icon": "$(trash)"
       },
       {
         "command": "streamline.bookmarks.renameList",
-        "title": "Rename...",
+        "title": "Rename List...",
         "icon": "$(edit)"
       },
       {
         "command": "streamline.bookmarks.archiveList",
-        "title": "Archive",
+        "title": "Archive List",
         "icon": "$(archive)"
       },
       {
         "command": "streamline.bookmarks.unarchiveList",
-        "title": "Unarchive",
+        "title": "Unarchive List",
         "icon": "$(archive)"
       },
       {
         "command": "streamline.bookmarks.undo",
-        "title": "Restore Deleted Bookmarks",
+        "title": "Bookmarks: Restore Deleted Bookmarks",
         "icon": "$(discard)"
       },
       {
         "command": "streamline.bookmarks.exportAsJson",
-        "title": "Export Bookmarks as JSON",
+        "title": "Bookmarks: Export as JSON",
         "icon": "$(cloud-download)"
       },
       {
+        "command": "streamline.bookmarks.quickOpen",
+        "title": "Bookmarks: Quick Open...",
+        "icon": "$(bookmark)"
+      },
+      {
         "command": "streamline.currentPath.copy",
-        "title": "Copy Current Path",
+        "title": "Current Path: Copy Relative Path",
         "icon": "$(copy)"
       },
       {
@@ -274,9 +287,96 @@
         "title": "Toggle"
       },
       {
-        "command": "streamline.superSearch.quickOpen",
-        "title": "Quick Open Super Search",
+        "command": "streamline.quickRepl.setup",
+        "title": "Quick Repl: Start Setup Wizard",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "streamline.quickRepl.run",
+        "title": "Quick Repl: Run Command",
+        "icon": "$(play)"
+      },
+      {
+        "command": "streamline.quickRepl.revealReplsInOS",
+        "title": "Quick Repl: Reveal Repls in OS",
         "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.quickRepl.openReplsInNewWindow",
+        "title": "Quick Repl: Open Repls in a new Window",
+        "icon": "$(empty-window)"
+      },
+      {
+        "command": "streamline.quickRepl.revealInOS",
+        "title": "Reveal in OS",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.quickRepl.openInNewWindow",
+        "title": "Open in a new Window",
+        "icon": "$(empty-window)"
+      },
+      {
+        "command": "streamline.quickRepl.delete",
+        "title": "Delete",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "streamline.quickRepl.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "streamline.quickRepl.openFolderInTerminal",
+        "title": "Open Folder in Terminal",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "streamline.quickRepl.copyAbsolutePath",
+        "title": "Copy Absolute Path",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "streamline.quickRepl.createQuickRepl",
+        "title": "Quick Repl: Create a Repl...",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "streamline.quickRepl.create",
+        "title": "Create...",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "streamline.quickRepl.createInRoot",
+        "title": "Create...",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "streamline.quickRepl.rename",
+        "title": "Rename...",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "streamline.quickRepl.duplicate",
+        "title": "Duplicate...",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "streamline.quickRepl.createTemplateFromFolder",
+        "title": "Create Template from Folder...",
+        "icon": "$(notebook)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "streamline.relatedFiles.quickOpen",
+        "key": "alt+p",
+        "when": "resourceScheme == file"
+      },
+      {
+        "command": "streamline.currentPath.copy",
+        "key": "shift+cmd+c",
+        "when": "resourceScheme == file"
       }
     ],
     "menus": {
@@ -299,34 +399,6 @@
         },
         {
           "command": "streamline.scopedPaths.includePathIntoCurrentScope",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.refresh",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.enableUseExcludes",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.disableUseExcludes",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.enableUseGlobalSearch",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.disableUseGlobalSearch",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.openToSide",
-          "when": "false"
-        },
-        {
-          "command": "streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch",
           "when": "false"
         },
         {
@@ -366,7 +438,67 @@
           "when": "false"
         },
         {
+          "command": "streamline.bookmarks.add",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.addToList",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.addNote",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.addNoteToList",
+          "when": "false"
+        },
+        {
           "command": "streamline.smartConfig.toggle",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.rename",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.create",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.duplicate",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.createInRoot",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.createTemplateFromFolder",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.copyAbsolutePath",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.openFolderInTerminal",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.refresh",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.delete",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.openInNewWindow",
+          "when": "false"
+        },
+        {
+          "command": "streamline.quickRepl.revealInOS",
           "when": "false"
         }
       ],
@@ -392,44 +524,54 @@
           "when": "view == 'workbench.explorer.fileView' && streamline.scopedPaths.enabled"
         },
         {
-          "command": "streamline.relatedFiles.enableUseGlobalSearch",
-          "group": "navigation@1",
-          "when": "view == relatedFiles && !streamline.relatedFiles.useGlobalSearch"
-        },
-        {
-          "command": "streamline.relatedFiles.disableUseGlobalSearch",
-          "group": "navigation@1",
-          "when": "view == relatedFiles && streamline.relatedFiles.useGlobalSearch"
-        },
-        {
-          "command": "streamline.relatedFiles.enableUseExcludes",
-          "group": "navigation@2",
-          "when": "view == relatedFiles && !streamline.relatedFiles.useExcludes"
-        },
-        {
-          "command": "streamline.relatedFiles.disableUseExcludes",
-          "group": "navigation@2",
-          "when": "view == relatedFiles && streamline.relatedFiles.useExcludes"
-        },
-        {
-          "command": "streamline.relatedFiles.refresh",
-          "group": "navigation@3",
-          "when": "view == relatedFiles"
-        },
-        {
           "command": "streamline.bookmarks.undo",
-          "group": "navigation@1",
+          "group": "info@1",
           "when": "view == bookmarks && !streamline.bookmarks.isUndoHistoryEmpty"
         },
         {
           "command": "streamline.bookmarks.exportAsJson",
+          "group": "info@2",
+          "when": "view == bookmarks"
+        },
+        {
+          "command": "streamline.bookmarks.undo",
+          "group": "navigation@1",
+          "when": "view == bookmarks && streamline.bookmarks.showProminentUndoButton"
+        },
+        {
+          "command": "streamline.bookmarks.addList",
           "group": "navigation@2",
           "when": "view == bookmarks"
         },
         {
-          "command": "streamline.bookmarks.addList",
-          "group": "navigation@3",
-          "when": "view == bookmarks"
+          "command": "streamline.quickRepl.createInRoot",
+          "group": "navigation@1",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.quickRepl.refresh",
+          "group": "navigation@2",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.quickRepl.revealReplsInOS",
+          "group": "1_info@1",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.quickRepl.openReplsInNewWindow",
+          "group": "1_info@2",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.quickRepl.setup",
+          "group": "2_info@1",
+          "when": "view == quickRepl"
+        },
+        {
+          "command": "streamline.help.quickRepl",
+          "group": "2_info@2",
+          "when": "view == quickRepl"
         }
       ],
       "view/item/context": [
@@ -439,24 +581,24 @@
           "group": "inline@1"
         },
         {
+          "command": "streamline.bookmarks.addFile",
+          "when": "view == bookmarks && viewItem == virtualFile",
+          "group": "1_info@1"
+        },
+        {
           "command": "streamline.bookmarks.editNote",
           "when": "view == bookmarks && viewItem == selection",
-          "group": "info@1"
+          "group": "2_info@1"
         },
         {
           "command": "streamline.bookmarks.move",
           "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == virtualFile || viewItem == selection)",
-          "group": "info@2"
-        },
-        {
-          "command": "streamline.bookmarks.addFile",
-          "when": "view == bookmarks && viewItem == virtualFile",
-          "group": "info@3"
+          "group": "2_info@2"
         },
         {
           "command": "streamline.bookmarks.delete",
           "when": "view == bookmarks && (viewItem == folder || viewItem == file || viewItem == virtualFile || viewItem == selection)",
-          "group": "info@3"
+          "group": "2_info@3"
         },
         {
           "command": "streamline.bookmarks.setListAsCurrent",
@@ -484,14 +626,59 @@
           "group": "info@3"
         },
         {
-          "command": "streamline.relatedFiles.openToSide",
-          "when": "view == relatedFiles && viewItem == relatedFile",
-          "group": "inline@1"
+          "command": "streamline.quickRepl.create",
+          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
+          "group": "inline@2"
         },
         {
-          "command": "streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch",
-          "when": "view == relatedFiles && viewItem == workspaceFolder",
-          "group": "info@1"
+          "command": "streamline.quickRepl.run",
+          "when": "view == quickRepl && (viewItem == runnableFile || viewItem == runnableFolder)",
+          "group": "inline@5"
+        },
+        {
+          "command": "streamline.quickRepl.create",
+          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
+          "group": "1_info@1"
+        },
+        {
+          "command": "streamline.quickRepl.rename",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "1_info@2"
+        },
+        {
+          "command": "streamline.quickRepl.duplicate",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "1_info@3"
+        },
+        {
+          "command": "streamline.quickRepl.copyAbsolutePath",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "1_info@4"
+        },
+        {
+          "command": "streamline.quickRepl.revealInOS",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "2_info@1"
+        },
+        {
+          "command": "streamline.quickRepl.openFolderInTerminal",
+          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
+          "group": "2_info@2"
+        },
+        {
+          "command": "streamline.quickRepl.openInNewWindow",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "2_info@3"
+        },
+        {
+          "command": "streamline.quickRepl.createTemplateFromFolder",
+          "when": "view == quickRepl && (viewItem == folder || viewItem == runnableFolder)",
+          "group": "2_info@4"
+        },
+        {
+          "command": "streamline.quickRepl.delete",
+          "when": "view == quickRepl && (viewItem == file || viewItem == runnableFile || viewItem == folder || viewItem == runnableFolder)",
+          "group": "3_info@1"
         }
       ],
       "explorer/context": [
@@ -522,11 +709,18 @@
         },
         {
           "command": "streamline.bookmarks.add",
-          "group": "2_workspace@1"
+          "group": "2_workspace@1",
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath not in streamline.bookmarks.bookmarkedPaths"
+        },
+        {
+          "command": "streamline.bookmarks.delete",
+          "group": "2_workspace@1",
+          "when": "activeViewlet == 'workbench.view.explorer' && resourcePath in streamline.bookmarks.bookmarkedPaths"
         },
         {
           "command": "streamline.bookmarks.addToList",
-          "group": "2_workspace@2"
+          "group": "2_workspace@2",
+          "when": "activeViewlet == 'workbench.view.explorer'"
         }
       ],
       "editor/context": [
@@ -544,24 +738,29 @@
         },
         {
           "command": "streamline.bookmarks.addNoteToList",
-          "group": "1_context@3"
+          "group": "1_context@4"
         }
       ],
       "editor/title": [
         {
-          "command": "streamline.relatedFiles.quickOpen",
-          "when": "resourceScheme == file",
+          "command": "streamline.quickRepl.run",
+          "when": "streamline.quickRepl.isActiveTextEditorRunnable",
           "group": "navigation@1"
         },
         {
-          "command": "streamline.bookmarks.addFile",
-          "when": "resourceScheme == file && !streamline.bookmarks.activeTextEditorBookmarked",
+          "command": "streamline.relatedFiles.quickOpen",
+          "when": "resourceScheme == file",
           "group": "navigation@2"
         },
         {
+          "command": "streamline.bookmarks.addFile",
+          "when": "resourceScheme == file && !streamline.bookmarks.isActiveTextEditorBookmarked",
+          "group": "navigation@3"
+        },
+        {
           "command": "streamline.bookmarks.deleteFile",
-          "when": "resourceScheme == file && streamline.bookmarks.activeTextEditorBookmarked",
-          "group": "navigation@2"
+          "when": "resourceScheme == file && streamline.bookmarks.isActiveTextEditorBookmarked",
+          "group": "navigation@3"
         }
       ]
     },
@@ -587,7 +786,7 @@
               "relatedFiles",
               "scopedPaths",
               "smartConfig",
-              "superSearch"
+              "quickRepl"
             ]
           },
           "default": [],
@@ -624,68 +823,16 @@
           },
           "description": "Highlight paths in explorer view that match these regular expression patterns"
         },
-        "streamline.currentPath.maxLabelLength": {
-          "type": "number",
-          "default": 60,
-          "description": "Smartly shorten current path label when exceeding certain length"
-        },
-        "streamline.currentPath.collapsedIndicator": {
-          "type": "string",
-          "default": "⸱⸱⸱",
-          "description": "Indicator that will be placed wherever label is shortened"
-        },
-        "streamline.relatedFiles.useExcludes": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable custom exclude patterns from 'streamline.relatedFiles.exclude' configuration section"
-        },
-        "streamline.relatedFiles.useStricterQuickOpenQuery": {
-          "type": "boolean",
-          "default": false,
-          "description": "Keep hyphens or underscores in the basename when using 'Quick Open Related File...' command"
-        },
-        "streamline.relatedFiles.useGlobalSearch": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable searching for related files across all workspace folders"
-        },
         "streamline.relatedFiles.exclude": {
           "type": "object",
-          "default": {},
+          "default": {
+            "**/*.snap": true,
+            "**/*.map": true
+          },
           "additionalProperties": {
             "type": "boolean"
           },
           "description": "Custom exclude patterns for Related Files view (in the same format as 'files.exclude')"
-        },
-        "streamline.relatedFiles.excludedSuffixes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "spec",
-            "test",
-            "e2e-spec"
-          ],
-          "description": "Basename suffixes to exclude from related files search (e.g. 'test' and 'spec')"
-        },
-        "streamline.relatedFiles.hiddenWorkspaceFoldersInGlobalSearch": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "description": "Hide these workspace folders in Related Files view when global search is enabled"
-        },
-        "streamline.relatedFiles.maxLabelLength": {
-          "type": "number",
-          "default": 60,
-          "description": "Smartly shorten related file labels when exceeding certain length"
-        },
-        "streamline.relatedFiles.collapsedIndicator": {
-          "type": "string",
-          "default": "⸱⸱⸱",
-          "description": "Indicator that will be placed wherever label is shortened"
         },
         "streamline.bookmarks.archivedLists": {
           "type": "array",
@@ -745,45 +892,131 @@
                 }
               },
               "when": {
+                "description": "Conditions when config is applied. Syntax: https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
                 "type": "array",
-                "description": "List of conditions for applying config presets - if at least one condition matches, specified config presets will be applied",
                 "items": {
                   "type": "object",
-                  "properties": {
-                    "basename": {
-                      "description": "Regular expression for basename of the currently active document",
+                  "additionalProperties": true
+                }
+              }
+            }
+          }
+        },
+        "streamline.quickRepl.replsPath": {
+          "type": "string",
+          "default": "~/.streamline/quick-repl/repls",
+          "description": "Path for stored Quick Repls (can be referenced as $replsPath)"
+        },
+        "streamline.quickRepl.templates": {
+          "description": "Templates allow you to quickly create scripts and projects in your Quick Repls folder: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "type"
+            ],
+            "properties": {
+              "name": {
+                "description": "Name of the template",
+                "type": "string"
+              },
+              "description": {
+                "description": "Description of the template (optional)",
+                "type": "string"
+              },
+              "type": {
+                "description": "Type of the template ('snippet' will create an Untitled editor)",
+                "type": "string",
+                "enum": [
+                  "snippet",
+                  "file",
+                  "directory"
+                ]
+              },
+              "defaultPath": {
+                "description": "Default path for the created file or directory",
+                "type": "string"
+              },
+              "template": {
+                "description": "Pre-populate snippet, file or directory upon creation",
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "description": "Content of the snippet or file",
+                    "type": "array",
+                    "items": {
                       "type": "string"
-                    },
-                    "path": {
-                      "description": "Regular expression for absolute path of the currently active document",
-                      "type": "string"
-                    },
-                    "toggle": {
-                      "description": "Triggers when custom toggle is currently enabled",
-                      "type": "string"
-                    },
-                    "colorThemeKind": {
-                      "description": "Triggers when current theme is light/dark",
-                      "type": "string"
-                    },
-                    "languageId": {
-                      "description": "Triggers for specific language of the currently active document",
-                      "type": "string"
-                    },
-                    "scopeSelected": {
-                      "description": "Triggers when a Scope is selected (regardless of being enabled/disabled)",
-                      "type": "string"
-                    },
-                    "scopeEnabled": {
-                      "description": "Triggers when a Scope is enabled (regardless of which one is selected)",
-                      "type": "boolean"
-                    },
-                    "scope": {
-                      "description": "Triggers when a specific Scope is selected AND enabled",
+                    }
+                  },
+                  "path": {
+                    "description": "Path to the template directory or file",
+                    "type": "string"
+                  },
+                  "fileToOpen": {
+                    "description": "If provided, this file will be opened after copying the template",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "streamline.quickRepl.commands": {
+          "description": "Commands allow you run snippets, files and folders depending on the context: https://github.com/vitaly-rudenko/streamline/blob/main/docs/quick-repl.md",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "cwd",
+              "command"
+            ],
+            "properties": {
+              "name": {
+                "description": "Name of the command",
+                "type": "string"
+              },
+              "description": {
+                "description": "Description of the command (optional)",
+                "type": "string"
+              },
+              "default": {
+                "description": "Whether to pick this command automatically upon match",
+                "type": "boolean"
+              },
+              "cwd": {
+                "description": "Working directory for the command",
+                "default": "$replsPath",
+                "type": "string"
+              },
+              "command": {
+                "description": "Command to run",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
                       "type": "string"
                     }
                   }
+                ]
+              },
+              "when": {
+                "description": "Conditions when command is applicable (optional). Syntax: https://github.com/vitaly-rudenko/streamline/blob/main/docs/when.md",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
                 }
+              },
+              "confirm": {
+                "description": "Do not automatically run this command, always ask to confirm",
+                "type": "boolean"
               }
             }
           }

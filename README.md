@@ -2,60 +2,68 @@
 
 Productivity-oriented VS Code extension packed with features for working on large projects.
 
+Major features:
+- **Scoped Paths** – quickly scope into selected files and folders, hiding everything else
+- **Bookmarks** – create bookmarks for folders, files and code selections, leave notes – and organize them into lists
+- **Quick Repl** – select a playground folder to run scripts and projects using fully customizable templates and commands
+- **Smart Config** – automatically apply configuration presets when certain conditions are met (for example, only enable Copilot in test files)
+
+Minor features:
+- **Related Files** – find and open related files, such as test files and documentation
+- **Current Path** – show current path and current selection in status bar (click to copy relative path)
+- **Highlighted Paths** – highlight certain files in Explorer View based on a regular expression
+
+> Note: The extension doesn't work properly on Windows yet.
+
 ## Scoped Paths
 
-Add files and folders into 'scopes' and easily toggle between them to only see what's important.
+Quickly scope into selected files and folders, hiding everything else.  
 Useful in large projects and monorepos to focus on modules that you're currently working on.
+
+> Use `Scoped Paths: Change Current Scope...` to manage your scopes.
+
+> When scoped, Workspace Folder is removed if it does not contain any scoped files.
 
 > This feature is achieved by analyzing your project files and modifying `files.exclude` accordingly.
 > Due to VS Code limitations in multi-folder workspaces, not all files are guaranteed to be hidden.
 
-![Demo](docs/scoped_paths.gif)
-
-Configuration example:
-```json
-"streamline.scopedPaths.scopes": {
-    "Bookmarks": [
-        "streamline/src/features/bookmarks",
-        "streamline/test/features/bookmarks"
-    ]
-}
-```
+![Demo](docs/demos/scoped-paths.gif)
 
 ## Bookmarks
 
-Bookmark folders, files and text  selections – and organize them into lists.
-You can also add notes to your bookmarks and archive lists.
+Create bookmarks for folders, files and code selections – and organize them into lists.  
+Bookmarks can contain notes and lists can be archived.
 
-![Demo](docs/bookmarks.gif)
+> Use `Bookmarks: Quick Open...` to quickly open a bookmark from current list.
 
-## Related Files
+![Demo](docs/demos/bookmarks.gif)
 
-Quickly discover potentially related files, such as tests, fixtures and components.
-Available as an Explorer view and as a command in the Command Palette (`Quick Open Related File...`).
+## Quick Repl
 
-> The extension searches for files whose basename include the current file's basename.
-> Priority is given to files within the same parent folder name.
-> You can also enable global search across all workspace folders and enable stricter search query in the settings.
+Select a playground folder to create scripts and projects – and run them.  
+Templates and commands are fully customizable.
 
-![Demo](docs/related_files.gif)
+> Run `Quick Repl: Start Setup Wizard` command to setup Quick Repl.  
+> For help, run `Quick Repl: Open Help` command.
+
+![Demo](docs/demos/quick-repl.gif)
 
 ## Smart Config
 
-Automatically apply configuration presets when certain conditions are met (such as current path, language or color theme).
-For example, it can be used to only enable Github Copilot in test files or when toggled in the status bar.
+Automatically apply configuration presets when certain conditions are met (such as current path, language or color theme).  
 
-![Demo](docs/smart_config.gif)
+> You can create custom toggles in the status bar to apply configuration presets manually.  
+> For help, run `Smart Config: Open Help` command.
 
-Configuration example:
+![Demo](docs/demos/smart-config.png)
+
+Here's a functional example for automatically enabling Copilot completions in test files or when manually toggled in status bar:
 ```json
 "streamline.smartConfig.defaults": {
-    "workbench.iconTheme": "catppuccin-latte",
     "github.copilot.editor.enableAutoCompletions": false
 },
 "streamline.smartConfig.configs": {
     "Copilot": { "github.copilot.editor.enableAutoCompletions": true },
-    "Dark theme": { "workbench.iconTheme": "catppuccin-macchiato" }
 },
 "streamline.smartConfig.toggles": ["Copilot"],
 "streamline.smartConfig.rules": [
@@ -67,22 +75,32 @@ Configuration example:
             { "path": "\\/__(tests|mocks|snapshots)__\\/" },
             { "toggle": "Copilot" }
         ]
-    },
-    {
-        "apply": ["Dark theme"],
-        "when": [{ "colorThemeKind": "dark" }]
     }
 ]
 ```
 
+## Related Files
+
+Find and open related files to the currently opened document.  
+File is considered related when it has a similar name to the current file (for example, `my.service.ts` is related to `my.service.test.ts`).  
+Related files are sorted by "best match", depending on their parent folder and basename match.
+
+> Best match is shown in status bar, and opens the related file to the side upon click.  
+> All related files can be accessed with `Related Files: Quick Open...` command.
+
+![Demo](docs/demos/related-files.gif)
+
+## Current Path
+
+Show current path and current selection in status bar.  
+Click to copy relative path of the currently opened document.
+
 ## Highlighted Paths
 
-Highlight files and folder using regular expressions by adding them into `streamline.highlightedPaths.patterns` in the workspace configuration.
+Highlight certain files in Explorer View based on a regular expression.  
 Useful for highlighting tests or build files.
 
-> Files are highlighted in all Explorer views, including Related Files and Bookmarks.
-
-Configuration example:
+Configuration example for highlighting test files:
 ```json
 "streamline.highlightedPaths.patterns": [
     "\\.(test|spec|snap|mock|e2e-spec)",
@@ -90,9 +108,3 @@ Configuration example:
     "_spec\\."
 ]
 ```
-
-## Current Path
-
-Show currently opened file path in the status bar, as well as detailed information about current selection.
-
-> Click to quickly copy current path.

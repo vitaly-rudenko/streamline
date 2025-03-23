@@ -1,5 +1,5 @@
 import { getParents } from '../../../utils/get-parents'
-import type { DirectoryReader } from '../../../utils/types'
+import type { DirectoryReader } from '../../../utils/directory-reader'
 import { unique } from '../../../utils/unique'
 
 /** Generates a list of files to *safely* exclude based on selected 'scoped paths' and explicitly 'excluded paths' */

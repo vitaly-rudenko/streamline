@@ -1,13 +1,23 @@
 import * as vscode from 'vscode'
+import { basename } from 'path'
 import { formatPaths } from '../../utils/format-paths'
 import type { BookmarksConfig } from './bookmarks-config'
 import type { Bookmark } from './common'
 import { stripIndent, stripIndents } from 'common-tags'
 import { BookmarksCache } from './bookmarks-cache'
 import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
-import { basename } from 'path'
 
-type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
+export type TreeItem = ArchivedListsTreeItem | ListTreeItem | FolderTreeItem | FileTreeItem | SelectionTreeItem
+
+const MAX_LABEL_LENGTH = 60
+const MAX_DESCRIPTION_LENGTH = 60
+const MAX_TOOLTIP_SELECTION_VALUE_LINES = 15
+
+const noteThemeIcon = new vscode.ThemeIcon('note')
+const selectionThemeIcon = new vscode.ThemeIcon('selection')
+
+const activeListThemeIcon = new vscode.ThemeIcon('folder-active')
+const inactiveListThemeIcon = new vscode.ThemeIcon('folder')
 
 export class ArchivedListsTreeItem extends vscode.TreeItem {
   constructor(expanded: boolean) {
@@ -126,9 +136,6 @@ export class BookmarksTreeDataProvider implements vscode.TreeDataProvider<TreeIt
   }
 }
 
-const activeListThemeIcon = new vscode.ThemeIcon('folder-active')
-const inactiveListThemeIcon = new vscode.ThemeIcon('folder')
-
 export class ListTreeItem extends vscode.TreeItem {
   constructor(public readonly list: string, isCurrentList: boolean, isArchived: boolean) {
     super(list, isCurrentList ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed)
@@ -178,13 +185,6 @@ export class FileTreeItem extends vscode.TreeItem {
   }
 }
 
-const MAX_LABEL_LENGTH = 64
-const MAX_DESCRIPTION_LENGTH = 64
-const MAX_TOOLTIP_SELECTION_VALUE_LINES = 15
-
-const noteThemeIcon = new vscode.ThemeIcon('note')
-const selectionThemeIcon = new vscode.ThemeIcon('selection')
-
 export class SelectionTreeItem extends vscode.TreeItem {
   public readonly type = 'selection'
 
@@ -228,8 +228,10 @@ function trimTextLength(text: string, maxLength: number) {
   return text
 }
 
-function formatSelectionValue(selection: vscode.Selection, value: string) {
+export function formatSelectionValue(selection: vscode.Selection, value: string) {
+  value = stripIndents(value).replaceAll('\n', ' \n ')
+
   return selection.isSingleLine
-    ? `${selection.start.line + 1}: ${stripIndents(value)}`
-    : `${selection.start.line + 1}-${selection.end.line + 1}: ${stripIndents(value)}`
+    ? `${selection.start.line + 1}: ${value}`
+    : `${selection.start.line + 1}-${selection.end.line + 1}: ${value}`
 }

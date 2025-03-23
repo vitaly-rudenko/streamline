@@ -1,34 +1,36 @@
 import * as vscode from 'vscode'
-import { CurrentPathConfig } from './current-path-config'
-import { createDebouncedFunction } from '../../utils/create-debounced-function'
-import { collapseString } from '../../utils/collapse-string'
-import { basename, extname } from 'path'
+import * as os from 'os'
+import { RegisterCommand } from '../../register-command'
+import { collapseHomedir } from '../../utils/collapse-homedir'
+import { collapsePath } from '../../utils/collapse-path'
 
-export function createCurrentPathFeature(input: { context: vscode.ExtensionContext }) {
-  const { context } = input
+const MAX_LABEL_LENGTH = 60
 
-  const config = new CurrentPathConfig()
-  const scheduleConfigLoad = createDebouncedFunction(() => {
-    if (!config.load()) return
-    updateCurrentPathStatusBarItem()
-    updateCurrentSelectionStatusBarItem()
-  }, 500)
+export function createCurrentPathFeature(input: {
+  context: vscode.ExtensionContext
+  registerCommand: RegisterCommand
+}) {
+  const { context, registerCommand } = input
+
+  const homedir = os.homedir()
 
   const currentPathStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 999)
-  currentPathStatusBarItem.name = 'Current Path'
+  currentPathStatusBarItem.name = 'Current Path: Relative Path'
+  currentPathStatusBarItem.tooltip = 'Copy Relative Path'
   currentPathStatusBarItem.command = 'streamline.currentPath.copy'
   context.subscriptions.push(currentPathStatusBarItem)
 
   const currentSelectionStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 999)
-  currentSelectionStatusBarItem.name = 'Current Selection'
+  currentSelectionStatusBarItem.name = 'Current Path: Current Selection'
+  currentSelectionStatusBarItem.tooltip = 'Current Selection (S = Selections, L = Lines, C = Characters)'
   context.subscriptions.push(currentSelectionStatusBarItem)
 
   function updateCurrentPathStatusBarItem() {
     const activeTextEditor = vscode.window.activeTextEditor
     if (activeTextEditor) {
       // Show relative path when possible
-      const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path)
-      currentPathStatusBarItem.text = collapseString(path, basename(path, extname(path)), config.getMaxLabelLength(), config.getCollapsedIndicator())
+      const path = collapseHomedir(vscode.workspace.asRelativePath(activeTextEditor.document.uri.path), homedir)
+      currentPathStatusBarItem.text = collapsePath(path, MAX_LABEL_LENGTH)
       currentPathStatusBarItem.show()
     } else {
       currentPathStatusBarItem.hide()
@@ -67,9 +69,11 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
           ? `${end.character - start.character}C`
           : `${end.line - start.line + 1}L ${activeTextEditor.document.getText(activeTextEditor.selection).length}C`
 
+        const multiSelectionStats = activeTextEditor.selections.length > 1 ? `${activeTextEditor.selections.length}S ` : ''
+
         currentSelectionStatusBarItem.text = isSingleLine
-          ? `${line(start)}:${col(start)}-${col(end)} (${stats})`
-          : `${line(start)}:${col(start)}-${line(end)}:${col(end)} (${stats})`
+          ? `${line(start)}:${col(start)}-${col(end)} (${multiSelectionStats}${stats})`
+          : `${line(start)}:${col(start)}-${line(end)}:${col(end)} (${multiSelectionStats}${stats})`
       }
 
       currentSelectionStatusBarItem.show()
@@ -79,23 +83,22 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
   }
 
   // Copy currently opened file's absolute path
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.currentPath.copy', async () => {
-      const activeTextEditor = vscode.window.activeTextEditor
-      if (!activeTextEditor) return
+  registerCommand('streamline.currentPath.copy', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
 
-      // Save relative path when possible (copy-what-you-see)
-      const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path)
-      await vscode.env.clipboard.writeText(path)
+    // Save relative path when possible (but without workspace folder)
+    const path = vscode.workspace.asRelativePath(activeTextEditor.document.uri.path, false)
+    await vscode.env.clipboard.writeText(path)
 
-      const copiedMessage = '⸱⸱⸱ copied!'
-      currentPathStatusBarItem.text = currentPathStatusBarItem.text.length > copiedMessage.length
-        ? currentPathStatusBarItem.text.slice(0, -copiedMessage.length) + copiedMessage
-        : copiedMessage
+    const copiedMessage = ' $(check) copied!'
+    const copiedMessageLength = copiedMessage.length - 6
+    currentPathStatusBarItem.text = currentPathStatusBarItem.text.length > copiedMessageLength
+      ? currentPathStatusBarItem.text.slice(0, -copiedMessageLength) + copiedMessage
+      : copiedMessage
 
-      setTimeout(() => updateCurrentPathStatusBarItem(), 1000)
-    })
-  )
+    setTimeout(() => updateCurrentPathStatusBarItem(), 1000)
+  })
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => {
@@ -103,13 +106,6 @@ export function createCurrentPathFeature(input: { context: vscode.ExtensionConte
       updateCurrentSelectionStatusBarItem()
     }),
     vscode.window.onDidChangeTextEditorSelection(() => updateCurrentSelectionStatusBarItem()),
-    vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration('streamline.currentPath')) {
-        if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
-        }
-      }
-    }),
   )
 
   updateCurrentPathStatusBarItem()

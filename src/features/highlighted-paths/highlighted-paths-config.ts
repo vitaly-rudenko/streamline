@@ -1,8 +1,8 @@
+import z from 'zod'
 import { ConfigurationTarget } from 'vscode'
 import { getConfig, initialConfig, safeConfigGet, updateEffectiveConfig } from '../../config'
 import { areArraysShallowEqual } from '../../utils/are-arrays-shallow-equal'
 import { FeatureConfig } from '../feature-config'
-import z from 'zod'
 
 export class HighlightedPathsConfig extends FeatureConfig {
   private _patterns: string[] = []
@@ -19,7 +19,9 @@ export class HighlightedPathsConfig extends FeatureConfig {
 
     let hasChanged = false
 
-    if (!areArraysShallowEqual(this._patterns, patterns)) {
+    if (
+      !areArraysShallowEqual(this._patterns, patterns)
+    ) {
       this._patterns = patterns
 
       hasChanged = true

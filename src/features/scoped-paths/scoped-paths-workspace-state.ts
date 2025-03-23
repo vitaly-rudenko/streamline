@@ -1,5 +1,5 @@
 import { Memento } from 'vscode'
-import { defaultCurrentScope, QUICK_SCOPE_PREFIX } from './common'
+import { defaultCurrentScope } from './common'
 
 const defaultEnabled = false
 
@@ -39,10 +39,6 @@ export class ScopedPathsWorkspaceState {
     console.debug('[ScopedPaths] WorkspaceState has been saved')
   }
 
-  getDynamicIsInQuickScope() {
-    return this._currentScope.startsWith(QUICK_SCOPE_PREFIX)
-  }
-
   setEnabled(value: boolean) {
     this._enabled = value
     this.onChange?.()
@@ -59,13 +55,5 @@ export class ScopedPathsWorkspaceState {
 
   getCurrentScope() {
     return this._currentScope
-  }
-
-  getDynamicQuickScopePath() {
-    if (!this.getDynamicIsInQuickScope()) {
-      throw new Error('Tried to access Quick Scope path when not in Quick Scope')
-    }
-
-    return this.getCurrentScope().slice(QUICK_SCOPE_PREFIX.length)
   }
 }

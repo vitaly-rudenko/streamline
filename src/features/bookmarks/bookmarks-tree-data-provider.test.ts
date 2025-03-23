@@ -1,3 +1,4 @@
+import assert from 'assert'
 import { fromPartial } from '@total-typescript/shoehorn'
 import { suite, before, test } from 'mocha'
 import { BookmarksCache } from './bookmarks-cache'
@@ -6,9 +7,6 @@ import { BookmarksWorkspaceState } from './bookmarks-workspace-state'
 import { Bookmark } from './common'
 import { ArchivedListsTreeItem, BookmarksTreeDataProvider, FileTreeItem, FolderTreeItem, ListTreeItem, SelectionTreeItem } from './bookmarks-tree-data-provider'
 import { Selection, Uri } from 'vscode'
-import assert from 'assert'
-
-// TODO: use better assertions
 
 suite('BookmarksTreeDataProvider', () => {
   let config: BookmarksConfig

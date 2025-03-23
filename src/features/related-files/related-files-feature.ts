@@ -1,130 +1,210 @@
 import * as vscode from 'vscode'
-import { isMultiRootWorkspace } from '../../utils/is-multi-root-workspace'
-import { RelatedFilesTreeDataProvider, type RelatedFileTreeItem, type WorkspaceFolderTreeItem } from './related-files-tree-data-provider'
 import { RelatedFilesConfig } from './related-files-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
-import { unique } from '../../utils/unique'
-import { getSmartBasename } from './toolkit/get-smart-basename'
+import { RegisterCommand } from '../../register-command'
+import { RelatedFilesFinder } from './related-files-finder'
+import { LRUCache } from 'lru-cache'
+import { formatPaths } from '../../utils/format-paths'
 
-export function createRelatedFilesFeature(input: { context: vscode.ExtensionContext }) {
-  const { context } = input
+export function createRelatedFilesFeature(input: {
+  context: vscode.ExtensionContext
+  registerCommand: RegisterCommand
+}) {
+  const { context, registerCommand } = input
 
   const config = new RelatedFilesConfig()
-  const relatedFilesTreeDataProvider = new RelatedFilesTreeDataProvider(config)
+  const relatedFilesFinder = new RelatedFilesFinder(config)
 
-  const scheduleRefresh = createDebouncedFunction(() => relatedFilesTreeDataProvider.refresh(), 50)
-  const scheduleClearCacheAndRefresh = createDebouncedFunction(() => relatedFilesTreeDataProvider.clearCacheAndRefresh(), 500)
+  const bestMatchStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
+  bestMatchStatusBarItem.text = '$(sparkle)'
+  bestMatchStatusBarItem.name = 'Related Files: Open Best Match to Side'
+  bestMatchStatusBarItem.tooltip = 'Related Files: Open Best Match to Side'
+  bestMatchStatusBarItem.hide()
 
-  const scheduleConfigLoad = createDebouncedFunction(() => {
+  const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
+  const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 250)
+
+  const scheduleConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
-    relatedFilesTreeDataProvider.clearCacheAndRefresh()
-    updateContextInBackground()
+    await hardRefresh()
   }, 500)
 
-  async function updateContextInBackground() {
+  async function softRefresh() {
+    await updateStatusBarItemInBackground()
+  }
+
+  async function hardRefresh() {
+    bestMatchCache.clear()
+    await updateStatusBarItemInBackground()
+  }
+
+  type BestMatchResult = { bestMatch: vscode.Uri | undefined }
+  const bestMatchCache = new LRUCache<string, BestMatchResult>({ max: 100 })
+  async function findBestMatch(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder | undefined): Promise<BestMatchResult> {
+    const cacheKey = `${workspaceFolder?.name ?? '#'}_${uri.path}`
+    const cached = bestMatchCache.get(cacheKey)
+    if (cached) return cached
+
+    const [bestMatch] = await relatedFilesFinder.find(uri, workspaceFolder, 1)
+    bestMatchCache.set(cacheKey, { bestMatch })
+
+    return { bestMatch }
+  }
+
+  async function updateStatusBarItemInBackground() {
     try {
-      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useExcludes', config.getUseExcludes())
-      await vscode.commands.executeCommand('setContext', 'streamline.relatedFiles.useGlobalSearch', config.getUseGlobalSearch())
+      const activeTextEditor = vscode.window.activeTextEditor
+      if (!activeTextEditor) return
+
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
+      const { bestMatch } = await findBestMatch(activeTextEditor.document.uri, workspaceFolder)
+
+      if (bestMatch) {
+        const formattedPaths = formatPaths([bestMatch.path, activeTextEditor.document.uri.path])
+        bestMatchStatusBarItem.text = `$(sparkle) ${formattedPaths.get(bestMatch.path)}`
+        bestMatchStatusBarItem.command = {
+          title: 'Related Files: Open Best Match to Side',
+          command: 'explorer.openToSide',
+          arguments: [bestMatch],
+        }
+        bestMatchStatusBarItem.show()
+      } else {
+        bestMatchStatusBarItem.hide()
+      }
     } catch (error) {
-      console.warn('[ScopedPaths] Could not update context', error)
+      console.warn('[ScopedPaths] Could not update status bar item', error)
     }
   }
 
-	context.subscriptions.push(vscode.window.registerTreeDataProvider('relatedFiles', relatedFilesTreeDataProvider))
+  // Open "Quick Open" modal with list of all potentially related files
+  registerCommand('streamline.relatedFiles.quickOpen', async (argument: unknown) => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
 
-  // Open "Quick Open" modal with pre-filled search query for the related files of currently opened file
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.quickOpen', async (uri: vscode.Uri | undefined) => {
-      uri ||= vscode.window.activeTextEditor?.document.uri
-      if (!uri) return
+    const searchAllWorkspaceFolders = (
+      argument &&
+      typeof argument === 'object' &&
+      'searchAllWorkspaceFolders' in argument &&
+      typeof argument.searchAllWorkspaceFolders === 'boolean' &&
+      argument.searchAllWorkspaceFolders
+    )
 
-      const workspaceFolder = isMultiRootWorkspace() && !config.getUseGlobalSearch()
-        ? vscode.workspace.getWorkspaceFolder(uri)
-        : undefined
+    const workspaceFolder = searchAllWorkspaceFolders
+      ? undefined
+      : vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
 
-      const basename = config.getUseStricterQuickOpenQuery()
-        ? getSmartBasename(uri.path, config.getExcludedSuffixes())
-        : getSmartBasename(uri.path, config.getExcludedSuffixes()).replaceAll(/[-_]/g, ' ')
+    type QuickPickItem = vscode.QuickPickItem & { match?: vscode.Uri; searchAllWorkspaceFolders?: boolean }
+    const quickPick = vscode.window.createQuickPick<QuickPickItem>()
 
-      const query = workspaceFolder ? `${workspaceFolder.name}/${basename}` : basename
+    quickPick.onDidAccept(async () => {
+      const [selected] = quickPick.selectedItems
+      if (!selected) return quickPick.dispose()
 
-      await vscode.commands.executeCommand('workbench.action.quickOpen', query)
+      if (selected.searchAllWorkspaceFolders) {
+        await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
+      } else if (selected.match) {
+        await vscode.window.showTextDocument(selected.match, { preview: false })
+      } else {
+        await vscode.commands.executeCommand('workbench.action.quickOpen')
+      }
+
+      quickPick.dispose()
     })
-  )
 
-  // Reload "Related files" panel
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.refresh', () => {
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
-      updateContextInBackground()
-    })
-  )
+    quickPick.onDidTriggerItemButton(async ({ item }) => {
+      if (!item.match) return quickPick.dispose()
 
-  // Open related file side-by-side (button in "Related files" panel)
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.openToSide', async (item?: RelatedFileTreeItem) => {
-      if (!item?.resourceUri) return
-      await vscode.commands.executeCommand('explorer.openToSide', item.resourceUri)
-    })
-  )
-
-  // Hide files from the selected workspace folder from the related files list (context menu item in "Related files" panel)
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.hideWorkspaceFolderInGlobalSearch', async (item?: WorkspaceFolderTreeItem) => {
-      if (!item) return
-
-      config.setHiddenWorkspaceFoldersInGlobalSearch(
-        unique([
-          ...config.getHiddenWorkspaceFoldersInGlobalSearch(),
-          item.workspaceFolder.name,
-        ])
+      await vscode.window.showTextDocument(
+        item.match,
+        { preview: false, viewColumn: vscode.ViewColumn.Beside }
       )
 
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
-      config.saveInBackground()
+      quickPick.dispose()
     })
-  )
 
-  // Toggle "Use Excludes" option
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.enableUseExcludes', () => {
-      config.setUseExcludes(true)
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+    quickPick.onDidHide(() => quickPick.dispose())
+    quickPick.show()
 
-      updateContextInBackground()
-      config.saveInBackground()
-    }),
-    vscode.commands.registerCommand('streamline.relatedFiles.disableUseExcludes', () => {
-      config.setUseExcludes(false)
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+    let loadingState: 'loading-first-batch' | 'loading-remaining-batches' | 'loaded' = 'loading-first-batch'
+    const matches: vscode.Uri[] = []
 
-      updateContextInBackground()
-      config.saveInBackground()
-    })
-  )
+    function refreshQuickPickItems() {
+      const formattedPaths = formatPaths(matches.map(match => match.path))
 
-  // Toggle "Use Global Search" option
-  context.subscriptions.push(
-    vscode.commands.registerCommand('streamline.relatedFiles.enableUseGlobalSearch', () => {
-      config.setUseGlobalSearch(true)
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+      quickPick.items = [
+        ...loadingState === 'loaded' && matches.length === 0 ? [{
+          label: `No related files found in ${workspaceFolder ? workspaceFolder.name : 'workspace'}`,
+          iconPath: new vscode.ThemeIcon('search-stop'),
+        }] : [],
+        ...matches.map(match => ({
+          match,
+          label: formattedPaths.get(match.path)!,
+          description: vscode.workspace.asRelativePath(match, searchAllWorkspaceFolders ? true : false),
+          iconPath: new vscode.ThemeIcon('sparkle'),
+          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+        })),
+        ...loadingState === 'loading-first-batch' ? [{
+          label: 'Searching...',
+          iconPath: new vscode.ThemeIcon('sparkle'),
+        }]: [],
+        ...searchAllWorkspaceFolders ? [] : [{
+          label: 'More options',
+          kind: vscode.QuickPickItemKind.Separator,
+        }, {
+          label: 'Search in all workspace folders',
+          iconPath: new vscode.ThemeIcon('search'),
+          searchAllWorkspaceFolders: true,
+        }],
+      ]
+    }
 
-      updateContextInBackground()
-      config.saveInBackground()
-    }),
-    vscode.commands.registerCommand('streamline.relatedFiles.disableUseGlobalSearch', () => {
-      config.setUseGlobalSearch(false)
-      relatedFilesTreeDataProvider.clearCacheAndRefresh()
+    refreshQuickPickItems()
 
-      updateContextInBackground()
-      config.saveInBackground()
-    })
-  )
+    for await (const batch of relatedFilesFinder.stream(activeTextEditor.document.uri, workspaceFolder, 10)) {
+      matches.push(...batch)
+      loadingState = 'loading-remaining-batches'
+
+      refreshQuickPickItems()
+    }
+
+    loadingState = 'loaded'
+    refreshQuickPickItems()
+  })
+
+  // Immediately open the best match file in the editor
+  registerCommand('streamline.relatedFiles.openBestMatch', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
+    const { bestMatch } = await findBestMatch(activeTextEditor.document.uri, workspaceFolder)
+    if (!bestMatch) return
+
+    await vscode.window.showTextDocument(
+      bestMatch,
+      { preview: false }
+    )
+  })
+
+  // Immediately open the best match file in the editor to the side
+  registerCommand('streamline.relatedFiles.openBestMatchToSide', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
+    const { bestMatch } = await findBestMatch(activeTextEditor.document.uri, workspaceFolder)
+    if (!bestMatch) return
+
+    await vscode.window.showTextDocument(
+      bestMatch,
+      { preview: false, viewColumn: vscode.ViewColumn.Beside }
+    )
+  })
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('search.exclude') || event.affectsConfiguration('files.exclude')) {
-        scheduleClearCacheAndRefresh()
+        scheduleHardRefresh()
       }
 
       if (event.affectsConfiguration('streamline.relatedFiles')) {
@@ -134,16 +214,16 @@ export function createRelatedFilesFeature(input: { context: vscode.ExtensionCont
       }
     }),
     // Reload "Related files" panel when currently opened file changes
-    vscode.window.onDidChangeActiveTextEditor(() => scheduleRefresh()),
+    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh()),
     // Refresh when window state changes (e.g. focused, minimized)
-    vscode.window.onDidChangeWindowState(() => scheduleRefresh()),
+    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh()),
     // Clear files cache when files are created/deleted/renamed
-    vscode.workspace.onDidCreateFiles(() => scheduleClearCacheAndRefresh()),
-    vscode.workspace.onDidDeleteFiles(() => scheduleClearCacheAndRefresh()),
-    vscode.workspace.onDidRenameFiles(() => scheduleClearCacheAndRefresh()),
+    vscode.workspace.onDidCreateFiles(() => scheduleHardRefresh()),
+    vscode.workspace.onDidDeleteFiles(() => scheduleHardRefresh()),
+    vscode.workspace.onDidRenameFiles(() => scheduleHardRefresh()),
     // Clear files cache when workspace folders are added, renamed or deleted
-    vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleClearCacheAndRefresh()),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleHardRefresh()),
   )
 
-  updateContextInBackground()
+  updateStatusBarItemInBackground()
 }

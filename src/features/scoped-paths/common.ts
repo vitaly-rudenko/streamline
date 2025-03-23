@@ -1,3 +1,9 @@
-/** Quick scope is a temporary scope (not saved) created directly from a workspace folder or any path in the file tree */
-export const QUICK_SCOPE_PREFIX = '@'
 export const defaultCurrentScope = 'Default'
+
+export function generateQuickScope(path: string) {
+  return `@${path}`
+}
+
+export function isQuickScope(scope: string) {
+  return scope.startsWith('@')
+}

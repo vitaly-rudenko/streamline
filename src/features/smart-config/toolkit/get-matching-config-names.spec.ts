@@ -3,6 +3,8 @@ import { getMatchingConfigNames } from './get-matching-config-names'
 
 describe('getMatchingConfigNames()', () => {
   it('returns matching config names', () => {
+    const supportedToggles = ['Copilot', 'Focus']
+
     const rules: Rule[] = [
       {
         apply: ['test-config', 'copilot'],
@@ -53,7 +55,7 @@ describe('getMatchingConfigNames()', () => {
         toggles: [],
         colorThemeKind: 'dark',
         scopeEnabled: false,
-      }, rules)
+      }, rules, supportedToggles)
     ).toEqual(['test-config', 'copilot', 'js-config', 'dark-theme'])
 
     expect(
@@ -63,7 +65,7 @@ describe('getMatchingConfigNames()', () => {
         toggles: [],
         colorThemeKind: 'high-contrast',
         scopeEnabled: false,
-      }, rules)
+      }, rules, supportedToggles)
     ).toEqual(['test-config', 'copilot', 'dark-theme'])
 
     expect(
@@ -73,7 +75,7 @@ describe('getMatchingConfigNames()', () => {
         toggles: [],
         colorThemeKind: 'dark',
         scopeEnabled: false,
-      }, rules)
+      }, rules, supportedToggles)
     ).toEqual(['js-config', 'dark-theme'])
 
     expect(
@@ -83,7 +85,7 @@ describe('getMatchingConfigNames()', () => {
         toggles: [],
         colorThemeKind: 'high-contrast-light',
         scopeEnabled: false,
-      }, rules)
+      }, rules, supportedToggles)
     ).toEqual(['light-theme'])
 
     expect(
@@ -91,7 +93,7 @@ describe('getMatchingConfigNames()', () => {
         toggles: [],
         colorThemeKind: 'high-contrast-light',
         scopeEnabled: false,
-      }, rules)
+      }, rules, supportedToggles)
     ).toEqual(['light-theme'])
 
     expect(
@@ -101,7 +103,7 @@ describe('getMatchingConfigNames()', () => {
         toggles: ['Copilot', 'Focus'],
         colorThemeKind: 'light',
         scopeEnabled: false,
-      }, rules)
+      }, rules, supportedToggles)
     ).toEqual(['copilot', 'focus-mode', 'light-theme'])
 
     expect(
@@ -112,7 +114,7 @@ describe('getMatchingConfigNames()', () => {
         languageId: 'plaintext',
         scopeSelected: 'Maximum',
         scopeEnabled: false,
-      }, rules)
+      }, rules, supportedToggles)
     ).toEqual(['copilot', 'focus-mode', 'light-theme', 'plain-text'])
 
     expect(
@@ -123,7 +125,7 @@ describe('getMatchingConfigNames()', () => {
         languageId: 'ruby',
         scopeSelected: 'Minimal',
         scopeEnabled: true,
-      }, rules)
+      }, rules, supportedToggles)
     ).toEqual(['light-theme', 'minimal-mode', 'strict-minimal-mode', 'scoped-in'])
 
     expect(
@@ -134,7 +136,16 @@ describe('getMatchingConfigNames()', () => {
         languageId: 'ruby',
         scopeSelected: 'Minimal',
         scopeEnabled: false,
-      }, rules)
+      }, rules, supportedToggles)
     ).toEqual(['light-theme', 'minimal-mode'])
+
+    // Fails when unsupported toggle is used
+    expect(
+      () => getMatchingConfigNames({
+        colorThemeKind: 'dark',
+        scopeEnabled: false,
+        toggles: [],
+      }, rules, ['Not Copilot'])
+    ).toThrow()
   })
 })

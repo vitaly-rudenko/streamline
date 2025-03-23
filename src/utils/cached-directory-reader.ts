@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { pathToUri } from './uri'
-import type { DirectoryReader } from './types'
+import { pathToUri } from './path-to-uri'
+import type { DirectoryReader } from './directory-reader'
 
 export class CachedDirectoryReader implements DirectoryReader {
 	private _cache = new Map<string, string[]>()
