@@ -60,7 +60,7 @@ export const setupCommands: Command[] = [
     cwd: '$contextDirname',
     command: 'node $contextBasename',
     when: [
-      { languageId: ['javascript', 'javascript'], untitled: false },
+      { languageId: ['typescript', 'javascript'], untitled: false },
       { basename: ['\\.(c|m)?ts$', '\\.(c|m)?js$'] },
     ],
   },
