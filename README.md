@@ -6,7 +6,7 @@ Major features:
 - **Scoped Paths** – quickly scope into selected files and folders, hiding everything else
 - **Bookmarks** – create bookmarks for folders, files and code selections, leave notes – and organize them into lists
 - **Quick Repl** – select a playground folder to run scripts and projects using fully customizable templates and commands
-- **Smart Config** – automatically apply configuration presets when certain conditions are met (for example, only enable Copilot in test files)
+- **Smart Config** – automatically apply configuration presets when certain conditions are met (for example, automatically enable Copilot in test files)
 
 Minor features:
 - **Related Files** – find and open related files, such as test files and documentation
