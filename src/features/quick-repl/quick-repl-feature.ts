@@ -7,7 +7,7 @@ import { QuickReplConfig } from './quick-repl-config'
 import path, { basename, dirname } from 'path'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
 import { GenerateConditionContextInput, GenerateConditionContext } from '../../generate-condition-context'
-import { QuickReplNotSetUpError, Template } from './common'
+import { Command, QuickReplNotSetUpError, Template } from './common'
 import { setupCommands, setupReplsPath, setupTemplates } from './setup'
 import { waitUntil } from '../../utils/wait-until'
 import { QuickReplDragAndDropController } from './quick-repl-drag-and-drop-controller'
@@ -122,6 +122,7 @@ export function createQuickReplFeature(input: {
       return
     }
 
+    const replsPath = getReplsPathOrFail()
     const context = { path: uri.path, content, selection }
 
     console.debug('streamline.quickRepl.run', { context })
@@ -139,15 +140,36 @@ export function createQuickReplFeature(input: {
 
     console.debug('streamline.quickRepl.run', { defaultCommand })
 
+    function renderCommandDetail(command: Command) {
+      // Avoid substituting content / selection
+      const formatContext = { path: context.path }
+
+      const cwd = substitute({
+        input: command.cwd,
+        replsPath,
+        context: formatContext,
+        homedir,
+      })
+
+      const cmd = substitute({
+        input: typeof command.command === 'string' ? command.command : command.command.join(' \n '),
+        replsPath,
+        context: formatContext,
+        homedir,
+      })
+
+      return `${collapseHomedir(cwd, homedir)}: ${cmd}`
+    }
+
     const selected = defaultCommand
       ? { command: defaultCommand }
       : await vscode.window.showQuickPick(
         commands.map(command => ({
           label: command.name,
           description: command.description,
-          detail: `${command.cwd}: ${Array.isArray(command.command) ? command.command.join(' \n ') : command.command}`,
-          command,
+          detail: renderCommandDetail(command),
           iconPath: new vscode.ThemeIcon('play'),
+          command,
         }))
       )
     if (!selected) return
@@ -161,7 +183,7 @@ export function createQuickReplFeature(input: {
     const terminalColor = new vscode.ThemeColor('terminal.ansiBlue')
     const terminalCwd = substitute({
       input: expandHomedir(command.cwd, homedir),
-      replsPath: getReplsPathOrFail(),
+      replsPath,
       context,
       homedir,
     })
@@ -186,10 +208,8 @@ export function createQuickReplFeature(input: {
     terminal.show(true)
     terminal.sendText(
       substitute({
-        input: typeof command.command === 'string'
-          ? command.command
-          : command.command.join('\n'),
-        replsPath: getReplsPathOrFail(),
+        input: typeof command.command === 'string' ? command.command : command.command.join('\n'),
+        replsPath,
         context,
         homedir,
       })
