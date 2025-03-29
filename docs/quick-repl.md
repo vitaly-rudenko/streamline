@@ -70,7 +70,7 @@ Example of a snippet template:
 ### Files
 
 Example of a file template:
-```json
+```jsonc
 {
   "name": "JavaScript File",
   "description": "Creates an empty JavaScript file",
@@ -83,7 +83,7 @@ Example of a file template:
 ### Projects
 
 Example of a project template:
-```json
+```jsonc
 {
   "name": "JavaScript Project",
   "description": "Creates a JavaScript project from a template directory, and then opens src/app.js file",
@@ -121,7 +121,7 @@ type Command = {
 ### Examples
 
 Run selected JavaScript snippet:
-```json
+```jsonc
 {
   "name": "Run Selection (JavaScript)",
   "description": "Runs the selected JavaScript code with Node.js",
@@ -136,7 +136,7 @@ Run selected JavaScript snippet:
 ```
 
 Run a JavaScript file (Untitled):
-```json
+```jsonc
 {
   "name": "Run Script (JavaScript)",
   "description": "Runs the Untitled JavaScript file with Node.js",
@@ -151,7 +151,7 @@ Run a JavaScript file (Untitled):
 ```
 
 Run a JavaScript file:
-```json
+```jsonc
 {
   "name": "Run File (JavaScript)",
   "description": "Runs the JavaScript file with Node.js",
@@ -165,7 +165,7 @@ Run a JavaScript file:
 ```
 
 Run a JavaScript project:
-```json
+```jsonc
 {
   "name": "Run Project (JavaScript)",
   "description": "Runs 'npm start' in a selected directory",

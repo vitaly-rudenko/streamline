@@ -446,18 +446,23 @@ export function createScopedPathsFeature(input: {
             uriToPath: createScopedUriToPath(getCurrentWorkspaceFoldersSnapshot()),
           })
           : (config.getScopesObject()[scope] ?? [])
-      ).map(path => path.startsWith('!') ? path.slice(1) : path)
+      )
 
-      const workspaceFolderNames = unique(pathsInScope.map(path => path.split('/')[0]))
-      const stats = workspaceFolderNames.length > 0
-        ? workspaceFolderNames.map(workspaceFolderName => {
-          if (pathsInScope.includes(workspaceFolderName)) {
-            return workspaceFolderName
-          }
+      const includedWorkspaceFolderNames = unique(pathsInScope.filter(path => !path.startsWith('!')).map(path => path.split('/')[0]))
+      const excludedWorkspaceFolderNames = unique(pathsInScope.filter(path => path.startsWith('!') && !path.includes('/')))
 
-          const pathsInWorkspaceFolder = pathsInScope.filter(path => path.startsWith(workspaceFolderName + '/'))
-          return `${workspaceFolderName} (${pathsInWorkspaceFolder.length})`
-        }).join(', ')
+      const stats = includedWorkspaceFolderNames.length > 0 || excludedWorkspaceFolderNames.length > 0
+        ? [
+          ...includedWorkspaceFolderNames.map(workspaceFolderName => {
+            if (pathsInScope.includes(workspaceFolderName)) {
+              return workspaceFolderName
+            }
+
+            const pathsInWorkspaceFolder = pathsInScope.filter(path => path.startsWith(workspaceFolderName + '/'))
+            return `${workspaceFolderName} (${pathsInWorkspaceFolder.length})`
+          }),
+          ...excludedWorkspaceFolderNames,
+        ].join(', ')
         : 'empty'
 
       scopeQuickPickItems.push({

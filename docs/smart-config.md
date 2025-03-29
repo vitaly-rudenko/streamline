@@ -66,8 +66,7 @@ Example:
         { "toggle": "AI" }
       ]
       // ^ when "path matches regex"
-      //     OR ("file is untitled" AND ("language is javascript"
-      //     OR "language is typescript"))
+      //     OR ("file is untitled" AND ("language is javascript" OR "language is typescript"))
       //     OR "AI toggle is enabled"
     }
   ],

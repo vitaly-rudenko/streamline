@@ -53,24 +53,23 @@ export function createRelatedFilesFeature(input: {
 
   async function updateStatusBarItemInBackground() {
     try {
+      bestMatchStatusBarItem.hide()
+
       const activeTextEditor = vscode.window.activeTextEditor
       if (!activeTextEditor) return
 
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(activeTextEditor.document.uri)
       const { bestMatch } = await findBestMatch(activeTextEditor.document.uri, workspaceFolder)
+      if (!bestMatch) return
 
-      if (bestMatch) {
-        const formattedPaths = formatPaths([bestMatch.path, activeTextEditor.document.uri.path])
-        bestMatchStatusBarItem.text = `$(sparkle) ${formattedPaths.get(bestMatch.path)}`
-        bestMatchStatusBarItem.command = {
-          title: 'Related Files: Open Best Match to Side',
-          command: 'explorer.openToSide',
-          arguments: [bestMatch],
-        }
-        bestMatchStatusBarItem.show()
-      } else {
-        bestMatchStatusBarItem.hide()
+      const formattedPaths = formatPaths([bestMatch.path, activeTextEditor.document.uri.path])
+      bestMatchStatusBarItem.text = `$(sparkle) ${formattedPaths.get(bestMatch.path)}`
+      bestMatchStatusBarItem.command = {
+        title: 'Related Files: Open Best Match to Side',
+        command: 'explorer.openToSide',
+        arguments: [bestMatch],
       }
+      bestMatchStatusBarItem.show()
     } catch (error) {
       console.warn('[ScopedPaths] Could not update status bar item', error)
     }
