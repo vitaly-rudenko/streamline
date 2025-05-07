@@ -52,10 +52,12 @@ export function createBookmarksFeature(input: {
         ? cache.getCachedBookmarkedPathsInCurrentBookmarksListSet().has(vscode.window.activeTextEditor.document.uri.path)
         : false
 
-      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.showProminentUndoButton', sessionUndoHistoryCount > 0)
-      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isActiveTextEditorBookmarked', isActiveTextEditorBookmarked)
-      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isUndoHistoryEmpty', workspaceState.getUndoHistory().length === 0)
-      await vscode.commands.executeCommand('setContext', 'streamline.bookmarks.bookmarkedPaths', cache.getCachedBookmarkedPathsInCurrentBookmarksList())
+      await Promise.all([
+        vscode.commands.executeCommand('setContext', 'streamline.bookmarks.showProminentUndoButton', sessionUndoHistoryCount > 0),
+        vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isActiveTextEditorBookmarked', isActiveTextEditorBookmarked),
+        vscode.commands.executeCommand('setContext', 'streamline.bookmarks.isUndoHistoryEmpty', workspaceState.getUndoHistory().length === 0),
+        vscode.commands.executeCommand('setContext', 'streamline.bookmarks.bookmarkedPaths', cache.getCachedBookmarkedPathsInCurrentBookmarksList()),
+      ])
     } catch (error) {
       console.warn('[Bookmarks] Could not update context', error)
     }

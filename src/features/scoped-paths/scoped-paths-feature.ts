@@ -275,13 +275,14 @@ export function createScopedPathsFeature(input: {
 
   async function updateContextInBackground() {
     try {
-      await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', workspaceState.getEnabled())
-
       const scopedPaths = cache.getCachedCurrentlyScopedPaths().map(scopedPath => pathToUri(scopedPath)?.path).filter(path => path !== undefined)
-      await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.scopedPaths', scopedPaths satisfies string[])
-
       const excludedPaths = cache.getCachedCurrentlyExcludedPaths().map(excludedPath => pathToUri(excludedPath)?.path).filter(path => path !== undefined)
-      await vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.excludedPaths', excludedPaths satisfies string[])
+
+      await Promise.all([
+        vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', workspaceState.getEnabled()),
+        vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.scopedPaths', scopedPaths satisfies string[]),
+        vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.excludedPaths', excludedPaths satisfies string[]),
+      ])
     } catch (error) {
       console.warn('[ScopedPaths] Could not update context', error)
     }
