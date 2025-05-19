@@ -256,7 +256,7 @@ export function createQuickReplFeature(input: {
 
       const fileUri = vscode.Uri.joinPath(parentUri, basename)
       await vscode.workspace.fs.writeFile(fileUri, new Uint8Array())
-      await vscode.window.showTextDocument(fileUri)
+      await vscode.window.showTextDocument(fileUri, { preview: false })
 
       quickReplTreeDataProvider.refresh()
     }
@@ -702,6 +702,36 @@ export function createQuickReplFeature(input: {
 
       vscode.window.showInformationMessage(`Template "${templateName}" has been created`)
     }
+  })
+
+  // Quickly save current file to the repls folder
+  registerCommand('streamline.quickRepl.quickSave', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
+
+    const quickSavePath = substitute({
+      homedir,
+      input: expandHomedir(config.getShortQuickSavePath(), homedir),
+      replsPath: getReplsPathOrFail(),
+    })
+
+    const defaultDirectory = path.dirname(quickSavePath)
+    const defaultBasename = path.basename(quickSavePath)
+
+    const basename = await vscode.window.showInputBox({
+      title: 'Enter file name',
+      value: defaultBasename,
+      valueSelection: [defaultBasename.length, defaultBasename.length],
+    })
+    if (!basename) return
+
+    const fileUri = vscode.Uri.joinPath(vscode.Uri.file(defaultDirectory), basename)
+    await vscode.workspace.fs.writeFile(fileUri, new TextEncoder().encode(activeTextEditor.document.getText()))
+    quickReplTreeDataProvider.refresh()
+
+    // Use 'workbench.action.revertAndCloseActiveEditor' instead of 'workbench.action.closeActiveEditor' to avoid confirmation dialog
+    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor')
+    await vscode.window.showTextDocument(fileUri, { preview: false, selection: activeTextEditor.selection })
   })
 
   context.subscriptions.push(

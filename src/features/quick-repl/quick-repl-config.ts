@@ -4,7 +4,10 @@ import { FeatureConfig } from '../feature-config'
 import { Command, commandSchema, Template, templateSchema } from './common'
 import { ConfigurationTarget } from 'vscode'
 
+const defaultQuickSavePath = '$replsPath/quick-save/$datetime_$randomAdjective_$randomNoun'
+
 export class QuickReplConfig extends FeatureConfig {
+  private _quickSavePath: string = defaultQuickSavePath
   private _replsPath: string | undefined = undefined
   private _templates: Template[] = []
   private _commands: Command[] = []
@@ -15,6 +18,7 @@ export class QuickReplConfig extends FeatureConfig {
   }
 
   load(config = getConfig()) {
+    const quickSavePath = safeConfigGet(config, 'quickRepl.quickSavePath', defaultQuickSavePath, z.string())
     const replsPath = safeConfigGet(config, 'quickRepl.replsPath', undefined, z.string().optional())
     const templates = safeConfigGet(config, 'quickRepl.templates', [], z.array(templateSchema))
     const commands = safeConfigGet(config, 'quickRepl.commands', [], z.array(commandSchema))
@@ -22,10 +26,12 @@ export class QuickReplConfig extends FeatureConfig {
     let hasChanged = false
 
     if (
-      this._replsPath !== replsPath
+      this._quickSavePath !== quickSavePath
+      || this._replsPath !== replsPath
       || JSON.stringify(this._templates) !== JSON.stringify(templates)
       || JSON.stringify(this._commands) !== JSON.stringify(commands)
     ) {
+      this._quickSavePath = quickSavePath
       this._replsPath = replsPath
       this._templates = templates
       this._commands = commands
@@ -35,6 +41,7 @@ export class QuickReplConfig extends FeatureConfig {
 
     console.debug('[QuickRepl] Config has been loaded', {
       hasChanged,
+      quickSavePath: this._quickSavePath,
       replsPath: this._replsPath,
       templates: this._templates,
       commands: this._commands,
@@ -66,6 +73,10 @@ export class QuickReplConfig extends FeatureConfig {
       'quickRepl.commands',
       exists => (exists || this._commands.length > 0) ? this._commands : undefined
     )
+  }
+
+  getShortQuickSavePath() {
+    return this._quickSavePath
   }
 
   getShortReplsPath() {
