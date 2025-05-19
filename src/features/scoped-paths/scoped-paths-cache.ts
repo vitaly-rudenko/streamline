@@ -5,6 +5,7 @@ import { DynamicScopeProvider } from './dynamic-scope-provider'
 import { ScopedPathsConfig } from './scoped-paths-config'
 import { ScopedPathsWorkspaceState } from './scoped-paths-workspace-state'
 import { createScopedUriToPath } from './toolkit/create-scoped-uri-to-path'
+import { pathToUri } from '../../utils/path-to-uri'
 
 export class ScopedPathsCache {
   private _cachedCurrentlyScopedAndExcludedPaths: string[] = []
@@ -15,6 +16,8 @@ export class ScopedPathsCache {
   private _cachedCurrentlyScopedPathsSet: Set<string> = new Set()
   private _cachedCurrentlyExcludedPathsSet: Set<string> = new Set()
   private _cachedParentsOfCurrentlyScopedAndExcludedPathsSet: Set<string> = new Set()
+  private _cachedContextScopedPaths: string[] = []
+  private _cachedContextExcludedPaths: string[] = []
 
   constructor(
     private readonly config: ScopedPathsConfig,
@@ -53,6 +56,9 @@ export class ScopedPathsCache {
     this._cachedParentsOfCurrentlyScopedAndExcludedPathsSet = new Set(
       [...this._cachedCurrentlyScopedPaths, ...this._cachedCurrentlyExcludedPaths].flatMap(path => getParents(path))
     )
+
+    this._cachedContextScopedPaths = this._cachedCurrentlyScopedPaths.map(scopedPath => pathToUri(scopedPath)?.path).filter(path => path !== undefined)
+    this._cachedContextScopedPaths = this._cachedCurrentlyExcludedPaths.map(excludedPath => pathToUri(excludedPath)?.path).filter(path => path !== undefined)
   }
 
   getCachedCurrentlyScopedAndExcludedPaths() {
@@ -85,5 +91,13 @@ export class ScopedPathsCache {
 
   getCachedParentsOfCurrentlyScopedAndExcludedPathsSet() {
     return this._cachedParentsOfCurrentlyScopedAndExcludedPathsSet
+  }
+
+  getCachedContextScopedPaths() {
+    return this._cachedContextScopedPaths
+  }
+
+  getCachedContextExcludedPaths() {
+    return this._cachedContextExcludedPaths
   }
 }
