@@ -61,11 +61,21 @@ export function activate(context: vscode.ExtensionContext) {
         untitled: input.document.isUntitled,
         fileType: 'file',
         selection: !input.selection.isEmpty,
+        hasFoldedRegions: input.visibleRanges.length > 1,
+        hasBreakpoints: vscode.debug.breakpoints.some(
+          breakpoint => breakpoint instanceof vscode.SourceBreakpoint
+                     && breakpoint.location.uri.path === input.document.uri.path
+        ),
       } : (input && 'path' in input) ? {
         path: input.path,
         fileType: input.fileType === vscode.FileType.File ? 'file'
           : input.fileType === vscode.FileType.Directory ? 'directory'
           : undefined,
+        hasBreakpoints: input.fileType === vscode.FileType.File
+                     && vscode.debug.breakpoints.some(
+                       breakpoint => breakpoint instanceof vscode.SourceBreakpoint
+                                  && breakpoint.location.uri.path === input.path
+                     ),
       } : {}
     }
   }

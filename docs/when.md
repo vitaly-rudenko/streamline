@@ -30,6 +30,10 @@ type Condition = {
   fileType: 'file' | 'directory'
   /** Whether file has a non-empty selection */
   selection: boolean
+  /** Whether file has at least one folded region */
+  hasFoldedRegions: boolean
+  /** Whether file has at least one breakpoint */
+  hasBreakpoints: boolean
   /** For negating the condition */
   not: Condition
 }

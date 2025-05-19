@@ -21,6 +21,8 @@ const basicConditionSchema = z.strictObject({
   scope: createConditionField(z.string()), // Shorthand for [{ scopeSelected: 'scope', scopeEnabled: true }]
   fileType: createConditionField(z.enum(['file', 'directory'])),
   selection: createConditionField(z.boolean()),
+  hasFoldedRegions: createConditionField(z.boolean()),
+  hasBreakpoints: createConditionField(z.boolean()),
 }).refine(data => Object.keys(data).length > 0,  'At least one condition must be present')
 
 export const conditionSchema = basicConditionSchema.and(
@@ -45,6 +47,8 @@ export type ConditionContext = {
   untitled?: boolean | undefined
   fileType?: 'file' | 'directory' | undefined
   selection?: boolean | undefined
+  hasFoldedRegions?: boolean | undefined
+  hasBreakpoints?: boolean | undefined
 }
 
 export function testWhen(ctx: ConditionContext, when: When, options?: { supportedToggles?: string[] }): boolean {
@@ -108,6 +112,14 @@ function testCondition(ctx: ConditionContext, condition: Condition, options?: { 
 
   if (condition.selection !== undefined) {
     checks.push(toArray(condition.selection).some(i => i === ctx.selection))
+  }
+
+  if (condition.hasFoldedRegions !== undefined) {
+    checks.push(toArray(condition.hasFoldedRegions).some(i => i === ctx.hasFoldedRegions))
+  }
+
+  if (condition.hasBreakpoints !== undefined) {
+    checks.push(toArray(condition.hasBreakpoints).some(i => i === ctx.hasBreakpoints))
   }
 
   if (condition.not !== undefined) {

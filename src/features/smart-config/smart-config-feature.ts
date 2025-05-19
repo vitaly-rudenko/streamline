@@ -201,6 +201,8 @@ export function createSmartConfigFeature(input: {
     vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh()),
     vscode.window.onDidChangeActiveColorTheme(() => scheduleSoftRefresh()),
     vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh()),
+    vscode.window.onDidChangeTextEditorVisibleRanges(() => scheduleSoftRefresh()),
+    vscode.debug.onDidChangeBreakpoints(() => scheduleSoftRefresh()),
     // Slower refresh rate to avoid performance issues
     vscode.window.onDidChangeTextEditorSelection(() => scheduleHardRefresh()),
   )
