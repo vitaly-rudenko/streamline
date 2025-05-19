@@ -770,7 +770,7 @@
         {
           "command": "streamline.bookmarks.deleteFile",
           "when": "resourceScheme == file && streamline.bookmarks.isActiveTextEditorBookmarked",
-          "group": "navigation@34"
+          "group": "navigation@4"
         }
       ]
     },
