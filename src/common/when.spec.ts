@@ -60,6 +60,14 @@ describe('testWhen()', () => {
       {
         apply: ['untitled-javascript'],
         when: [{ untitled: true, languageId: 'javascript' }]
+      },
+      {
+        apply: ['debug-mode'],
+        when: [{ hasBreakpoints: true }]
+      },
+      {
+        apply: ['folded-mode'],
+        when: [{ hasFoldedRegions: true }]
       }
     ]
 
@@ -157,8 +165,21 @@ describe('testWhen()', () => {
         languageId: 'ruby',
         scopeSelected: 'Minimal',
         scopeEnabled: false,
+        hasFoldedRegions: true,
       }, rules)
-    ).toEqual(['light-theme', 'minimal-mode'])
+    ).toEqual(['light-theme', 'minimal-mode', 'folded-mode'])
+
+        expect(
+      getMatchingConfigNames({
+        path: '/path/to/file.rb',
+        toggles: [],
+        colorThemeKind: 'light',
+        languageId: 'ruby',
+        scopeSelected: 'Minimal',
+        scopeEnabled: false,
+        hasBreakpoints: true,
+      }, rules)
+    ).toEqual(['light-theme', 'minimal-mode', 'debug-mode'])
 
     // AND conditions
 
