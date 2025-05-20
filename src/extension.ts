@@ -61,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
         untitled: input.document.isUntitled,
         fileType: 'file',
         selection: !input.selection.isEmpty,
-        hasFoldedRegions: input.visibleRanges.length > 1,
+        hasVisibleFoldedRegions: input.visibleRanges.length > 1,
         hasBreakpoints: vscode.debug.breakpoints.some(
           breakpoint => breakpoint instanceof vscode.SourceBreakpoint
                      && breakpoint.location.uri.path === input.document.uri.path
