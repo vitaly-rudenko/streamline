@@ -269,7 +269,7 @@
       },
       {
         "command": "streamline.bookmarks.clearCurrentList",
-        "title": "Clear Current Bookmarks List",
+        "title": "Bookmarks: Clear Current List",
         "icon": "$(clear-all)"
       },
       {
