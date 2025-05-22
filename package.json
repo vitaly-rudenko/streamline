@@ -263,6 +263,11 @@
         "icon": "$(archive)"
       },
       {
+        "command": "streamline.bookmarks.clearList",
+        "title": "Clear List",
+        "icon": "$(clear-all)"
+      },
+      {
         "command": "streamline.bookmarks.undo",
         "title": "Bookmarks: Restore Deleted Bookmarks",
         "icon": "$(discard)"
@@ -626,9 +631,15 @@
           "group": "info@2"
         },
         {
+          "command": "streamline.bookmarks.clearList",
+          "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
+          "group": "info@3",
+          "title": "Clear"
+        },
+        {
           "command": "streamline.bookmarks.deleteList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
-          "group": "info@3"
+          "group": "info@4"
         },
         {
           "command": "streamline.quickRepl.create",

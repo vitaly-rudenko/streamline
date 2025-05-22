@@ -364,6 +364,25 @@ export function createBookmarksFeature(input: {
     await vscode.commands.executeCommand('streamline.bookmarks.delete', item, items)
   })
 
+  // Clear all bookmarks in a list
+  registerCommand('streamline.bookmarks.clearList', async (item: ListTreeItem) => {
+    if (!item || !(item instanceof ListTreeItem)) return
+
+    const bookmarksInList = config.getBookmarks().filter(bookmark => bookmark.list === item.list)
+    if (bookmarksInList.length === 0) return
+
+    // Save cleared bookmarks in workspace state to be able to revert the deletion
+    workspaceState.setUndoHistory([...workspaceState.getUndoHistory(), bookmarksInList].slice(0, UNDO_HISTORY_SIZE))
+    config.setBookmarks(config.getBookmarks().filter(bookmark => bookmark.list !== item.list))
+
+    sessionUndoHistoryCount++
+
+    bookmarksTreeDataProvider.refresh()
+    updateContextInBackground()
+    config.saveInBackground()
+    await workspaceState.save()
+  })
+
   // Deletes an individual bookmark (file, folder or selection) or all bookmarks in a list
   registerCommand('streamline.bookmarks.delete', async (item?: TreeItem | vscode.Uri, selectedItems?: (TreeItem | vscode.Uri)[]) => {
     const targetItems = getTargetItemsForCommand(item, selectedItems)
