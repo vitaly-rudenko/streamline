@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.52.1",
+  "version": "0.52.901",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -152,6 +152,11 @@
         "command": "streamline.scopedPaths.includePathIntoCurrentScope",
         "title": "Include into Current Scope",
         "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.scopedPaths.temporarilyDisableScope",
+        "title": "Scoped Paths: Temporarily Disable Current Scope",
+        "icon": "$(stop-circle)"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
