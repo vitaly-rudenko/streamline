@@ -1,5 +1,40 @@
 # Change Log
 
+## 0.52
+
+### General
+
+- Added `hasBreakpoints` and `hasVisibleFoldedRegions` conditions in `when` syntax
+
+### Quick Repl
+
+- Added "Quick Repl: Quick Save..." command (experimental)
+- Quick save path can be modified by changing `streamline.quickRepl.quickSavePath` config section
+
+### Scoped Paths
+
+- Added a small workaround to fix current scope status rendering in Explorer view
+
+### Bookmarks
+
+- Added "Bookmarks: Clear Current List" command
+- Added "Clear List" context menu command in Bookmarks List
+
+## 0.51
+
+### Bookmarks
+
+- Added bookmark count to each list in Bookmarks View
+
+### Current Path
+
+- Added "Total Characters" and "Selections" stats
+- Improved documentation when hovering over Current Selection status bar icon
+
+### Scoped Paths
+
+- Improved Scope stats in "Change Current Scope" command
+
 ## 0.50
 
 ### General
