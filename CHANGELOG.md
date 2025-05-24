@@ -8,6 +8,7 @@
   - A new unscoped file has been opened opened
   - A new path was added to the Current Scope
   - Current Scope has been re-enabled manually
+- Dynamic Scopes (such as Quick Scopes and Bookmarks Scope) can now be modified, which creates an editable copy
 
 > Quick Unscope resets when Current Scope changes, or when Quick Scope is used, or when "Streamline: Disable Current Scope" command is executed.
 
