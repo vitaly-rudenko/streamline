@@ -18,7 +18,7 @@ export function createRelatedFilesFeature(input: {
   const bestMatchStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 998)
   bestMatchStatusBarItem.text = '$(sparkle)'
   bestMatchStatusBarItem.name = 'Related Files: Open Best Match to Side'
-  bestMatchStatusBarItem.tooltip = 'Related Files: Open Best Match to Side'
+  bestMatchStatusBarItem.tooltip = 'Open Best Match to Side'
   bestMatchStatusBarItem.hide()
 
   const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
