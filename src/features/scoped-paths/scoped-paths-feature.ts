@@ -1,6 +1,5 @@
 import z from 'zod'
 import * as vscode from 'vscode'
-import { pathToUri } from '../../utils/path-to-uri'
 import { unique } from '../../utils/unique'
 import { ScopedPathsConfig } from './scoped-paths-config'
 import { createDebouncedFunction } from '../../utils/create-debounced-function'
@@ -96,45 +95,29 @@ export function createScopedPathsFeature(input: {
 
   context.subscriptions.push(debouncedHandleConfigChanged, debouncedRefresh)
 
+  /** Save configs, then update cache, status bar items, context and excludes */
+  async function saveAndHardRefresh() {
+    // Save config
+    await Promise.all([
+      workspaceState.save(),
+      config.saveInBackground(),
+    ])
+
+    // Update cache
+    cache.update()
+
+    // Update UI
     updateStatusBarItems()
     await updateContextInBackground()
+
+    // Update excludes
+    directoryReader.clearCache()
     await updateExcludesInBackground()
-  }, 250)
+  }
 
-  context.subscriptions.push(scheduleConfigLoad, scheduleHardRefresh, scheduleSoftRefresh)
-
+  /** Whether current scope is NOT provided by a DynamicScopeProvider */
   function isCurrentScopeEditable() {
     return dynamicScopeProviders.every(p => !p.isScopeMatching(workspaceState.getCurrentScope()))
-  }
-
-  /** Takes a snapshot of currently opened files and disables the Current Scope temporarily until certain conditions are met */
-  async function enableQuickUnscope() {
-    // Disable Current Scope before enabling Quick Unscope because "Disable Current Scope" command resets Quick Unscope
-    await vscode.commands.executeCommand('streamline.scopedPaths.disableScope')
-
-    workspaceState.setQuickUnscopePathsSnapshot(getCurrentlyOpenedPaths())
-    updateStatusBarItems()
-    updateContextInBackground()
-    await workspaceState.save()
-  }
-
-    /** Resets Quick Unscope without re-enabling the Current Scope */
-  async function resetQuickUnscope() {
-    if (workspaceState.getQuickUnscopePathsSnapshot() === undefined) return
-
-    workspaceState.setQuickUnscopePathsSnapshot(undefined)
-    updateStatusBarItems()
-    updateContextInBackground()
-    await workspaceState.save()
-  }
-
-  /** Disables Quick Unscope and re-enables the Current Scope if necessary */
-  async function disableQuickUnscope() {
-    await resetQuickUnscope()
-
-    if (!workspaceState.getEnabled()) {
-      await vscode.commands.executeCommand('streamline.scopedPaths.enableScope')
-    }
   }
 
   /** Returns 'true' is excludes are currently set by the extension */
@@ -354,26 +337,18 @@ export function createScopedPathsFeature(input: {
 
   // Activate current scope
   registerCommand('streamline.scopedPaths.enableScope', async () => {
+    workspaceState.setQuickUnscopePathsSnapshot(undefined) // Reset Quick Unscope
     workspaceState.setEnabled(true)
 
-    updateStatusBarItems()
-    updateContextInBackground()
-    updateExcludesInBackground()
-    await workspaceState.save()
-
-    await disableQuickUnscope()
+    await saveAndHardRefresh()
   })
 
   // Deactivate current scope
   registerCommand('streamline.scopedPaths.disableScope', async () => {
+    workspaceState.setQuickUnscopePathsSnapshot(undefined) // Reset Quick Unscope
     workspaceState.setEnabled(false)
 
-    updateStatusBarItems()
-    updateContextInBackground()
-    updateExcludesInBackground()
-    await workspaceState.save()
-
-    await resetQuickUnscope()
+    await saveAndHardRefresh()
   })
 
   // Create a Quick Scope from a selected path
@@ -385,27 +360,33 @@ export function createScopedPathsFeature(input: {
       return
     }
 
+    workspaceState.setQuickUnscopePathsSnapshot(undefined) // Reset Quick Unscope
     workspaceState.setCurrentScope(generateQuickScope(paths[0]))
     workspaceState.setEnabled(true)
 
-    updateStatusBarItems()
-    updateContextInBackground()
-    updateExcludesInBackground()
-    await workspaceState.save()
-
-    await resetQuickUnscope()
+    await saveAndHardRefresh()
   })
+
+  /** Creates a copy of Current Scope if it's not editable (a.k.a provided by a DynamicScopeProvider) */
+  function prepareCurrentScopeForEditing() {
+    if (isCurrentScopeEditable()) return
+
+    const editedCurrentScope = `Edited: ${workspaceState.getCurrentScope()}`
+
+    config.setScopesObject({
+      ...config.getScopesObject(),
+      [editedCurrentScope]: [...cache.getCachedCurrentlyScopedAndExcludedPaths()]
+    })
+
+    workspaceState.setCurrentScope(editedCurrentScope)
+  }
 
   // Add path to the current scope
   registerCommand('streamline.scopedPaths.addPathToCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
-    if (!isCurrentScopeEditable()) {
-      vscode.window.showWarningMessage('Current scope is not editable')
-      return
-    }
-
     const scopedPathsToAdd = getTargetPathsForCommand(uri, selectedUris)
     if (scopedPathsToAdd.length === 0) return
 
+    prepareCurrentScopeForEditing()
     config.setScopesObject({
       ...config.getScopesObject(),
       [workspaceState.getCurrentScope()]: unique([
@@ -414,43 +395,29 @@ export function createScopedPathsFeature(input: {
       ])
     })
 
-    updateContextInBackground()
-    updateExcludesInBackground()
-    config.saveInBackground()
-
-    await disableQuickUnscope()
+    await saveAndHardRefresh()
   })
 
   // Delete path from the current scope
   registerCommand('streamline.scopedPaths.deletePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
-    if (!isCurrentScopeEditable()) {
-      vscode.window.showWarningMessage('Current scope is not editable')
-      return
-    }
-
     const scopedPathsToDelete = new Set(getTargetPathsForCommand(uri, selectedUris))
     if (scopedPathsToDelete.size === 0) return
 
+    prepareCurrentScopeForEditing()
     config.setScopesObject({
       ...config.getScopesObject(),
       [workspaceState.getCurrentScope()]: config.getScopesObject()[workspaceState.getCurrentScope()].filter(path => !scopedPathsToDelete.has(path)),
     })
 
-    updateContextInBackground()
-    updateExcludesInBackground()
-    config.saveInBackground()
+    await saveAndHardRefresh()
   })
 
   // Exclude path from the current scope (not the same as deleting path from the current scope!)
   registerCommand('streamline.scopedPaths.excludePathFromCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
-    if (!isCurrentScopeEditable()) {
-      vscode.window.showWarningMessage('Current scope is not editable')
-      return
-    }
-
     const excludedPathsToAdd = getTargetPathsForCommand(uri, selectedUris).map(path => `!${path}`)
     if (excludedPathsToAdd.length === 0) return
 
+    prepareCurrentScopeForEditing()
     config.setScopesObject({
       ...config.getScopesObject(),
       [workspaceState.getCurrentScope()]: unique([
@@ -459,29 +426,21 @@ export function createScopedPathsFeature(input: {
       ])
     })
 
-    updateContextInBackground()
-    updateExcludesInBackground()
-    config.saveInBackground()
+    await saveAndHardRefresh()
   })
 
   // Include previously 'excluded path' (not the same as adding path to the current scope!)
   registerCommand('streamline.scopedPaths.includePathIntoCurrentScope', async (uri: vscode.Uri | undefined, selectedUris: vscode.Uri[] | undefined) => {
-    if (!isCurrentScopeEditable()) {
-      vscode.window.showWarningMessage('Current scope is not editable')
-      return
-    }
-
     const excludedPathsToDelete = new Set(getTargetPathsForCommand(uri, selectedUris).map(path => `!${path}`))
     if (excludedPathsToDelete.size === 0) return
 
+    prepareCurrentScopeForEditing()
     config.setScopesObject({
       ...config.getScopesObject(),
       [workspaceState.getCurrentScope()]: config.getScopesObject()[workspaceState.getCurrentScope()].filter(path => !excludedPathsToDelete.has(path)),
     })
 
-    updateContextInBackground()
-    updateExcludesInBackground()
-    config.saveInBackground()
+    await saveAndHardRefresh()
   })
 
   // Select current scope
@@ -589,19 +548,14 @@ export function createScopedPathsFeature(input: {
       }
 
       workspaceState.setCurrentScope(selectedScope)
+      workspaceState.setQuickUnscopePathsSnapshot(undefined) // Reset Quick Unscope
 
       if (!selected.scope) {
         vscode.window.showInformationMessage(`Switched to new "${selectedScope}" scope`)
       }
 
-      updateStatusBarItems()
-      updateExcludesInBackground()
-      config.saveInBackground()
-      await workspaceState.save()
-
+      await saveAndHardRefresh()
       quickPick.dispose()
-
-      await resetQuickUnscope()
     })
 
     quickPick.onDidTriggerItemButton(async ({ item, button }) => {
@@ -649,11 +603,7 @@ export function createScopedPathsFeature(input: {
         vscode.window.showInformationMessage(`Scope "${item.scope}" has been deleted`)
       }
 
-      updateStatusBarItems()
-      updateExcludesInBackground()
-      config.saveInBackground()
-      await workspaceState.save()
-
+      await saveAndHardRefresh()
       quickPick.dispose()
 
       await vscode.commands.executeCommand('streamline.scopedPaths.changeCurrentScope')
@@ -670,21 +620,30 @@ export function createScopedPathsFeature(input: {
       return
     }
 
-    config.setScopesObject({ ...config.getScopesObject(), [workspaceState.getCurrentScope()]: [] })
+    config.setScopesObject({
+      ...config.getScopesObject(),
+      [workspaceState.getCurrentScope()]: []
+    })
 
-    updateContextInBackground()
-    updateExcludesInBackground()
-    config.saveInBackground()
+    await saveAndHardRefresh()
   })
 
   // Temporarily disable Current Scope until certain conditions are met (e.g. unscoped file is opened or path was added to the scope)
   registerCommand('streamline.scopedPaths.enableQuickUnscope', async () => {
-    await enableQuickUnscope()
+    workspaceState.setQuickUnscopePathsSnapshot(getCurrentlyOpenedPaths())
+    workspaceState.setEnabled(false)
+
+    await saveAndHardRefresh()
   })
 
   // Disables Quick Unscope, a hidden command that is used to show different Scope icon in status bar and editor view
   registerCommand('streamline.scopedPaths.disableQuickUnscope', async () => {
-    await disableQuickUnscope()
+    if (!workspaceState.getQuickUnscopeEnabled()) return
+
+    workspaceState.setQuickUnscopePathsSnapshot(undefined)
+    workspaceState.setEnabled(true)
+
+    await saveAndHardRefresh()
   })
 
   context.subscriptions.push(
@@ -719,7 +678,7 @@ export function createScopedPathsFeature(input: {
 
       const newUnscopedPaths = newPaths.filter(path => !newScopedPaths.includes(path))
       if (newUnscopedPaths.length > 0) {
-        await disableQuickUnscope()
+        await vscode.commands.executeCommand('streamline.scopedPaths.disableQuickUnscope')
       }
     }),
   )
