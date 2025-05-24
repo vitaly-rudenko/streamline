@@ -225,8 +225,15 @@ export function createScopedPathsFeature(input: {
   }
 
   function updateStatusBarItems() {
+    const color = workspaceState.getQuickUnscopeEnabled() ? new vscode.ThemeColor('statusBarItem.warningForeground') : undefined
+    const backgroundColor = workspaceState.getQuickUnscopeEnabled() ? new vscode.ThemeColor('statusBarItem.warningBackground') : undefined
+
+    textStatusBarItem.color = color
+    textStatusBarItem.backgroundColor = backgroundColor
     textStatusBarItem.text = workspaceState.getCurrentScope()
 
+    buttonStatusBarItem.color = color
+    buttonStatusBarItem.backgroundColor = backgroundColor
     buttonStatusBarItem.command = workspaceState.getEnabled() ? 'streamline.scopedPaths.disableScope' : 'streamline.scopedPaths.enableScope'
     buttonStatusBarItem.text = workspaceState.getEnabled()
       ? '$(pass-filled)'
