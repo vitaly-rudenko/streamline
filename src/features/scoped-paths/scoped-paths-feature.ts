@@ -107,14 +107,19 @@ export function createScopedPathsFeature(input: {
     await vscode.commands.executeCommand('streamline.scopedPaths.disableScope')
   }
 
-  /** Disables Quick Unscope and re-enables the Current Scope if necessary */
-  async function disableQuickUnscope() {
+    /** Resets Quick Unscope without re-enabling the Current Scope */
+  async function resetQuickUnscope() {
     if (workspaceState.getQuickUnscopePathsSnapshot() === undefined) return
 
     workspaceState.setQuickUnscopePathsSnapshot(undefined)
     updateStatusBarItems()
     updateContextInBackground()
     await workspaceState.save()
+  }
+
+  /** Disables Quick Unscope and re-enables the Current Scope if necessary */
+  async function disableQuickUnscope() {
+    await resetQuickUnscope()
 
     if (!workspaceState.getEnabled()) {
       await vscode.commands.executeCommand('streamline.scopedPaths.enableScope')
@@ -345,6 +350,8 @@ export function createScopedPathsFeature(input: {
     updateContextInBackground()
     updateExcludesInBackground()
     await workspaceState.save()
+
+    await resetQuickUnscope()
   })
 
   // Create a Quick Scope from a selected path
@@ -364,7 +371,7 @@ export function createScopedPathsFeature(input: {
     updateExcludesInBackground()
     await workspaceState.save()
 
-    await disableQuickUnscope()
+    await resetQuickUnscope()
   })
 
   // Add path to the current scope
@@ -572,7 +579,7 @@ export function createScopedPathsFeature(input: {
 
       quickPick.dispose()
 
-      await disableQuickUnscope()
+      await resetQuickUnscope()
     })
 
     quickPick.onDidTriggerItemButton(async ({ item, button }) => {

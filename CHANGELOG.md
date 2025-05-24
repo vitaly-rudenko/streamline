@@ -8,7 +8,8 @@
   - A new unscoped file has been opened opened
   - A new path was added to the Current Scope
   - Current Scope has been re-enabled manually
-  - Current Scope was changed, including Quick Scoping into a path
+
+> Quick Unscope resets when Current Scope changes, or when Quick Scope is used, or when "Streamline: Disable Current Scope" command is executed.
 
 ## 0.52
 
