@@ -101,12 +101,13 @@ export function createScopedPathsFeature(input: {
 
   /** Takes a snapshot of currently opened files and disables the Current Scope temporarily until certain conditions are met */
   async function enableQuickUnscope() {
+    // Disable Current Scope before enabling Quick Unscope because "Disable Current Scope" command resets Quick Unscope
+    await vscode.commands.executeCommand('streamline.scopedPaths.disableScope')
+
     workspaceState.setQuickUnscopePathsSnapshot(getCurrentlyOpenedPaths())
     updateStatusBarItems()
     updateContextInBackground()
     await workspaceState.save()
-
-    await vscode.commands.executeCommand('streamline.scopedPaths.disableScope')
   }
 
     /** Resets Quick Unscope without re-enabling the Current Scope */
