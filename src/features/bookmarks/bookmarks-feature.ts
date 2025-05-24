@@ -43,14 +43,44 @@ export function createBookmarksFeature(input: {
 
   context.subscriptions.push(bookmarksTreeView)
 
-  const scheduleConfigLoad = createDebouncedFunction(() => {
+  const debouncedHandleConfigChanged = createDebouncedFunction(async () => {
     if (!config.load()) return
+
+    // Update cache
+    cache.update()
+
+    // Update UI
     bookmarksTreeDataProvider.refresh()
+    await tryUpdateContext()
   }, 500)
 
-  context.subscriptions.push(scheduleConfigLoad)
+  const debouncedRefresh = createDebouncedFunction(async () => {
+    // Update cache
+    cache.update()
 
-  async function updateContextInBackground() {
+    // Update UI
+    bookmarksTreeDataProvider.refresh()
+    await tryUpdateContext()
+  }, 250)
+
+  context.subscriptions.push(debouncedHandleConfigChanged)
+
+  async function saveAndRefresh() {
+    // Save config
+    await Promise.all([
+      workspaceState.save(),
+      config.saveInBackground(),
+    ])
+
+    // Update cache
+    cache.update()
+
+    // Update UI
+    bookmarksTreeDataProvider.refresh()
+    await tryUpdateContext()
+  }
+
+  async function tryUpdateContext() {
     try {
       const isActiveTextEditorBookmarked = vscode.window.activeTextEditor
         ? cache.getCachedBookmarkedPathsInCurrentBookmarksListSet().has(vscode.window.activeTextEditor.document.uri.path)
@@ -133,9 +163,7 @@ export function createBookmarksFeature(input: {
       ])
     }
 
-    bookmarksTreeDataProvider.refresh()
-    updateContextInBackground()
-    config.saveInBackground()
+    await saveAndRefresh()
   })
 
   // Bookmark a file
@@ -209,8 +237,7 @@ export function createBookmarksFeature(input: {
       { ...bookmarkToEdit, note: newNote === '' ? undefined : newNote },
     ])
 
-    bookmarksTreeDataProvider.refresh()
-    config.saveInBackground()
+    await saveAndRefresh()
   })
 
   // Move bookmarks to another list
@@ -242,8 +269,7 @@ export function createBookmarksFeature(input: {
       ...bookmarksToMove.map(bookmark => ({ ...bookmark, list: newList })),
     ])
 
-    bookmarksTreeDataProvider.refresh()
-    config.saveInBackground()
+    await saveAndRefresh()
   })
 
   // Bookmark with a note to custom list
@@ -263,9 +289,8 @@ export function createBookmarksFeature(input: {
     if (!selectedList) return
 
     workspaceState.setCurrentList(selectedList)
-    bookmarksTreeDataProvider.refresh()
-    updateContextInBackground()
-    await workspaceState.save()
+
+    await saveAndRefresh()
   })
 
   // Set bookmarks list as currently active
@@ -273,9 +298,8 @@ export function createBookmarksFeature(input: {
     if (!item?.list) return
 
     workspaceState.setCurrentList(item?.list)
-    bookmarksTreeDataProvider.refresh()
-    updateContextInBackground()
-    await workspaceState.save()
+
+    await saveAndRefresh()
   })
 
   // 'Create' a new bookmarks list
@@ -284,9 +308,8 @@ export function createBookmarksFeature(input: {
     if (!list) return
 
     workspaceState.setCurrentList(list)
-    bookmarksTreeDataProvider.refresh()
-    updateContextInBackground()
-    await workspaceState.save()
+
+    await saveAndRefresh()
   })
 
   // Rename bookmarks list
@@ -323,9 +346,7 @@ export function createBookmarksFeature(input: {
       config.getBookmarks().map((bookmark) => bookmark.list === oldName ? { ...bookmark, list: newName } : bookmark)
     )
 
-    bookmarksTreeDataProvider.refresh()
-    config.saveInBackground()
-    await workspaceState.save()
+    await saveAndRefresh()
   })
 
   // Archive bookmarks list
@@ -335,8 +356,7 @@ export function createBookmarksFeature(input: {
 
     config.setArchivedLists([...config.getArchivedLists(), item.list])
 
-    bookmarksTreeDataProvider.refresh()
-    config.saveInBackground()
+    await saveAndRefresh()
   })
 
   // Unarchive bookmarks list
@@ -346,8 +366,7 @@ export function createBookmarksFeature(input: {
 
     config.setArchivedLists(config.getArchivedLists().filter(list => list !== item.list))
 
-    bookmarksTreeDataProvider.refresh()
-    config.saveInBackground()
+    await saveAndRefresh()
   })
 
   // Reveal bookmark (file) in the file tree
@@ -380,10 +399,7 @@ export function createBookmarksFeature(input: {
 
     sessionUndoHistoryCount++
 
-    bookmarksTreeDataProvider.refresh()
-    updateContextInBackground()
-    config.saveInBackground()
-    await workspaceState.save()
+    await saveAndRefresh()
   })
 
   // Clear all bookmarks in the current list
@@ -481,10 +497,7 @@ export function createBookmarksFeature(input: {
 
     sessionUndoHistoryCount++
 
-    bookmarksTreeDataProvider.refresh()
-    updateContextInBackground()
-    config.saveInBackground()
-    await workspaceState.save()
+    await saveAndRefresh()
 
     if (allBookmarksToDelete.length > 5) {
       const result = await vscode.window.showInformationMessage(
@@ -492,6 +505,7 @@ export function createBookmarksFeature(input: {
         'OK',
         'Undo',
       )
+
       if (result === 'Undo') {
         await vscode.commands.executeCommand('streamline.bookmarks.undo')
       }
@@ -508,10 +522,7 @@ export function createBookmarksFeature(input: {
 
     if (sessionUndoHistoryCount > 0) sessionUndoHistoryCount--
 
-    bookmarksTreeDataProvider.refresh()
-    updateContextInBackground()
-    config.saveInBackground()
-    await workspaceState.save()
+    await saveAndRefresh()
   })
 
   // Export all bookmarks as serialized JSON (opens the data in a new tab)
@@ -640,13 +651,13 @@ export function createBookmarksFeature(input: {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.bookmarks')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad.schedule()
+          debouncedHandleConfigChanged.schedule()
         }
       }
     }),
-    vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
+    vscode.window.onDidChangeActiveTextEditor(() => tryUpdateContext()),
     // Update bookmarks when corresponding files are renamed or moved
-    vscode.workspace.onDidRenameFiles((event) => {
+    vscode.workspace.onDidRenameFiles(async (event) => {
       const oldPathNewUriMap = new Map(event.files.map(file => [file.oldUri.path, file.newUri]))
 
       config.setBookmarks(
@@ -657,12 +668,11 @@ export function createBookmarksFeature(input: {
         )
       )
 
-      bookmarksTreeDataProvider.refresh()
-      config.saveInBackground()
+      await saveAndRefresh()
     }),
   )
 
-  updateContextInBackground()
+  debouncedRefresh.schedule()
 
   return {
     isPathBookmarkedInCurrentBookmarksList(path: string) {
