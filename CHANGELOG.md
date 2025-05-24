@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.53
+
+### Scoped Paths
+
+- Added "Scoped Paths: Quick Unscope" feature that temporarily disables the Current Scope until one of these conditions is met:
+  - A new unscoped file has been opened opened
+  - A new path was added to the Current Scope
+  - Current Scope has been re-enabled manually
+  - Current Scope was changed, including Quick Scoping into a path
+
 ## 0.52
 
 ### General

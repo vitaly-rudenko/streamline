@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.52.901",
+  "version": "0.52.902",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -154,8 +154,13 @@
         "icon": "$(eye)"
       },
       {
-        "command": "streamline.scopedPaths.temporarilyDisableScope",
-        "title": "Scoped Paths: Temporarily Disable Current Scope",
+        "command": "streamline.scopedPaths.enableQuickUnscope",
+        "title": "Scoped Paths: Quick Unscope",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "streamline.scopedPaths.disableQuickUnscope",
+        "title": "Scoped Paths: Enable Current Scope",
         "icon": "$(stop-circle)"
       },
       {
@@ -422,6 +427,10 @@
           "when": "false"
         },
         {
+          "command": "streamline.scopedPaths.disableQuickUnscope",
+          "when": "false"
+        },
+        {
           "command": "streamline.bookmarks.delete",
           "when": "false"
         },
@@ -540,7 +549,12 @@
         {
           "command": "streamline.scopedPaths.enableScope",
           "group": "navigation@1",
-          "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled"
+          "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled && !streamline.scopedPaths.quickUnscopeEnabled"
+        },
+        {
+          "command": "streamline.scopedPaths.disableQuickUnscope",
+          "group": "navigation@1",
+          "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled && streamline.scopedPaths.quickUnscopeEnabled"
         },
         {
           "command": "streamline.scopedPaths.disableScope",
