@@ -77,20 +77,20 @@ export function createScopedPathsFeature(input: {
     cache.update()
 
     updateStatusBarItems()
-    await updateContextInBackground()
+    await updateContext()
 
     directoryReader.clearCache()
-    await updateExcludesInBackground()
+    await updateExcludes()
   }, 500)
 
   const debouncedRefresh = createDebouncedFunction(async () => {
     cache.update()
 
     updateStatusBarItems()
-    await updateContextInBackground()
+    await updateContext()
 
     directoryReader.clearCache()
-    await updateExcludesInBackground()
+    await updateExcludes()
   }, 500)
 
   context.subscriptions.push(debouncedHandleConfigChanged, debouncedRefresh)
@@ -108,11 +108,11 @@ export function createScopedPathsFeature(input: {
 
     // Update UI
     updateStatusBarItems()
-    await updateContextInBackground()
+    await updateContext()
 
     // Update excludes
     directoryReader.clearCache()
-    await updateExcludesInBackground()
+    await updateExcludes()
   }
 
   /** Whether current scope is NOT provided by a DynamicScopeProvider */
@@ -171,7 +171,7 @@ export function createScopedPathsFeature(input: {
   }
 
   /** Updates "files.exclude" configuration based on the currently 'scoped paths' & 'excluded paths' */
-  async function updateExcludesInBackground() {
+  async function updateExcludes() {
     if (!vscode.workspace.workspaceFolders) return // Do nothing when no workspace is opened
 
     try {
@@ -313,7 +313,7 @@ export function createScopedPathsFeature(input: {
       })
   }
 
-  async function updateContextInBackground() {
+  async function updateContext() {
     try {
       await Promise.all([
         vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', workspaceState.getEnabled()),
@@ -683,30 +683,28 @@ export function createScopedPathsFeature(input: {
     }),
   )
 
-  updateStatusBarItems()
-  updateContextInBackground()
-  updateExcludesInBackground()
-
-  for (const dynamicScopeProvider of dynamicScopeProviders) {
-    if (dynamicScopeProvider.subscribe) {
-      dynamicScopeProvider.subscribe(() => debouncedRefresh.schedule())
-    }
-  }
+  debouncedRefresh.schedule()
 
   // When workspace folders are modified, the extension is re-activated (activate() is called again)
   // And there seems to be an issue with async operations which leaves the context in invalid state
   // (e.g. Current Scope is shown as enabled, even though it's not in reality)
   // This is a workaround that refreshes status bar items and context continuously, faster initially
   // Only lightweight operations are allowed here to avoid performance issues
-  const scheduleContinuousSofterRefresh = createContinuousFunction(
+  const scheduleContinuousSoftRefresh = createContinuousFunction(
     async () => {
       updateStatusBarItems()
-      await updateContextInBackground()
+      await updateContext()
     },
     { minMs: 50, maxMs: 5000 }
   )
-  context.subscriptions.push(scheduleContinuousSofterRefresh)
-  scheduleContinuousSofterRefresh.schedule()
+  context.subscriptions.push(scheduleContinuousSoftRefresh)
+  scheduleContinuousSoftRefresh.schedule()
+
+  for (const dynamicScopeProvider of dynamicScopeProviders) {
+    if (dynamicScopeProvider.subscribe) {
+      dynamicScopeProvider.subscribe(() => debouncedRefresh.schedule())
+    }
+  }
 
   return {
     isScopeEnabled() {
