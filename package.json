@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.52.0",
+  "version": "0.52.904",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -96,6 +96,7 @@
       {
         "command": "streamline.help.quickRepl",
         "title": "Quick Repl: Open Help",
+        "shortTitle": "Open Help",
         "icon": "$(question)"
       },
       {
@@ -106,6 +107,7 @@
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
         "title": "Scoped Paths: Change Current Scope...",
+        "shortTitle": "Change Current Scope",
         "icon": "$(chevron-down)"
       },
       {
@@ -126,6 +128,7 @@
       {
         "command": "streamline.scopedPaths.clearCurrentScope",
         "title": "Scoped Paths: Clear Current Scope",
+        "shortTitle": "Clear Current Scope",
         "icon": "$(circle-slash)"
       },
       {
@@ -152,6 +155,16 @@
         "command": "streamline.scopedPaths.includePathIntoCurrentScope",
         "title": "Include into Current Scope",
         "icon": "$(eye)"
+      },
+      {
+        "command": "streamline.scopedPaths.enableQuickUnscope",
+        "title": "Scoped Paths: Quick Unscope",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "streamline.scopedPaths.disableQuickUnscope",
+        "title": "Scoped Paths: Enable Current Scope",
+        "icon": "$(stop-circle)"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
@@ -263,13 +276,25 @@
         "icon": "$(archive)"
       },
       {
+        "command": "streamline.bookmarks.clearList",
+        "title": "Clear List",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "streamline.bookmarks.clearCurrentList",
+        "title": "Bookmarks: Clear Current List",
+        "icon": "$(clear-all)"
+      },
+      {
         "command": "streamline.bookmarks.undo",
         "title": "Bookmarks: Restore Deleted Bookmarks",
+        "shortTitle": "Restore Deleted Bookmarks",
         "icon": "$(discard)"
       },
       {
         "command": "streamline.bookmarks.exportAsJson",
         "title": "Bookmarks: Export as JSON",
+        "shortTitle": "Export as JSON",
         "icon": "$(cloud-download)"
       },
       {
@@ -289,6 +314,7 @@
       {
         "command": "streamline.quickRepl.setup",
         "title": "Quick Repl: Start Setup Wizard",
+        "shortTitle": "Start Setup Wizard",
         "icon": "$(rocket)"
       },
       {
@@ -299,11 +325,13 @@
       {
         "command": "streamline.quickRepl.revealReplsInOS",
         "title": "Quick Repl: Reveal Repls in OS",
+        "shortTitle": "Reveal Repls in OS",
         "icon": "$(eye)"
       },
       {
         "command": "streamline.quickRepl.openReplsInNewWindow",
         "title": "Quick Repl: Open Repls in a new Window",
+        "shortTitle": "Open Repls in a new Window",
         "icon": "$(empty-window)"
       },
       {
@@ -407,6 +435,10 @@
           "when": "false"
         },
         {
+          "command": "streamline.scopedPaths.disableQuickUnscope",
+          "when": "false"
+        },
+        {
           "command": "streamline.bookmarks.delete",
           "when": "false"
         },
@@ -436,6 +468,10 @@
         },
         {
           "command": "streamline.bookmarks.unarchiveList",
+          "when": "false"
+        },
+        {
+          "command": "streamline.bookmarks.clearList",
           "when": "false"
         },
         {
@@ -521,7 +557,12 @@
         {
           "command": "streamline.scopedPaths.enableScope",
           "group": "navigation@1",
-          "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled"
+          "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled && !streamline.scopedPaths.quickUnscopeEnabled"
+        },
+        {
+          "command": "streamline.scopedPaths.disableQuickUnscope",
+          "group": "navigation@1",
+          "when": "view == 'workbench.explorer.fileView' && !streamline.scopedPaths.enabled && streamline.scopedPaths.quickUnscopeEnabled"
         },
         {
           "command": "streamline.scopedPaths.disableScope",
@@ -626,9 +667,15 @@
           "group": "info@2"
         },
         {
+          "command": "streamline.bookmarks.clearList",
+          "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
+          "group": "info@3",
+          "title": "Clear"
+        },
+        {
           "command": "streamline.bookmarks.deleteList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
-          "group": "info@3"
+          "group": "info@4"
         },
         {
           "command": "streamline.quickRepl.create",

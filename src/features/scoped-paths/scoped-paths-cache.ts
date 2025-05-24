@@ -58,7 +58,7 @@ export class ScopedPathsCache {
     )
 
     this._cachedContextScopedPaths = this._cachedCurrentlyScopedPaths.map(scopedPath => pathToUri(scopedPath)?.path).filter(path => path !== undefined)
-    this._cachedContextScopedPaths = this._cachedCurrentlyExcludedPaths.map(excludedPath => pathToUri(excludedPath)?.path).filter(path => path !== undefined)
+    this._cachedContextExcludedPaths = this._cachedCurrentlyExcludedPaths.map(excludedPath => pathToUri(excludedPath)?.path).filter(path => path !== undefined)
   }
 
   getCachedCurrentlyScopedAndExcludedPaths() {

@@ -15,6 +15,7 @@ import { substitute } from './toolkit/substitute'
 import { expandHomedir } from '../../utils/expand-homedir'
 import { collapseHomedir } from '../../utils/collapse-homedir'
 import { RegisterCommand } from '../../register-command'
+import { createContinuousFunction } from '../../utils/create-continuous-function'
 
 // TODO: Quickly saved current untitled file to the repls folder
 // TODO: Somehow automatically reveal created file/directory in the Quick Repl view
@@ -29,6 +30,7 @@ export function createQuickReplFeature(input: {
   const homedir = os.homedir()
 
   const config = new QuickReplConfig()
+
   const scheduleConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
     quickReplTreeDataProvider.refresh()
@@ -38,6 +40,8 @@ export function createQuickReplFeature(input: {
   const scheduleUpdateContextInBackground = createDebouncedFunction(async () => {
     await updateContextInBackground()
   }, 500)
+
+  context.subscriptions.push(scheduleConfigLoad, scheduleUpdateContextInBackground)
 
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable, homedir)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
@@ -734,11 +738,19 @@ export function createQuickReplFeature(input: {
     await vscode.window.showTextDocument(fileUri, { preview: false, selection: activeTextEditor.selection })
   })
 
+  // Continuously update context, because not all events can be reliably detected
+  const scheduleContinuousSoftRefresh = createContinuousFunction(
+    () => updateContextInBackground(),
+    { minMs: 500, maxMs: 5000 }
+  )
+  context.subscriptions.push(scheduleContinuousSoftRefresh)
+  scheduleContinuousSoftRefresh.schedule()
+
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.quickRepl')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+          scheduleConfigLoad.schedule()
         }
       }
     }),
@@ -746,7 +758,7 @@ export function createQuickReplFeature(input: {
     vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
     vscode.window.onDidChangeTextEditorOptions(() => updateContextInBackground()),
     // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => scheduleUpdateContextInBackground()),
+    vscode.window.onDidChangeTextEditorSelection(() => scheduleUpdateContextInBackground.schedule()),
   )
 
   updateContextInBackground()

@@ -8,6 +8,7 @@ export class ScopedPathsWorkspaceState {
 
   private _enabled: boolean = defaultEnabled
   private _currentScope: string = defaultCurrentScope
+  private _quickUnscopePathsSnapshot: string[] | undefined = undefined
 
   constructor(
     private readonly workspaceState: Memento,
@@ -18,11 +19,13 @@ export class ScopedPathsWorkspaceState {
   private load() {
     const enabled = this.workspaceState.get<boolean>('streamline.scopedPaths.enabled', defaultEnabled)
     const currentScope = this.workspaceState.get<string>('streamline.scopedPaths.currentScope', defaultCurrentScope)
+    const quickUnscopedPathsSnapshot = this.workspaceState.get<string[] | undefined>('streamline.scopedPaths.quickUnscopedPathsSnapshot', undefined)
 
     this._enabled = enabled
     this._currentScope = currentScope
+    this._quickUnscopePathsSnapshot = quickUnscopedPathsSnapshot
 
-    console.debug('[ScopedPaths] WorkspaceState has been loaded', { enabled, currentScope })
+    console.debug('[ScopedPaths] WorkspaceState has been loaded', { enabled, currentScope, quickUnscopedPathsSnapshot })
   }
 
   async save() {
@@ -34,6 +37,11 @@ export class ScopedPathsWorkspaceState {
     await this.workspaceState.update(
       'streamline.scopedPaths.currentScope',
       this._currentScope !== defaultCurrentScope ? this._currentScope : undefined,
+    )
+
+    await this.workspaceState.update(
+      'streamline.scopedPaths.quickUnscopedPathsSnapshot',
+      this._quickUnscopePathsSnapshot,
     )
 
     console.debug('[ScopedPaths] WorkspaceState has been saved')
@@ -55,5 +63,18 @@ export class ScopedPathsWorkspaceState {
 
   getCurrentScope() {
     return this._currentScope
+  }
+
+  setQuickUnscopePathsSnapshot(value: string[] | undefined) {
+    this._quickUnscopePathsSnapshot = value
+    this.onChange?.()
+  }
+
+  getQuickUnscopePathsSnapshot() {
+    return this._quickUnscopePathsSnapshot
+  }
+
+  getQuickUnscopeEnabled() {
+    return this._quickUnscopePathsSnapshot !== undefined
   }
 }

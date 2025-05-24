@@ -10,6 +10,7 @@ import { getInspectKeyFromConfigurationTarget } from '../../config'
 import { GenerateConditionContext } from '../../generate-condition-context'
 import { RegisterCommand } from '../../register-command'
 import { UnsupportedTogglesError } from '../../common/when'
+import { createContinuousFunction } from '../../utils/create-continuous-function'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
@@ -37,6 +38,8 @@ export function createSmartConfigFeature(input: {
     applyMatchingConfigsInBackground()
     updateStatusBarItems()
   }, 500)
+
+  context.subscriptions.push(scheduleConfigLoad, scheduleSoftRefresh, scheduleHardRefresh)
 
   /** Stores currently created toggle buttons in the status bar to be able to update them */
   let toggleItems: vscode.StatusBarItem[] = []
@@ -185,29 +188,40 @@ export function createSmartConfigFeature(input: {
       workspaceState.setEnabledToggles([...workspaceState.getEnabledToggles(), toggle])
     }
 
-    scheduleSoftRefresh()
+    scheduleSoftRefresh.schedule()
     await workspaceState.save()
   })
+
+  // Continuously re-evaluate all matching configs and update status bar items, because not all events can be reliably detected
+  const scheduleContinuousSoftRefresh = createContinuousFunction(
+    () => {
+      applyMatchingConfigsInBackground()
+      updateStatusBarItems()
+    },
+    { minMs: 500, maxMs: 5000 }
+  )
+  context.subscriptions.push(scheduleContinuousSoftRefresh)
+  scheduleContinuousSoftRefresh.schedule()
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.smartConfig')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+          scheduleConfigLoad.schedule()
         }
       }
     }),
     // Context to match rules against relies on currently active document and color theme
-    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh()),
-    vscode.window.onDidChangeActiveColorTheme(() => scheduleSoftRefresh()),
-    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh()),
-    vscode.window.onDidChangeTextEditorVisibleRanges(() => scheduleSoftRefresh()),
-    vscode.debug.onDidChangeBreakpoints(() => scheduleSoftRefresh()),
+    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh.schedule()),
+    vscode.window.onDidChangeActiveColorTheme(() => scheduleSoftRefresh.schedule()),
+    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh.schedule()),
+    vscode.window.onDidChangeTextEditorVisibleRanges(() => scheduleSoftRefresh.schedule()),
+    vscode.debug.onDidChangeBreakpoints(() => scheduleSoftRefresh.schedule()),
     // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => scheduleHardRefresh()),
+    vscode.window.onDidChangeTextEditorSelection(() => scheduleHardRefresh.schedule()),
   )
 
-  scheduleSoftRefresh()
+  scheduleSoftRefresh.schedule()
 
   return {
     scheduleRefresh: scheduleSoftRefresh,
