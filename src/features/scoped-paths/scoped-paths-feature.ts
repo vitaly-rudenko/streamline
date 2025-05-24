@@ -72,22 +72,30 @@ export function createScopedPathsFeature(input: {
 
   const directoryReader = new CachedDirectoryReader()
 
-  const scheduleConfigLoad = createDebouncedFunction(async () => {
+  const debouncedHandleConfigChanged = createDebouncedFunction(async () => {
     if (!config.load()) return
+
+    cache.update()
+
     updateStatusBarItems()
-    directoryReader.clearCache()
     await updateContextInBackground()
+
+    directoryReader.clearCache()
     await updateExcludesInBackground()
   }, 500)
 
-  const scheduleHardRefresh = createDebouncedFunction(async () => {
+  const debouncedRefresh = createDebouncedFunction(async () => {
+    cache.update()
+
     updateStatusBarItems()
-    directoryReader.clearCache()
     await updateContextInBackground()
+
+    directoryReader.clearCache()
     await updateExcludesInBackground()
   }, 500)
 
-  const scheduleSoftRefresh = createDebouncedFunction(async () => {
+  context.subscriptions.push(debouncedHandleConfigChanged, debouncedRefresh)
+
     updateStatusBarItems()
     await updateContextInBackground()
     await updateExcludesInBackground()
@@ -683,17 +691,17 @@ export function createScopedPathsFeature(input: {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.scopedPaths')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad.schedule()
+          debouncedHandleConfigChanged.schedule()
         }
       }
     }),
     // Clear cache and re-generate excludes when files are created or renamed
-    vscode.workspace.onDidCreateFiles(() => scheduleHardRefresh.schedule()),
-    vscode.workspace.onDidRenameFiles(() => scheduleHardRefresh.schedule()),
+    vscode.workspace.onDidCreateFiles(() => debouncedRefresh.schedule()),
+    vscode.workspace.onDidRenameFiles(() => debouncedRefresh.schedule()),
     // Clear cache and re-generate excludes when workspace folders are added, renamed or deleted
     vscode.workspace.onDidChangeWorkspaceFolders(async () => {
       await saveCurrentWorkspaceFoldersSnapshot()
-      scheduleHardRefresh.schedule()
+      debouncedRefresh.schedule()
     }),
     // 
     vscode.window.onDidChangeVisibleTextEditors(async () => {
@@ -722,10 +730,7 @@ export function createScopedPathsFeature(input: {
 
   for (const dynamicScopeProvider of dynamicScopeProviders) {
     if (dynamicScopeProvider.subscribe) {
-      dynamicScopeProvider.subscribe(() => {
-        cache.update()
-        scheduleSoftRefresh.schedule()
-      })
+      dynamicScopeProvider.subscribe(() => debouncedRefresh.schedule())
     }
   }
 
