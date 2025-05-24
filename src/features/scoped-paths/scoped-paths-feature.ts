@@ -93,6 +93,8 @@ export function createScopedPathsFeature(input: {
     await updateExcludesInBackground()
   }, 250)
 
+  context.subscriptions.push(scheduleConfigLoad, scheduleHardRefresh, scheduleSoftRefresh)
+
   function isCurrentScopeEditable() {
     return dynamicScopeProviders.every(p => !p.isScopeMatching(workspaceState.getCurrentScope()))
   }
@@ -669,17 +671,17 @@ export function createScopedPathsFeature(input: {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.scopedPaths')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+          scheduleConfigLoad.schedule()
         }
       }
     }),
     // Clear cache and re-generate excludes when files are created or renamed
-    vscode.workspace.onDidCreateFiles(() => scheduleHardRefresh()),
-    vscode.workspace.onDidRenameFiles(() => scheduleHardRefresh()),
+    vscode.workspace.onDidCreateFiles(() => scheduleHardRefresh.schedule()),
+    vscode.workspace.onDidRenameFiles(() => scheduleHardRefresh.schedule()),
     // Clear cache and re-generate excludes when workspace folders are added, renamed or deleted
     vscode.workspace.onDidChangeWorkspaceFolders(async () => {
       await saveCurrentWorkspaceFoldersSnapshot()
-      scheduleHardRefresh()
+      scheduleHardRefresh.schedule()
     }),
     // 
     vscode.window.onDidChangeVisibleTextEditors(async () => {
@@ -710,7 +712,7 @@ export function createScopedPathsFeature(input: {
     if (dynamicScopeProvider.subscribe) {
       dynamicScopeProvider.subscribe(() => {
         cache.update()
-        scheduleSoftRefresh()
+        scheduleSoftRefresh.schedule()
       })
     }
   }

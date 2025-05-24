@@ -135,7 +135,7 @@ export function activate(context: vscode.ExtensionContext) {
       registerCommand,
 			onChange: () => {
         onDidChangeFileDecorationsEmitter.fire(undefined)
-        smartConfigFeature?.scheduleRefresh()
+        smartConfigFeature?.scheduleRefresh.schedule()
       },
       dynamicScopeProviders,
 		})

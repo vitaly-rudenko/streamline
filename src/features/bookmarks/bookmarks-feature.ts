@@ -41,10 +41,14 @@ export function createBookmarksFeature(input: {
     canSelectMany: true,
   })
 
+  context.subscriptions.push(bookmarksTreeView)
+
   const scheduleConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
     bookmarksTreeDataProvider.refresh()
   }, 500)
+
+  context.subscriptions.push(scheduleConfigLoad)
 
   async function updateContextInBackground() {
     try {
@@ -86,8 +90,6 @@ export function createBookmarksFeature(input: {
 
     return selectedList
   }
-
-  context.subscriptions.push(bookmarksTreeView)
 
   // Primary "Bookmark this..." command implementation
   registerCommand('streamline.bookmarks.add', async (_: never, selectedUris: vscode.Uri[] | undefined, list?: string | undefined, note?: string | undefined) => {
@@ -638,7 +640,7 @@ export function createBookmarksFeature(input: {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.bookmarks')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+          scheduleConfigLoad.schedule()
         }
       }
     }),

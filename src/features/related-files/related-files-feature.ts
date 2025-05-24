@@ -23,11 +23,12 @@ export function createRelatedFilesFeature(input: {
 
   const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
   const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 250)
-
   const scheduleConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
     await hardRefresh()
   }, 500)
+
+  context.subscriptions.push(scheduleSoftRefresh, scheduleHardRefresh, scheduleConfigLoad)
 
   async function softRefresh() {
     await updateStatusBarItemInBackground()
@@ -203,25 +204,25 @@ export function createRelatedFilesFeature(input: {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('search.exclude') || event.affectsConfiguration('files.exclude')) {
-        scheduleHardRefresh()
+        scheduleHardRefresh.schedule()
       }
 
       if (event.affectsConfiguration('streamline.relatedFiles')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+          scheduleConfigLoad.schedule()
         }
       }
     }),
     // Reload "Related files" panel when currently opened file changes
-    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh()),
+    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh.schedule()),
     // Refresh when window state changes (e.g. focused, minimized)
-    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh()),
+    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh.schedule()),
     // Clear files cache when files are created/deleted/renamed
-    vscode.workspace.onDidCreateFiles(() => scheduleHardRefresh()),
-    vscode.workspace.onDidDeleteFiles(() => scheduleHardRefresh()),
-    vscode.workspace.onDidRenameFiles(() => scheduleHardRefresh()),
+    vscode.workspace.onDidCreateFiles(() => scheduleHardRefresh.schedule()),
+    vscode.workspace.onDidDeleteFiles(() => scheduleHardRefresh.schedule()),
+    vscode.workspace.onDidRenameFiles(() => scheduleHardRefresh.schedule()),
     // Clear files cache when workspace folders are added, renamed or deleted
-    vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleHardRefresh()),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleHardRefresh.schedule()),
   )
 
   updateStatusBarItemInBackground()

@@ -38,6 +38,8 @@ export function createSmartConfigFeature(input: {
     updateStatusBarItems()
   }, 500)
 
+  context.subscriptions.push(scheduleConfigLoad, scheduleSoftRefresh, scheduleHardRefresh)
+
   /** Stores currently created toggle buttons in the status bar to be able to update them */
   let toggleItems: vscode.StatusBarItem[] = []
 
@@ -185,7 +187,7 @@ export function createSmartConfigFeature(input: {
       workspaceState.setEnabledToggles([...workspaceState.getEnabledToggles(), toggle])
     }
 
-    scheduleSoftRefresh()
+    scheduleSoftRefresh.schedule()
     await workspaceState.save()
   })
 
@@ -193,21 +195,21 @@ export function createSmartConfigFeature(input: {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.smartConfig')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+          scheduleConfigLoad.schedule()
         }
       }
     }),
     // Context to match rules against relies on currently active document and color theme
-    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh()),
-    vscode.window.onDidChangeActiveColorTheme(() => scheduleSoftRefresh()),
-    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh()),
-    vscode.window.onDidChangeTextEditorVisibleRanges(() => scheduleSoftRefresh()),
-    vscode.debug.onDidChangeBreakpoints(() => scheduleSoftRefresh()),
+    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh.schedule()),
+    vscode.window.onDidChangeActiveColorTheme(() => scheduleSoftRefresh.schedule()),
+    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh.schedule()),
+    vscode.window.onDidChangeTextEditorVisibleRanges(() => scheduleSoftRefresh.schedule()),
+    vscode.debug.onDidChangeBreakpoints(() => scheduleSoftRefresh.schedule()),
     // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => scheduleHardRefresh()),
+    vscode.window.onDidChangeTextEditorSelection(() => scheduleHardRefresh.schedule()),
   )
 
-  scheduleSoftRefresh()
+  scheduleSoftRefresh.schedule()
 
   return {
     scheduleRefresh: scheduleSoftRefresh,

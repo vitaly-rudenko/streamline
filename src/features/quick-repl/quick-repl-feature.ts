@@ -29,6 +29,7 @@ export function createQuickReplFeature(input: {
   const homedir = os.homedir()
 
   const config = new QuickReplConfig()
+
   const scheduleConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
     quickReplTreeDataProvider.refresh()
@@ -38,6 +39,8 @@ export function createQuickReplFeature(input: {
   const scheduleUpdateContextInBackground = createDebouncedFunction(async () => {
     await updateContextInBackground()
   }, 500)
+
+  context.subscriptions.push(scheduleConfigLoad, scheduleUpdateContextInBackground)
 
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable, homedir)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
@@ -738,7 +741,7 @@ export function createQuickReplFeature(input: {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.quickRepl')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+          scheduleConfigLoad.schedule()
         }
       }
     }),
@@ -746,7 +749,7 @@ export function createQuickReplFeature(input: {
     vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
     vscode.window.onDidChangeTextEditorOptions(() => updateContextInBackground()),
     // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => scheduleUpdateContextInBackground()),
+    vscode.window.onDidChangeTextEditorSelection(() => scheduleUpdateContextInBackground.schedule()),
   )
 
   updateContextInBackground()

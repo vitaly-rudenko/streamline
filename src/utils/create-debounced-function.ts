@@ -1,8 +1,20 @@
 export function createDebouncedFunction<T extends (...args: any) => any>(fn: T, delayMs: number) {
   let timeoutId: ReturnType<typeof setTimeout>
+  let isDisposed = false
 
-  return (...args: Parameters<T>) => {
+  const schedule = (...args: Parameters<T>) => {
+    if (isDisposed) return
     clearTimeout(timeoutId)
-    timeoutId = setTimeout(() => fn(...args), delayMs)
+    timeoutId = setTimeout(() => {
+      if (isDisposed) return
+      fn(...args)
+    }, delayMs)
   }
+
+  const dispose = () => {
+    clearTimeout(timeoutId)
+    isDisposed = true
+  }
+
+  return { schedule, dispose }
 }
