@@ -10,6 +10,7 @@ import { getInspectKeyFromConfigurationTarget } from '../../config'
 import { GenerateConditionContext } from '../../generate-condition-context'
 import { RegisterCommand } from '../../register-command'
 import { UnsupportedTogglesError } from '../../common/when'
+import { createContinuousFunction } from '../../utils/create-continuous-function'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
@@ -190,6 +191,17 @@ export function createSmartConfigFeature(input: {
     scheduleSoftRefresh.schedule()
     await workspaceState.save()
   })
+
+  // Continuously re-evaluate all matching configs and update status bar items, because not all events can be reliably detected
+  const scheduleContinuousSoftRefresh = createContinuousFunction(
+    () => {
+      applyMatchingConfigsInBackground()
+      updateStatusBarItems()
+    },
+    { minMs: 500, maxMs: 5000 }
+  )
+  context.subscriptions.push(scheduleContinuousSoftRefresh)
+  scheduleContinuousSoftRefresh.schedule()
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {

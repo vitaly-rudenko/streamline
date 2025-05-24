@@ -15,6 +15,7 @@ import { substitute } from './toolkit/substitute'
 import { expandHomedir } from '../../utils/expand-homedir'
 import { collapseHomedir } from '../../utils/collapse-homedir'
 import { RegisterCommand } from '../../register-command'
+import { createContinuousFunction } from '../../utils/create-continuous-function'
 
 // TODO: Quickly saved current untitled file to the repls folder
 // TODO: Somehow automatically reveal created file/directory in the Quick Repl view
@@ -736,6 +737,14 @@ export function createQuickReplFeature(input: {
     await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor')
     await vscode.window.showTextDocument(fileUri, { preview: false, selection: activeTextEditor.selection })
   })
+
+  // Continuously update context, because not all events can be reliably detected
+  const scheduleContinuousSoftRefresh = createContinuousFunction(
+    () => updateContextInBackground(),
+    { minMs: 500, maxMs: 5000 }
+  )
+  context.subscriptions.push(scheduleContinuousSoftRefresh)
+  scheduleContinuousSoftRefresh.schedule()
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
