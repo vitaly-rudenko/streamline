@@ -90,320 +90,374 @@
     "commands": [
       {
         "command": "streamline.help.when",
-        "title": "Streamline: Open Help for 'when' Syntax",
-        "icon": "$(question)"
+        "title": "Open Help for 'when' Syntax",
+        "icon": "$(question)",
+        "category": "Streamline"
       },
       {
         "command": "streamline.help.quickRepl",
-        "title": "Quick Repl: Open Help",
+        "title": "Open Help",
         "shortTitle": "Open Help",
-        "icon": "$(question)"
+        "icon": "$(question)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.help.smartConfig",
-        "title": "Smart Config: Open Help",
-        "icon": "$(question)"
+        "title": "Open Help",
+        "icon": "$(question)",
+        "category": "Smart Config"
       },
       {
         "command": "streamline.scopedPaths.changeCurrentScope",
-        "title": "Scoped Paths: Change Current Scope...",
-        "shortTitle": "Change Current Scope",
-        "icon": "$(chevron-down)"
+        "title": "Change Current Scope...",
+        "icon": "$(chevron-down)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.toggleScope",
-        "title": "Scoped Paths: Toggle Current Scope",
-        "icon": "$(activate-breakpoints)"
+        "title": "Toggle Current Scope",
+        "icon": "$(activate-breakpoints)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.enableScope",
-        "title": "Scoped Paths: Enable Current Scope",
-        "icon": "$(circle-large-outline)"
+        "title": "Enable Current Scope",
+        "icon": "$(circle-large-outline)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.disableScope",
-        "title": "Scoped Paths: Disable Current Scope",
-        "icon": "$(pass-filled)"
+        "title": "Disable Current Scope",
+        "icon": "$(pass-filled)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.clearCurrentScope",
-        "title": "Scoped Paths: Clear Current Scope",
-        "shortTitle": "Clear Current Scope",
-        "icon": "$(circle-slash)"
+        "title": "Clear Current Scope",
+        "icon": "$(circle-slash)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.quickScopeIntoPath",
         "title": "Quick Scope",
-        "icon": "$(search)"
+        "icon": "$(search)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.addPathToCurrentScope",
         "title": "Add to Current Scope",
-        "icon": "$(add)"
+        "icon": "$(add)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.deletePathFromCurrentScope",
         "title": "Delete from Current Scope",
-        "icon": "$(remove)"
+        "icon": "$(remove)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.excludePathFromCurrentScope",
         "title": "Exclude from Current Scope",
-        "icon": "$(eye-closed)"
+        "icon": "$(eye-closed)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.includePathIntoCurrentScope",
         "title": "Include into Current Scope",
-        "icon": "$(eye)"
+        "icon": "$(eye)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.enableQuickUnscope",
-        "title": "Scoped Paths: Quick Unscope",
-        "shortTitle": "Quick Unscope",
-        "icon": "$(stop-circle)"
+        "title": "Quick Unscope",
+        "icon": "$(stop-circle)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.scopedPaths.disableQuickUnscope",
-        "title": "Scoped Paths: Enable Current Scope",
-        "icon": "$(stop-circle)"
+        "title": "Enable Current Scope",
+        "icon": "$(stop-circle)",
+        "category": "Scoped Paths"
       },
       {
         "command": "streamline.relatedFiles.quickOpen",
-        "title": "Related Files: Quick Open...",
-        "icon": "$(sparkle)"
+        "title": "Quick Open...",
+        "icon": "$(sparkle)",
+        "category": "Related Files"
       },
       {
         "command": "streamline.relatedFiles.openBestMatch",
-        "title": "Related Files: Open Best Match",
-        "icon": "$(sparkle)"
+        "title": "Open Best Match",
+        "icon": "$(sparkle)",
+        "category": "Related Files"
       },
       {
         "command": "streamline.relatedFiles.openBestMatchToSide",
-        "title": "Related Files: Open Best Match to Side",
-        "icon": "$(sparkle)"
+        "title": "Open Best Match to Side",
+        "icon": "$(sparkle)",
+        "category": "Related Files"
       },
       {
         "command": "streamline.bookmarks.add",
         "title": "Add Bookmark",
-        "icon": "$(star)"
+        "icon": "$(star)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.addFile",
-        "title": "Bookmarks: Add File to Bookmarks",
-        "icon": "$(star)"
+        "title": "Add File to Bookmarks",
+        "icon": "$(star)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.deleteFile",
-        "title": "Bookmarks: Delete File from Bookmarks",
-        "icon": "$(star-full)"
+        "title": "Delete File from Bookmarks",
+        "icon": "$(star-full)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.addSelection",
-        "title": "Bookmarks: Add Selection to Bookmarks",
-        "icon": "$(star)"
+        "title": "Add Selection to Bookmarks",
+        "icon": "$(star)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.addSelectionWithNote",
-        "title": "Bookmarks: Add Selection to Bookmarks (with Note)",
-        "icon": "$(star)"
+        "title": "Add Selection to Bookmarks (with Note)",
+        "icon": "$(star)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.addToList",
         "title": "Add Bookmark to List...",
-        "icon": "$(star)"
+        "icon": "$(star)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.addNote",
         "title": "Add Note...",
-        "icon": "$(note)"
+        "icon": "$(note)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.addNoteToList",
         "title": "Add Note to List...",
-        "icon": "$(note)"
+        "icon": "$(note)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.delete",
         "title": "Delete Bookmark",
-        "icon": "$(star-full)"
+        "icon": "$(star-full)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.editNote",
         "title": "Edit Note...",
-        "icon": "$(edit)"
+        "icon": "$(edit)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.move",
-        "title": "Move to List..."
+        "title": "Move to List...",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.revealInExplorer",
         "title": "Reveal in Explorer",
-        "icon": "$(eye)"
+        "icon": "$(eye)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.changeCurrentList",
-        "title": "Bookmarks: Change Current List...",
-        "icon": "$(issue-closed)"
+        "title": "Change Current List...",
+        "icon": "$(issue-closed)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.setListAsCurrent",
         "title": "Set as Current List",
-        "icon": "$(issue-closed)"
+        "icon": "$(issue-closed)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.addList",
-        "title": "Bookmarks: Create List...",
-        "icon": "$(add)"
+        "title": "Create List...",
+        "icon": "$(add)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.deleteList",
         "title": "Delete List",
-        "icon": "$(trash)"
+        "icon": "$(trash)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.renameList",
         "title": "Rename List...",
-        "icon": "$(edit)"
+        "icon": "$(edit)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.archiveList",
         "title": "Archive List",
-        "icon": "$(archive)"
+        "icon": "$(archive)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.unarchiveList",
         "title": "Unarchive List",
-        "icon": "$(archive)"
+        "icon": "$(archive)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.clearList",
         "title": "Clear List",
-        "icon": "$(clear-all)"
+        "icon": "$(clear-all)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.clearCurrentList",
-        "title": "Bookmarks: Clear Current List",
-        "icon": "$(clear-all)"
+        "title": "Clear Current List",
+        "icon": "$(clear-all)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.undo",
-        "title": "Bookmarks: Restore Deleted Bookmarks",
-        "shortTitle": "Restore Deleted Bookmarks",
-        "icon": "$(discard)"
+        "title": "Restore Deleted Bookmarks",
+        "icon": "$(discard)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.exportAsJson",
-        "title": "Bookmarks: Export as JSON",
-        "shortTitle": "Export as JSON",
-        "icon": "$(cloud-download)"
+        "title": "Export as JSON",
+        "icon": "$(cloud-download)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.bookmarks.quickOpen",
-        "title": "Bookmarks: Quick Open...",
-        "icon": "$(bookmark)"
+        "title": "Quick Open...",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
       },
       {
         "command": "streamline.currentPath.copy",
-        "title": "Current Path: Copy Relative Path",
-        "icon": "$(copy)"
+        "title": "Copy Relative Path",
+        "icon": "$(copy)",
+        "category": "Current Path"
       },
       {
         "command": "streamline.smartConfig.toggle",
-        "title": "Toggle"
+        "title": "Toggle",
+        "category": "Smart Config"
       },
       {
         "command": "streamline.quickRepl.setup",
-        "title": "Quick Repl: Start Setup Wizard",
-        "shortTitle": "Start Setup Wizard",
-        "icon": "$(rocket)"
+        "title": "Start Setup Wizard",
+        "icon": "$(rocket)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.run",
-        "title": "Quick Repl: Run Command",
-        "icon": "$(play)"
+        "title": "Run Command",
+        "icon": "$(play)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.revealReplsInOS",
-        "title": "Quick Repl: Reveal Repls in OS",
-        "shortTitle": "Reveal Repls in OS",
-        "icon": "$(eye)"
+        "title": "Reveal Repls in OS",
+        "icon": "$(eye)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.openReplsInNewWindow",
-        "title": "Quick Repl: Open Repls in a new Window",
-        "shortTitle": "Open Repls in a new Window",
-        "icon": "$(empty-window)"
+        "title": "Open Repls in a new Window",
+        "icon": "$(empty-window)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.revealInOS",
         "title": "Reveal in OS",
-        "icon": "$(eye)"
+        "icon": "$(eye)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.openInNewWindow",
         "title": "Open in a new Window",
-        "icon": "$(empty-window)"
+        "icon": "$(empty-window)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.delete",
         "title": "Delete",
-        "icon": "$(trash)"
+        "icon": "$(trash)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.refresh",
         "title": "Refresh",
-        "icon": "$(refresh)"
+        "icon": "$(refresh)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.openFolderInTerminal",
         "title": "Open Folder in Terminal",
-        "icon": "$(terminal)"
+        "icon": "$(terminal)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.copyAbsolutePath",
         "title": "Copy Absolute Path",
-        "icon": "$(copy)"
+        "icon": "$(copy)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.createQuickRepl",
         "title": "Quick Repl: Create a Repl...",
-        "icon": "$(plus)"
+        "icon": "$(plus)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.create",
         "title": "Create...",
-        "icon": "$(plus)"
+        "icon": "$(plus)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.createInRoot",
         "title": "Create...",
-        "icon": "$(plus)"
+        "icon": "$(plus)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.rename",
         "title": "Rename...",
-        "icon": "$(edit)"
+        "icon": "$(edit)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.duplicate",
         "title": "Duplicate...",
-        "icon": "$(copy)"
+        "icon": "$(copy)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.createTemplateFromFolder",
         "title": "Create Template from Folder...",
-        "icon": "$(notebook)"
+        "icon": "$(notebook)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.quickRepl.quickSave",
-        "title": "Quick Repl: Quick Save...",
-        "icon": "$(file-add)"
+        "title": "Quick Save...",
+        "icon": "$(file-add)",
+        "category": "Quick Repl"
       },
       {
         "command": "streamline.highlights.addSelection",
-        "title": "Highlight Selection",
-        "icon": "$(symbol-color)"
+        "title": "Highlight Exact Selection",
+        "icon": "$(symbol-color)",
+        "category": "Highlights"
       },
       {
         "command": "streamline.highlights.removeSelection",
