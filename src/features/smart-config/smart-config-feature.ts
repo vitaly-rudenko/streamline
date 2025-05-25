@@ -24,6 +24,10 @@ export function createSmartConfigFeature(input: {
 
   const debouncedHandleConfigChanged = createDebouncedFunction(async () => {
     if (!config.load()) return
+    currentMergedToggles = ['']
+    currentEnabledToggles = ['']
+    currentMatchingConfigNames = ['']
+
     await refresh()
   }, 500)
 
@@ -36,9 +40,10 @@ export function createSmartConfigFeature(input: {
   let toggleItems: vscode.StatusBarItem[] = []
 
   // Cache to avoid unnecessary updates to status bar items and configuration
-  let cachedMergedToggles: string[] = []
-  let cachedEnabledToggles: string[] = []
-  let cachedMatchingConfigNames: string[] = []
+  // Empty string is used so that areArraysShallowEqual() always returns false on first run and configs are updated at least once
+  let currentMergedToggles: string[] = ['']
+  let currentEnabledToggles: string[] = ['']
+  let currentMatchingConfigNames: string[] = ['']
 
   async function saveAndRefresh() {
     await Promise.all([workspaceState.save(), config.saveInQueue()])
@@ -47,16 +52,8 @@ export function createSmartConfigFeature(input: {
   }
 
   async function refresh() {
-    clearCache()
-
     updateStatusBarItems()
     await applyMatchingConfigs()
-  }
-
-  function clearCache() {
-    cachedMergedToggles = []
-    cachedEnabledToggles = []
-    cachedMatchingConfigNames = []
   }
 
   // Creates toggle buttons in the status bar
@@ -65,12 +62,12 @@ export function createSmartConfigFeature(input: {
     const enabledToggles = workspaceState.getEnabledToggles()
 
     if (
-      areArraysShallowEqual(cachedEnabledToggles, enabledToggles)
-      && areArraysShallowEqual(cachedMergedToggles, mergedToggles)
+      areArraysShallowEqual(currentEnabledToggles, enabledToggles) &&
+      areArraysShallowEqual(currentMergedToggles, mergedToggles)
     ) return
 
-    cachedMergedToggles = mergedToggles
-    cachedEnabledToggles = enabledToggles
+    currentMergedToggles = mergedToggles
+    currentEnabledToggles = enabledToggles
 
     // Delete all current toggle buttons
     for (const item of toggleItems) item.dispose()
@@ -103,8 +100,9 @@ export function createSmartConfigFeature(input: {
       const conditionContext = generateConditionContext(vscode.window.activeTextEditor)
       const matchingConfigNames = getMatchingConfigNames(conditionContext, config.getMergedRules(), config.getMergedToggles())
 
-      if (areArraysShallowEqual(cachedMatchingConfigNames, matchingConfigNames)) return
-      cachedMatchingConfigNames = matchingConfigNames
+      if (areArraysShallowEqual(currentMatchingConfigNames, matchingConfigNames)) return
+
+      currentMatchingConfigNames = matchingConfigNames
 
       await applyMatchingConfigsForConfigurationTarget(
         config.getInspectedDefaults()?.globalValue,
