@@ -52,9 +52,10 @@ export function createHighlightsFeature(input: {
       const activeTextEditor = vscode.window.activeTextEditor
 
       await Promise.all([
+        vscode.commands.executeCommand('setContext', 'streamline.highlights.hasHighlight', highlights.length > 0),
         vscode.commands.executeCommand(
           'setContext',
-          'streamline.highlights.hasHighlight',
+          'streamline.highlights.hasHighlightInFile',
           activeTextEditor
             ? highlights.some(highlight => highlight.uri.path === activeTextEditor.document.uri.path)
             : false
@@ -121,6 +122,16 @@ export function createHighlightsFeature(input: {
     if (!activeTextEditor) return
 
     highlights = highlights.filter(highlight => highlight.uri.path !== activeTextEditor.document.uri.path)
+
+    updateDecorations()
+    await updateContext()
+  })
+
+  registerCommand('streamline.highlights.removeAll', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
+
+    highlights = []
 
     updateDecorations()
     await updateContext()

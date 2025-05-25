@@ -471,11 +471,18 @@
         "title": "Remove Highlights in Selection",
         "icon": "$(trash)",
         "category": "Highlights",
-        "enablement": "streamline.highlights.hasHighlight"
+        "enablement": "streamline.highlights.hasHighlightInFile"
       },
       {
         "command": "streamline.highlights.removeInFile",
         "title": "Remove All Highlights in File",
+        "icon": "$(trash)",
+        "category": "Highlights",
+        "enablement": "streamline.highlights.hasHighlightInFile"
+      },
+      {
+        "command": "streamline.highlights.removeAll",
+        "title": "Remove All Highlights in All Files",
         "icon": "$(trash)",
         "category": "Highlights",
         "enablement": "streamline.highlights.hasHighlight"
@@ -887,7 +894,7 @@
         {
           "command": "streamline.highlights.removeInSelection",
           "group": "2_context@3",
-          "when": "streamline.highlights.hasHighlight"
+          "when": "streamline.highlights.hasHighlightInFile"
         }
       ],
       "editor/title": [
