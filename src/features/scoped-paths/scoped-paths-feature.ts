@@ -430,6 +430,7 @@ export function createScopedPathsFeature(input: {
     const scopeQuickPickItems: (vscode.QuickPickItem & { scope?: string })[] = []
     const addedScopesSet = new Set<string>()
 
+    const duplicateThemeIcon = new vscode.ThemeIcon('copy')
     const renameThemeIcon = new vscode.ThemeIcon('edit')
     const clearThemeIcon = new vscode.ThemeIcon('clear-all')
     const deleteThemeIcon = new vscode.ThemeIcon('trash')
@@ -475,6 +476,7 @@ export function createScopedPathsFeature(input: {
         scope,
         ...!dynamicScopeProvider && {
           buttons: [
+            { iconPath: duplicateThemeIcon, tooltip: 'Duplicate' },
             { iconPath: renameThemeIcon, tooltip: 'Rename...' },
             { iconPath: clearThemeIcon, tooltip: 'Clear' },
             { iconPath: deleteThemeIcon, tooltip: 'Delete' },
@@ -540,6 +542,23 @@ export function createScopedPathsFeature(input: {
 
     quickPick.onDidTriggerItemButton(async ({ item, button }) => {
       if (!item.scope) return quickPick.dispose()
+
+      if (button.iconPath === duplicateThemeIcon) {
+        const newScope = await vscode.window.showInputBox({ value: item.scope })
+        if (!newScope) return quickPick.dispose()
+
+        if (config.getScopesObject()[newScope]) {
+          vscode.window.showWarningMessage(`Scope "${newScope}" already exists`)
+          return
+        }
+
+        config.setScopesObject({
+          ...config.getScopesObject(),
+          [newScope]: config.getScopesObject()[item.scope],
+        })
+
+        vscode.window.showInformationMessage(`Scope "${item.scope}" has been duplicated as "${newScope}"`)
+      }
 
       if (button.iconPath === renameThemeIcon) {
         const newScope = await vscode.window.showInputBox({ value: item.scope })
