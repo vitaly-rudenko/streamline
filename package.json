@@ -455,14 +455,30 @@
       },
       {
         "command": "streamline.highlights.addSelection",
-        "title": "Highlight Exact Selection",
+        "title": "Highlight Selection",
+        "icon": "$(symbol-color)",
+        "category": "Highlights",
+        "enablement": "editor.hasSelection"
+      },
+      {
+        "command": "streamline.highlights.addLines",
+        "title": "Highlight Lines",
         "icon": "$(symbol-color)",
         "category": "Highlights"
       },
       {
-        "command": "streamline.highlights.removeSelection",
-        "title": "Remove Highlight",
-        "icon": "$(trash)"
+        "command": "streamline.highlights.removeInSelection",
+        "title": "Remove Highlights in Selection",
+        "icon": "$(trash)",
+        "category": "Highlights",
+        "enablement": "streamline.highlights.hasHighlight"
+      },
+      {
+        "command": "streamline.highlights.removeInFile",
+        "title": "Remove All Highlights in File",
+        "icon": "$(trash)",
+        "category": "Highlights",
+        "enablement": "streamline.highlights.hasHighlight"
       }
     ],
     "keybindings": [
@@ -592,10 +608,6 @@
           "when": "false"
         },
         {
-          "command": "streamline.quickRepl.refresh",
-          "when": "false"
-        },
-        {
           "command": "streamline.quickRepl.delete",
           "when": "false"
         },
@@ -605,14 +617,6 @@
         },
         {
           "command": "streamline.quickRepl.revealInOS",
-          "when": "false"
-        },
-        {
-          "command": "streamline.highlights.addSelection",
-          "when": "false"
-        },
-        {
-          "command": "streamline.highlights.removeSelection",
           "when": "false"
         }
       ],
@@ -872,14 +876,18 @@
           "group": "1_context@4"
         },
         {
-          "command": "streamline.highlights.addSelection",
-          "group": "2_context@1",
-          "when": "editorHasSelection && !streamline.highlights.highlightSelected"
+          "command": "streamline.highlights.addLines",
+          "group": "2_context@1"
         },
         {
-          "command": "streamline.highlights.removeSelection",
+          "command": "streamline.highlights.addSelection",
           "group": "2_context@2",
-          "when": "streamline.highlights.highlightSelected"
+          "when": "editor.hasSelection"
+        },
+        {
+          "command": "streamline.highlights.removeInSelection",
+          "group": "2_context@3",
+          "when": "streamline.highlights.hasHighlight"
         }
       ],
       "editor/title": [

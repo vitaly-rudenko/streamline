@@ -4,6 +4,7 @@ import { RegisterCommand } from '../../register-command'
 type Highlight = {
   uri: vscode.Uri
   range: vscode.Range
+  type: 'selection' | 'line'
 }
 
 export function createHighlightsFeature(input: {
@@ -14,8 +15,15 @@ export function createHighlightsFeature(input: {
 
   let highlights: Highlight[] = []
 
-  const decoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: 'rgba(65, 135, 225, 0.1)',
+  const lineDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: 'rgba(67, 222, 239, 0.15)',
+    overviewRulerColor: 'rgba(67, 222, 239, 0.15)',
+    isWholeLine: true,
+  })
+
+  const selectionDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: 'rgba(67, 222, 239, 0.15)',
+    overviewRulerColor: 'rgba(67, 222, 239, 0.15)',
   })
 
   function updateDecorations() {
@@ -23,8 +31,17 @@ export function createHighlightsFeature(input: {
     if (!activeTextEditor) return
 
     activeTextEditor.setDecorations(
-      decoration,
+      lineDecoration,
       highlights
+        .filter(highlight => highlight.type === 'line')
+        .filter(highlight => highlight.uri.path === activeTextEditor.document.uri.path)
+        .map(highlight => ({ range: highlight.range }))
+    )
+
+    activeTextEditor.setDecorations(
+      selectionDecoration,
+      highlights
+        .filter(highlight => highlight.type === 'selection')
         .filter(highlight => highlight.uri.path === activeTextEditor.document.uri.path)
         .map(highlight => ({ range: highlight.range }))
     )
@@ -33,22 +50,15 @@ export function createHighlightsFeature(input: {
   async function updateContext() {
     try {
       const activeTextEditor = vscode.window.activeTextEditor
- 
+
       await Promise.all([
         vscode.commands.executeCommand(
           'setContext',
-          'streamline.highlights.highlightSelected',
+          'streamline.highlights.hasHighlight',
           activeTextEditor
-            ? highlights.some(
-                highlight => 
-                  highlight.uri.path === activeTextEditor.document.uri.path &&
-                  (
-                    highlight.range.contains(activeTextEditor.selection.active) ||
-                    highlight.range.intersection(activeTextEditor.selection)
-                  )
-              )
+            ? highlights.some(highlight => highlight.uri.path === activeTextEditor.document.uri.path)
             : false
-        )
+        ),
       ])
     } catch (err) {
       // TODO: err
@@ -59,9 +69,8 @@ export function createHighlightsFeature(input: {
     const activeTextEditor = vscode.window.activeTextEditor
     if (!activeTextEditor) return
 
-    if (activeTextEditor.selection.isEmpty) return
-
     highlights.push({
+      type: 'selection',
       uri: activeTextEditor.document.uri,
       range: activeTextEditor.selection,
     })
@@ -70,7 +79,26 @@ export function createHighlightsFeature(input: {
     await updateContext()
   })
 
-  registerCommand('streamline.highlights.removeSelection', async () => {
+    registerCommand('streamline.highlights.addLines', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
+
+    // Expand selection to contain all characters in the lines
+    // Does not impact rendering, but can impact context menu commands
+    const startLine = activeTextEditor.document.lineAt(activeTextEditor.selection.start.line)
+    const endLine = activeTextEditor.document.lineAt(activeTextEditor.selection.end.line)
+
+    highlights.push({
+      type: 'line',
+      uri: activeTextEditor.document.uri,
+      range: new vscode.Range(startLine.range.start, endLine.range.end),
+    })
+
+    updateDecorations()
+    await updateContext()
+  })
+
+  registerCommand('streamline.highlights.removeInSelection', async () => {
     const activeTextEditor = vscode.window.activeTextEditor
     if (!activeTextEditor) return
 
@@ -88,14 +116,21 @@ export function createHighlightsFeature(input: {
     await updateContext()
   })
 
+  registerCommand('streamline.highlights.removeInFile', async () => {
+    const activeTextEditor = vscode.window.activeTextEditor
+    if (!activeTextEditor) return
+
+    highlights = highlights.filter(highlight => highlight.uri.path !== activeTextEditor.document.uri.path)
+
+    updateDecorations()
+    await updateContext()
+  })
+
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(async () => {
       updateDecorations()
       await updateContext()
     }),
-    vscode.window.onDidChangeTextEditorSelection(async () => {
-      await updateContext()
-    })
   )
 
   updateContext()
