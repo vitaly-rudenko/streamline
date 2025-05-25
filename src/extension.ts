@@ -12,6 +12,7 @@ import { ConditionContext } from './common/when'
 import { GenerateConditionContextInput } from './generate-condition-context'
 import { DynamicScopeProvider } from './features/scoped-paths/dynamic-scope-provider'
 import { uriToPath } from './utils/uri-to-path'
+import { createHighlightsFeature } from './features/highlights/highlights-feature'
 
 const featureSchema = z.enum([
   'bookmarks',
@@ -21,6 +22,7 @@ const featureSchema = z.enum([
   'scopedPaths',
   'smartConfig',
   'quickRepl',
+  'highlights',
 ])
 
 type Feature = z.infer<typeof featureSchema>
@@ -144,6 +146,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context, registerCommand })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context, registerCommand })
   if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, registerCommand, generateConditionContext })
+  if (isFeatureEnabled('highlights')) createHighlightsFeature({ context, registerCommand })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')

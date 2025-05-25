@@ -399,6 +399,16 @@
         "command": "streamline.quickRepl.quickSave",
         "title": "Quick Repl: Quick Save...",
         "icon": "$(file-add)"
+      },
+      {
+        "command": "streamline.highlights.addSelection",
+        "title": "Highlight Selection",
+        "icon": "$(symbol-color)"
+      },
+      {
+        "command": "streamline.highlights.removeSelection",
+        "title": "Remove Highlight",
+        "icon": "$(trash)"
       }
     ],
     "keybindings": [
@@ -541,6 +551,14 @@
         },
         {
           "command": "streamline.quickRepl.revealInOS",
+          "when": "false"
+        },
+        {
+          "command": "streamline.highlights.addSelection",
+          "when": "false"
+        },
+        {
+          "command": "streamline.highlights.removeSelection",
           "when": "false"
         }
       ],
@@ -797,6 +815,16 @@
         {
           "command": "streamline.bookmarks.addNoteToList",
           "group": "1_context@4"
+        },
+        {
+          "command": "streamline.highlights.addSelection",
+          "group": "2_context@1",
+          "when": "editorHasSelection && !streamline.highlights.highlightSelected"
+        },
+        {
+          "command": "streamline.highlights.removeSelection",
+          "group": "2_context@2",
+          "when": "streamline.highlights.highlightSelected"
         }
       ],
       "editor/title": [
@@ -849,7 +877,8 @@
               "relatedFiles",
               "scopedPaths",
               "smartConfig",
-              "quickRepl"
+              "quickRepl",
+              "highlights"
             ]
           },
           "default": [],
