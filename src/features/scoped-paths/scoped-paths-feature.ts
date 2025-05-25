@@ -672,7 +672,7 @@ export function createScopedPathsFeature(input: {
       const excludedPaths = cache.getCachedCurrentlyExcludedPaths()
 
       const newScopedPaths = newPaths
-        .filter(path => scopedPaths.some(scopedPath => scopedPath === path || path.startsWith(scopedPath + '/')))
+        .filter(path => scopedPaths.length === 0 || scopedPaths.some(scopedPath => scopedPath === path || path.startsWith(scopedPath + '/')))
         .filter(path => excludedPaths.every(excludedPath => excludedPath !== path && !path.startsWith(excludedPath + '/')))
 
       const newUnscopedPaths = newPaths.filter(path => !newScopedPaths.includes(path))
