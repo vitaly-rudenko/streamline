@@ -17,7 +17,6 @@ import { collapseHomedir } from '../../utils/collapse-homedir'
 import { RegisterCommand } from '../../register-command'
 import { createContinuousFunction } from '../../utils/create-continuous-function'
 
-// TODO: Quickly saved current untitled file to the repls folder
 // TODO: Somehow automatically reveal created file/directory in the Quick Repl view
 
 export function createQuickReplFeature(input: {
@@ -28,20 +27,20 @@ export function createQuickReplFeature(input: {
   const { context, registerCommand, generateConditionContext } = input
 
   const homedir = os.homedir()
-
   const config = new QuickReplConfig()
 
-  const scheduleConfigLoad = createDebouncedFunction(async () => {
+  const debouncedHandleConfigChanged = createDebouncedFunction(async () => {
     if (!config.load()) return
+
     quickReplTreeDataProvider.refresh()
-    await updateContextInBackground()
+    await tryUpdateContext()
   }, 500)
 
-  const scheduleUpdateContextInBackground = createDebouncedFunction(async () => {
-    await updateContextInBackground()
+  const debouncedTryUpdateContext = createDebouncedFunction(async () => {
+    await tryUpdateContext()
   }, 500)
 
-  context.subscriptions.push(scheduleConfigLoad, scheduleUpdateContextInBackground)
+  context.subscriptions.push(debouncedHandleConfigChanged, debouncedTryUpdateContext)
 
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable, homedir)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
@@ -51,9 +50,22 @@ export function createQuickReplFeature(input: {
     canSelectMany: true,
   })
 
+  context.subscriptions.push(quickReplTreeView)
+
+  async function saveAndRefresh() {
+    await config.saveInBackground()
+    await refresh()
+  }
+
+  async function refresh() {
+    quickReplTreeDataProvider.refresh()
+    await tryUpdateContext()
+  }
+
   function getReplsPathOrFail() {
     const shortReplsPath = config.getShortReplsPath()
     if (!shortReplsPath) throw new QuickReplNotSetUpError()
+
     return expandHomedir(shortReplsPath, homedir)
   }
 
@@ -75,7 +87,7 @@ export function createQuickReplFeature(input: {
   }
 
   // Update context to show/hide "Run" command for active text editor
-  async function updateContextInBackground() {
+  async function tryUpdateContext() {
     try {
       await vscode.commands.executeCommand(
         'setContext',
@@ -86,8 +98,6 @@ export function createQuickReplFeature(input: {
       console.warn('[QuickRepl] Could not update context', error)
     }
   }
-
-  context.subscriptions.push(quickReplTreeView)
 
   // Runs selected command against File, Folder or Active Text Editor
   registerCommand('streamline.quickRepl.run', async (argument: unknown) => {
@@ -262,7 +272,7 @@ export function createQuickReplFeature(input: {
       await vscode.workspace.fs.writeFile(fileUri, new Uint8Array())
       await vscode.window.showTextDocument(fileUri, { preview: false })
 
-      quickReplTreeDataProvider.refresh()
+      await refresh()
     }
 
     if (option === 'createDirectory') {
@@ -272,7 +282,7 @@ export function createQuickReplFeature(input: {
       const directoryUri = vscode.Uri.joinPath(parentUri, basename)
       await vscode.workspace.fs.createDirectory(directoryUri)
 
-      quickReplTreeDataProvider.refresh()
+      await refresh()
     }
   })
 
@@ -411,7 +421,7 @@ export function createQuickReplFeature(input: {
       }
     }
 
-    quickReplTreeDataProvider.refresh()
+    await refresh()
   }
 
   // Delete file or folder
@@ -434,12 +444,12 @@ export function createQuickReplFeature(input: {
       }
     }
 
-    quickReplTreeDataProvider.refresh()
+    await refresh()
   })
 
   // Refresh tree view
   registerCommand('streamline.quickRepl.refresh', async () => {
-    quickReplTreeDataProvider.refresh()
+    await refresh()
   })
 
   // Start setup wizard
@@ -483,8 +493,7 @@ export function createQuickReplFeature(input: {
     )
 
     config.setShortReplsPath(collapseHomedir(shortReplsPath, homedir))
-    quickReplTreeDataProvider.refresh()
-    await config.save()
+    await saveAndRefresh()
 
     vscode.window.showInformationMessage(`Your Quick Repls will now be stored in ${shortReplsPath}`)
 
@@ -528,7 +537,7 @@ export function createQuickReplFeature(input: {
       await waitUntil(() => templatesEditor.document.isClosed)
 
       config.setTemplates(setupTemplates)
-      await config.save()
+      await saveAndRefresh()
 
       vscode.window.showInformationMessage('Default templates have been added to your settings')
     }
@@ -573,7 +582,7 @@ export function createQuickReplFeature(input: {
       await waitUntil(() => commandsEditor.document.isClosed)
 
       config.setCommands(setupCommands)
-      await config.save()
+      await saveAndRefresh()
 
       vscode.window.showInformationMessage('Default commands have been added to your settings')
     }
@@ -630,24 +639,24 @@ export function createQuickReplFeature(input: {
       const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
       await vscode.workspace.fs.copy(argument.uri, vscode.Uri.joinPath(directoryUri, copyBasename), { overwrite: false })
 
-      quickReplTreeDataProvider.refresh()
+      await refresh()
     }
   })
 
   // Rename file or folder
   registerCommand('streamline.quickRepl.rename', async (argument: unknown) => {
-    if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
-      const newBasename = await vscode.window.showInputBox({
-        placeHolder: basename(argument.uri.path),
-        value: basename(argument.uri.path),
-      })
-      if (!newBasename) return
+    if (!(argument instanceof FileTreeItem) && !(argument instanceof FolderTreeItem)) return
 
-      const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
-      await vscode.workspace.fs.rename(argument.uri, vscode.Uri.joinPath(directoryUri, newBasename))
+    const newBasename = await vscode.window.showInputBox({
+      placeHolder: basename(argument.uri.path),
+      value: basename(argument.uri.path),
+    })
+    if (!newBasename) return
 
-      quickReplTreeDataProvider.refresh()
-    }
+    const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
+    await vscode.workspace.fs.rename(argument.uri, vscode.Uri.joinPath(directoryUri, newBasename))
+
+    await refresh()
   })
 
   // Copy file's or folder's absolute path to clipboard
@@ -702,7 +711,7 @@ export function createQuickReplFeature(input: {
       }
 
       config.setTemplates([...config.getTemplates(), template])
-      await config.save()
+      await saveAndRefresh()
 
       vscode.window.showInformationMessage(`Template "${templateName}" has been created`)
     }
@@ -731,7 +740,7 @@ export function createQuickReplFeature(input: {
 
     const fileUri = vscode.Uri.joinPath(vscode.Uri.file(defaultDirectory), basename)
     await vscode.workspace.fs.writeFile(fileUri, new TextEncoder().encode(activeTextEditor.document.getText()))
-    quickReplTreeDataProvider.refresh()
+    await refresh()
 
     // Use 'workbench.action.revertAndCloseActiveEditor' instead of 'workbench.action.closeActiveEditor' to avoid confirmation dialog
     await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor')
@@ -740,7 +749,7 @@ export function createQuickReplFeature(input: {
 
   // Continuously update context, because not all events can be reliably detected
   const scheduleContinuousSoftRefresh = createContinuousFunction(
-    () => updateContextInBackground(),
+    () => tryUpdateContext(),
     { minMs: 500, maxMs: 5000 }
   )
   context.subscriptions.push(scheduleContinuousSoftRefresh)
@@ -750,16 +759,16 @@ export function createQuickReplFeature(input: {
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.quickRepl')) {
         if (!config.isSavingInBackground) {
-          scheduleConfigLoad.schedule()
+          debouncedHandleConfigChanged.schedule()
         }
       }
     }),
     // Note: Not triggered when file language changes (manually or by VS Code)
-    vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
-    vscode.window.onDidChangeTextEditorOptions(() => updateContextInBackground()),
+    vscode.window.onDidChangeActiveTextEditor(() => tryUpdateContext()),
+    vscode.window.onDidChangeTextEditorOptions(() => tryUpdateContext()),
     // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => scheduleUpdateContextInBackground.schedule()),
+    vscode.window.onDidChangeTextEditorSelection(() => debouncedTryUpdateContext.schedule()),
   )
 
-  updateContextInBackground()
+  refresh()
 }
