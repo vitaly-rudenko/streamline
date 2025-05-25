@@ -2,6 +2,12 @@
 
 ## 0.53
 
+### Highlights
+
+- New experimental feature: Highlights
+  - Make a selection in the editor and highlight it with "Highlight Selection" context menu command
+  - Selection can be removed with "Remove Highlight" context menu command
+
 ### Scoped Paths
 
 - Added "Scoped Paths: Quick Unscope" feature that temporarily disables the Current Scope until one of these conditions is met:
