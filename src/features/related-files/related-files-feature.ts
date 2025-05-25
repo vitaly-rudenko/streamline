@@ -21,22 +21,18 @@ export function createRelatedFilesFeature(input: {
   bestMatchStatusBarItem.tooltip = 'Open Best Match to Side'
   bestMatchStatusBarItem.hide()
 
-  const scheduleSoftRefresh = createDebouncedFunction(() => softRefresh(), 50)
-  const scheduleHardRefresh = createDebouncedFunction(() => hardRefresh(), 250)
-  const scheduleConfigLoad = createDebouncedFunction(async () => {
+  const debouncedTryUpdateStatusBarItems = createDebouncedFunction(() => tryUpdateStatusBarItems(), 50)
+  const debouncedRefresh = createDebouncedFunction(() => refresh(), 250)
+  const debouncedConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
-    await hardRefresh()
+    await refresh()
   }, 500)
 
-  context.subscriptions.push(scheduleSoftRefresh, scheduleHardRefresh, scheduleConfigLoad)
+  context.subscriptions.push(debouncedTryUpdateStatusBarItems, debouncedRefresh, debouncedConfigLoad)
 
-  async function softRefresh() {
-    await updateStatusBarItemInBackground()
-  }
-
-  async function hardRefresh() {
+  async function refresh() {
     bestMatchCache.clear()
-    await updateStatusBarItemInBackground()
+    await tryUpdateStatusBarItems()
   }
 
   type BestMatchResult = { bestMatch: vscode.Uri | undefined }
@@ -52,7 +48,7 @@ export function createRelatedFilesFeature(input: {
     return { bestMatch }
   }
 
-  async function updateStatusBarItemInBackground() {
+  async function tryUpdateStatusBarItems() {
     try {
       bestMatchStatusBarItem.hide()
 
@@ -204,26 +200,26 @@ export function createRelatedFilesFeature(input: {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('search.exclude') || event.affectsConfiguration('files.exclude')) {
-        scheduleHardRefresh.schedule()
+        debouncedRefresh.schedule()
       }
 
       if (event.affectsConfiguration('streamline.relatedFiles')) {
-        if (!config.isSavingInBackground) {
-          scheduleConfigLoad.schedule()
+        if (!config.isSaving) {
+          debouncedConfigLoad.schedule()
         }
       }
     }),
     // Reload "Related files" panel when currently opened file changes
-    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh.schedule()),
+    vscode.window.onDidChangeActiveTextEditor(() => debouncedTryUpdateStatusBarItems.schedule()),
     // Refresh when window state changes (e.g. focused, minimized)
-    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh.schedule()),
+    vscode.window.onDidChangeWindowState(() => debouncedTryUpdateStatusBarItems.schedule()),
     // Clear files cache when files are created/deleted/renamed
-    vscode.workspace.onDidCreateFiles(() => scheduleHardRefresh.schedule()),
-    vscode.workspace.onDidDeleteFiles(() => scheduleHardRefresh.schedule()),
-    vscode.workspace.onDidRenameFiles(() => scheduleHardRefresh.schedule()),
+    vscode.workspace.onDidCreateFiles(() => debouncedRefresh.schedule()),
+    vscode.workspace.onDidDeleteFiles(() => debouncedRefresh.schedule()),
+    vscode.workspace.onDidRenameFiles(() => debouncedRefresh.schedule()),
     // Clear files cache when workspace folders are added, renamed or deleted
-    vscode.workspace.onDidChangeWorkspaceFolders(() => scheduleHardRefresh.schedule()),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => debouncedRefresh.schedule()),
   )
 
-  updateStatusBarItemInBackground()
+  debouncedRefresh.schedule()
 }

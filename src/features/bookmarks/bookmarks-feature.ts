@@ -43,39 +43,24 @@ export function createBookmarksFeature(input: {
 
   context.subscriptions.push(bookmarksTreeView)
 
-  const debouncedHandleConfigChanged = createDebouncedFunction(async () => {
+  const debouncedConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
-
-    // Update cache
-    cache.update()
-
-    // Update UI
-    bookmarksTreeDataProvider.refresh()
-    await tryUpdateContext()
+    await refresh()
   }, 500)
 
-  const debouncedRefresh = createDebouncedFunction(async () => {
-    // Update cache
-    cache.update()
+  const debouncedRefresh = createDebouncedFunction(() => refresh(), 250)
 
-    // Update UI
-    bookmarksTreeDataProvider.refresh()
-    await tryUpdateContext()
-  }, 250)
-
-  context.subscriptions.push(debouncedHandleConfigChanged)
+  context.subscriptions.push(debouncedConfigLoad)
 
   async function saveAndRefresh() {
-    // Save config
-    await Promise.all([
-      workspaceState.save(),
-      config.saveInBackground(),
-    ])
+    await Promise.all([workspaceState.save(), config.saveInQueue()])
 
-    // Update cache
+    await refresh()
+  }
+
+  async function refresh() {
     cache.update()
 
-    // Update UI
     bookmarksTreeDataProvider.refresh()
     await tryUpdateContext()
   }
@@ -650,12 +635,16 @@ export function createBookmarksFeature(input: {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.bookmarks')) {
-        if (!config.isSavingInBackground) {
-          debouncedHandleConfigChanged.schedule()
+        if (!config.isSaving) {
+          debouncedConfigLoad.schedule()
         }
       }
     }),
-    vscode.window.onDidChangeActiveTextEditor(() => tryUpdateContext()),
+    // Soft refresh when switching active editor
+    vscode.window.onDidChangeActiveTextEditor(async () => {
+      bookmarksTreeDataProvider.refresh()
+      await tryUpdateContext()
+    }),
     // Update bookmarks when corresponding files are renamed or moved
     vscode.workspace.onDidRenameFiles(async (event) => {
       const oldPathNewUriMap = new Map(event.files.map(file => [file.oldUri.path, file.newUri]))

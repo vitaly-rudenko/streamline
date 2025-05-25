@@ -29,18 +29,15 @@ export function createQuickReplFeature(input: {
   const homedir = os.homedir()
   const config = new QuickReplConfig()
 
-  const debouncedHandleConfigChanged = createDebouncedFunction(async () => {
+  const debouncedConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
-
-    quickReplTreeDataProvider.refresh()
-    await tryUpdateContext()
+    await refresh()
   }, 500)
 
-  const debouncedTryUpdateContext = createDebouncedFunction(async () => {
-    await tryUpdateContext()
-  }, 500)
+  const debouncedRefresh = createDebouncedFunction(() => refresh(), 250)
+  const debouncedTryUpdateContext = createDebouncedFunction(() => tryUpdateContext(), 500)
 
-  context.subscriptions.push(debouncedHandleConfigChanged, debouncedTryUpdateContext)
+  context.subscriptions.push(debouncedConfigLoad, debouncedTryUpdateContext, debouncedRefresh)
 
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable, homedir)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
@@ -53,7 +50,8 @@ export function createQuickReplFeature(input: {
   context.subscriptions.push(quickReplTreeView)
 
   async function saveAndRefresh() {
-    await config.saveInBackground()
+    await config.saveInQueue()
+
     await refresh()
   }
 
@@ -82,8 +80,7 @@ export function createQuickReplFeature(input: {
   // Whether file or folder is runnable (used in context and view)
   function isRunnable(input: GenerateConditionContextInput): boolean {
     const conditionContext = generateConditionContext(input)
-    return config.getCommands()
-      .some(command => !command.when || testWhen(conditionContext, command.when))
+    return config.getCommands().some(command => !command.when || testWhen(conditionContext, command.when))
   }
 
   // Update context to show/hide "Run" command for active text editor
@@ -92,7 +89,7 @@ export function createQuickReplFeature(input: {
       await vscode.commands.executeCommand(
         'setContext',
         'streamline.quickRepl.isActiveTextEditorRunnable',
-        vscode.window.activeTextEditor && isRunnable(vscode.window.activeTextEditor)
+        vscode.window.activeTextEditor ? isRunnable(vscode.window.activeTextEditor) : false
       )
     } catch (error) {
       console.warn('[QuickRepl] Could not update context', error)
@@ -204,6 +201,7 @@ export function createQuickReplFeature(input: {
 
     console.debug('streamline.quickRepl.run', { terminalName, terminalCwd, terminalIconPath, terminalColor })
 
+    // If terminals with the same name, icon, color and cwd already exist, reuse it
     const existingTerminal = vscode.window.terminals
       .find(t => (
         t.creationOptions.name === terminalName
@@ -230,6 +228,10 @@ export function createQuickReplFeature(input: {
     )
 
     console.debug('streamline.quickRepl.run', { terminal })
+
+    // Small quality-of-life improvement to refresh the tree view after running a command
+    // Can be useful if script creates or modifies files
+    setTimeout(() => refresh(), 1000)
   })
 
   // For Command Palette (Cmd+P)
@@ -425,8 +427,8 @@ export function createQuickReplFeature(input: {
   }
 
   // Delete file or folder
-  registerCommand('streamline.quickRepl.delete', async (arg: unknown, alernativeArg: unknown) => {
-    const args = Array.isArray(alernativeArg) ? alernativeArg : [arg]
+  registerCommand('streamline.quickRepl.delete', async (arg: unknown, alternativeArg: unknown) => {
+    const args = Array.isArray(alternativeArg) ? alternativeArg : [arg]
     const treeItems = args.filter(arg => arg instanceof FileTreeItem || arg instanceof FolderTreeItem)
     if (treeItems.length === 0) return
 
@@ -623,24 +625,24 @@ export function createQuickReplFeature(input: {
 
   // Duplicate file or folder
   registerCommand('streamline.quickRepl.duplicate', async (argument: unknown) => {
-    if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
-      const originalBasename = basename(argument.uri.path)
-      const copyBasename = await vscode.window.showInputBox({
-        placeHolder: originalBasename,
-        value: originalBasename,
-      })
-      if (!copyBasename) return
-      if (copyBasename === originalBasename) {
-        vscode.window.showWarningMessage('Please provide a different name')
-        await vscode.commands.executeCommand('streamline.quickRepl.duplicate', argument)
-        return
-      }
+    if (!(argument instanceof FileTreeItem) && !(argument instanceof FolderTreeItem)) return
 
-      const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
-      await vscode.workspace.fs.copy(argument.uri, vscode.Uri.joinPath(directoryUri, copyBasename), { overwrite: false })
-
-      await refresh()
+    const originalBasename = basename(argument.uri.path)
+    const copyBasename = await vscode.window.showInputBox({
+      placeHolder: originalBasename,
+      value: originalBasename,
+    })
+    if (!copyBasename) return
+    if (copyBasename === originalBasename) {
+      vscode.window.showWarningMessage('Please provide a different name')
+      await vscode.commands.executeCommand('streamline.quickRepl.duplicate', argument)
+      return
     }
+
+    const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
+    await vscode.workspace.fs.copy(argument.uri, vscode.Uri.joinPath(directoryUri, copyBasename), { overwrite: false })
+
+    await refresh()
   })
 
   // Rename file or folder
@@ -668,53 +670,53 @@ export function createQuickReplFeature(input: {
 
   // Open folder in terminal
   registerCommand('streamline.quickRepl.openFolderInTerminal', async (argument: unknown) => {
-    if (argument instanceof FolderTreeItem) {
-      const terminalName = generateTerminalName({ path: argument.uri.path })
-      const terminal = vscode.window.createTerminal({
-        name: terminalName,
-        iconPath: new vscode.ThemeIcon('play'),
-        cwd: argument.uri,
-      })
+    if (!(argument instanceof FolderTreeItem)) return
 
-      terminal.show()
-    }
+    const terminalName = generateTerminalName({ path: argument.uri.path })
+    const terminal = vscode.window.createTerminal({
+      name: terminalName,
+      iconPath: new vscode.ThemeIcon('play'),
+      cwd: argument.uri,
+    })
+
+    terminal.show()
   })
 
   // Create template from a folder
   registerCommand('streamline.quickRepl.createTemplateFromFolder', async (argument: unknown) => {
-    if (argument instanceof FolderTreeItem) {
-      const templateName = await vscode.window.showInputBox({
-        value: basename(argument.uri.path),
-        placeHolder: 'Enter template name',
-      })
-      if (!templateName) return
+    if (!(argument instanceof FolderTreeItem)) return
 
-      if (config.getTemplates().some(template => template.name === templateName)) {
-        vscode.window.showWarningMessage(`Template with name "${templateName}" already exists`)
-        await vscode.commands.executeCommand('streamline.quickRepl.createTemplateFromFolder', argument)
-        return
-      }
+    const templateName = await vscode.window.showInputBox({
+      value: basename(argument.uri.path),
+      placeHolder: 'Enter template name',
+    })
+    if (!templateName) return
 
-      const replsPath = getReplsPathOrFail()
-      const templatePath = argument.uri.path
-      const templateTemplatePath = templatePath.startsWith(replsPath + '/')
-        ? ('$replsPath' + templatePath.slice(replsPath.length))
-        : templatePath
-
-      const template: Template = {
-        name: templateName,
-        type: 'directory',
-        defaultPath: '$replsPath/$datetime_$randomAdjective_$randomNoun',
-        template: {
-          path: templateTemplatePath,
-        }
-      }
-
-      config.setTemplates([...config.getTemplates(), template])
-      await saveAndRefresh()
-
-      vscode.window.showInformationMessage(`Template "${templateName}" has been created`)
+    if (config.getTemplates().some(template => template.name === templateName)) {
+      vscode.window.showWarningMessage(`Template with name "${templateName}" already exists`)
+      await vscode.commands.executeCommand('streamline.quickRepl.createTemplateFromFolder', argument)
+      return
     }
+
+    const replsPath = getReplsPathOrFail()
+    const templatePath = argument.uri.path
+    const templateTemplatePath = templatePath.startsWith(replsPath + '/')
+      ? ('$replsPath' + templatePath.slice(replsPath.length))
+      : templatePath
+
+    const template: Template = {
+      name: templateName,
+      type: 'directory',
+      defaultPath: '$replsPath/$datetime_$randomAdjective_$randomNoun',
+      template: {
+        path: templateTemplatePath,
+      }
+    }
+
+    config.setTemplates([...config.getTemplates(), template])
+    await saveAndRefresh()
+
+    vscode.window.showInformationMessage(`Template "${templateName}" was created`)
   })
 
   // Quickly save current file to the repls folder
@@ -747,19 +749,15 @@ export function createQuickReplFeature(input: {
     await vscode.window.showTextDocument(fileUri, { preview: false, selection: activeTextEditor.selection })
   })
 
-  // Continuously update context, because not all events can be reliably detected
-  const scheduleContinuousSoftRefresh = createContinuousFunction(
-    () => tryUpdateContext(),
-    { minMs: 500, maxMs: 5000 }
-  )
-  context.subscriptions.push(scheduleContinuousSoftRefresh)
-  scheduleContinuousSoftRefresh.schedule()
+  // Continuously update context, because not all VS Code events can be reliably detected
+  const continuousTryContextUpdate = createContinuousFunction(() => tryUpdateContext(), { minMs: 1000, maxMs: 5000 })
+  context.subscriptions.push(continuousTryContextUpdate)
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.quickRepl')) {
-        if (!config.isSavingInBackground) {
-          debouncedHandleConfigChanged.schedule()
+        if (!config.isSaving) {
+          debouncedConfigLoad.schedule()
         }
       }
     }),
@@ -770,5 +768,6 @@ export function createQuickReplFeature(input: {
     vscode.window.onDidChangeTextEditorSelection(() => debouncedTryUpdateContext.schedule()),
   )
 
-  refresh()
+  debouncedRefresh.schedule()
+  continuousTryContextUpdate.schedule()
 }

@@ -28,12 +28,12 @@ const APPLY_WORKSPACE_FOLDERS_COOLDOWN_MS = 3000
  * - "Note: it is not valid to call updateWorkspaceFolders() multiple times without waiting for the onDidChangeWorkspaceFolders() to fire."
  */
 export function createScopedPathsFeature(input: {
+  dynamicScopeProviders: DynamicScopeProvider[]
   context: vscode.ExtensionContext
   registerCommand: RegisterCommand
   onChange: () => unknown
-  dynamicScopeProviders: DynamicScopeProvider[]
 }) {
-  const { context, registerCommand, onChange, dynamicScopeProviders } = input
+  const { dynamicScopeProviders, context, registerCommand, onChange } = input
 
   // Quick Scope
   dynamicScopeProviders.push({
@@ -42,9 +42,7 @@ export function createScopedPathsFeature(input: {
     isScopeMatching: (scope) => isQuickScope(scope),
     getScopedAndExcludedPaths: ({ currentScope: scope }) => [scope.slice(1)],
     getScopes: () => getCurrentWorkspaceFoldersSnapshot().map(wf => generateQuickScope(wf.name)),
-    subscribe: (callback) => {
-      context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => callback()))
-    }
+    subscribe: (callback) => context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => callback()))
   })
 
   const textStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 2)
@@ -71,46 +69,28 @@ export function createScopedPathsFeature(input: {
 
   const directoryReader = new CachedDirectoryReader()
 
-  const debouncedHandleConfigChanged = createDebouncedFunction(async () => {
+  const debouncedConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
-
-    cache.update()
-
-    updateStatusBarItems()
-    await tryUpdateContext()
-
-    directoryReader.clearCache()
-    await tryUpdateExcludes()
+    await refresh()
   }, 500)
 
-  const debouncedRefresh = createDebouncedFunction(async () => {
-    cache.update()
+  // Slow because Scoped Paths is a heavy feature
+  const debouncedRefresh = createDebouncedFunction(async () => refresh(), 500)
 
-    updateStatusBarItems()
-    await tryUpdateContext()
+  context.subscriptions.push(debouncedConfigLoad, debouncedRefresh)
 
-    directoryReader.clearCache()
-    await tryUpdateExcludes()
-  }, 500) // slower because Scoped Paths is a heavy feature
-
-  context.subscriptions.push(debouncedHandleConfigChanged, debouncedRefresh)
-
-  /** Save configs, then update cache, status bar items, context and excludes */
   async function saveAndRefresh() {
-    // Save config
-    await Promise.all([
-      workspaceState.save(),
-      config.saveInBackground(),
-    ])
+    await Promise.all([workspaceState.save(), config.saveInQueue()])
 
-    // Update cache
+    await refresh()
+  }
+
+  async function refresh() {
     cache.update()
 
-    // Update UI
     updateStatusBarItems()
     await tryUpdateContext()
 
-    // Update excludes
     directoryReader.clearCache()
     await tryUpdateExcludes()
   }
@@ -649,8 +629,8 @@ export function createScopedPathsFeature(input: {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.scopedPaths')) {
-        if (!config.isSavingInBackground) {
-          debouncedHandleConfigChanged.schedule()
+        if (!config.isSaving) {
+          debouncedConfigLoad.schedule()
         }
       }
     }),
@@ -662,7 +642,7 @@ export function createScopedPathsFeature(input: {
       await saveCurrentWorkspaceFoldersSnapshot()
       debouncedRefresh.schedule()
     }),
-    // 
+    // Disable Quick Scope when new unscoped file is opened
     vscode.window.onDidChangeVisibleTextEditors(async () => {
       const quickUnscopePathsSnapshot = workspaceState.getQuickUnscopePathsSnapshot()
       if (quickUnscopePathsSnapshot === undefined) return
@@ -683,28 +663,28 @@ export function createScopedPathsFeature(input: {
     }),
   )
 
-  debouncedRefresh.schedule()
-
   // When workspace folders are modified, the extension is re-activated (activate() is called again)
   // And there seems to be an issue with async operations which leaves the context in invalid state
   // (e.g. Current Scope is shown as enabled, even though it's not in reality)
   // This is a workaround that refreshes status bar items and context continuously, faster initially
   // Only lightweight operations are allowed here to avoid performance issues
-  const scheduleContinuousSoftRefresh = createContinuousFunction(
+  const continuousUpdateUi = createContinuousFunction(
     async () => {
       updateStatusBarItems()
       await tryUpdateContext()
     },
     { minMs: 50, maxMs: 5000 }
   )
-  context.subscriptions.push(scheduleContinuousSoftRefresh)
-  scheduleContinuousSoftRefresh.schedule()
+  context.subscriptions.push(continuousUpdateUi)
 
   for (const dynamicScopeProvider of dynamicScopeProviders) {
     if (dynamicScopeProvider.subscribe) {
       dynamicScopeProvider.subscribe(() => debouncedRefresh.schedule())
     }
   }
+
+  debouncedRefresh.schedule()
+  continuousUpdateUi.schedule()
 
   return {
     isScopeEnabled() {
