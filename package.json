@@ -590,6 +590,7 @@
         },
         {
           "command": "streamline.scopedPaths.disableScope",
+          "alt": "streamline.scopedPaths.enableQuickUnscope",
           "group": "navigation@1",
           "when": "view == 'workbench.explorer.fileView' && streamline.scopedPaths.enabled"
         },
@@ -840,6 +841,7 @@
         },
         {
           "command": "streamline.relatedFiles.quickOpen",
+          "alt": "streamline.relatedFiles.openBestMatchToSide",
           "when": "resourceScheme == file",
           "group": "navigation@3"
         },
