@@ -476,7 +476,7 @@ export function createScopedPathsFeature(input: {
         scope,
         ...!dynamicScopeProvider && {
           buttons: [
-            { iconPath: duplicateThemeIcon, tooltip: 'Duplicate' },
+            { iconPath: duplicateThemeIcon, tooltip: 'Duplicate...' },
             { iconPath: renameThemeIcon, tooltip: 'Rename...' },
             { iconPath: clearThemeIcon, tooltip: 'Clear' },
             { iconPath: deleteThemeIcon, tooltip: 'Delete' },

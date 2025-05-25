@@ -9,8 +9,9 @@
   - A new path was added to the Current Scope
   - Current Scope has been re-enabled manually
 - Dynamic Scopes (such as Quick Scopes and Bookmarks Scope) can now be modified, which creates an editable copy
+- Added "Duplicate..." button in "Scoped Paths: Change Current Scope..." menu
 
-> Quick Unscope resets when Current Scope changes, or when Quick Scope is used, or when "Streamline: Disable Current Scope" command is executed.
+> Quick Unscope resets automatically when Current Scope changes, or when Quick Scope is used, or when "Streamline: Disable Current Scope" command is executed.
 
 ## 0.52
 
