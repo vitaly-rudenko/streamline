@@ -75,7 +75,7 @@ export function createScopedPathsFeature(input: {
   }, 500)
 
   // Slow because Scoped Paths is a heavy feature
-  const debouncedRefresh = createDebouncedFunction(async () => refresh(), 500)
+  const debouncedRefresh = createDebouncedFunction(() => refresh(), 500)
 
   context.subscriptions.push(debouncedConfigLoad, debouncedRefresh)
 
@@ -89,10 +89,10 @@ export function createScopedPathsFeature(input: {
     cache.update()
 
     updateStatusBarItems()
-    await tryUpdateContext()
+    await updateContext()
 
     directoryReader.clearCache()
-    await tryUpdateExcludes()
+    await updateExcludes()
   }
 
   /** Whether current scope is NOT provided by a DynamicScopeProvider */
@@ -151,7 +151,7 @@ export function createScopedPathsFeature(input: {
   }
 
   /** Updates "files.exclude" configuration based on the currently 'scoped paths' & 'excluded paths' */
-  async function tryUpdateExcludes() {
+  async function updateExcludes() {
     if (!vscode.workspace.workspaceFolders) return // Do nothing when no workspace is opened
 
     try {
@@ -293,7 +293,7 @@ export function createScopedPathsFeature(input: {
       })
   }
 
-  async function tryUpdateContext() {
+  async function updateContext() {
     try {
       await Promise.all([
         vscode.commands.executeCommand('setContext', 'streamline.scopedPaths.enabled', workspaceState.getEnabled()),
@@ -687,14 +687,14 @@ export function createScopedPathsFeature(input: {
   // (e.g. Current Scope is shown as enabled, even though it's not in reality)
   // This is a workaround that refreshes status bar items and context continuously, faster initially
   // Only lightweight operations are allowed here to avoid performance issues
-  const continuousUpdateUi = createContinuousFunction(
+  const continuousUiUpdate = createContinuousFunction(
     async () => {
       updateStatusBarItems()
-      await tryUpdateContext()
+      await updateContext()
     },
     { minMs: 50, maxMs: 5000 }
   )
-  context.subscriptions.push(continuousUpdateUi)
+  context.subscriptions.push(continuousUiUpdate)
 
   for (const dynamicScopeProvider of dynamicScopeProviders) {
     if (dynamicScopeProvider.subscribe) {
@@ -703,7 +703,7 @@ export function createScopedPathsFeature(input: {
   }
 
   debouncedRefresh.schedule()
-  continuousUpdateUi.schedule()
+  continuousUiUpdate.schedule()
 
   return {
     isScopeEnabled() {

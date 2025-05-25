@@ -62,10 +62,10 @@ export function createBookmarksFeature(input: {
     cache.update()
 
     bookmarksTreeDataProvider.refresh()
-    await tryUpdateContext()
+    await updateContext()
   }
 
-  async function tryUpdateContext() {
+  async function updateContext() {
     try {
       const isActiveTextEditorBookmarked = vscode.window.activeTextEditor
         ? cache.getCachedBookmarkedPathsInCurrentBookmarksListSet().has(vscode.window.activeTextEditor.document.uri.path)
@@ -643,7 +643,7 @@ export function createBookmarksFeature(input: {
     // Soft refresh when switching active editor
     vscode.window.onDidChangeActiveTextEditor(async () => {
       bookmarksTreeDataProvider.refresh()
-      await tryUpdateContext()
+      await updateContext()
     }),
     // Update bookmarks when corresponding files are renamed or moved
     vscode.workspace.onDidRenameFiles(async (event) => {

@@ -35,9 +35,9 @@ export function createQuickReplFeature(input: {
   }, 500)
 
   const debouncedRefresh = createDebouncedFunction(() => refresh(), 250)
-  const debouncedTryUpdateContext = createDebouncedFunction(() => tryUpdateContext(), 500)
+  const debouncedUpdateContext = createDebouncedFunction(() => updateContext(), 500)
 
-  context.subscriptions.push(debouncedConfigLoad, debouncedTryUpdateContext, debouncedRefresh)
+  context.subscriptions.push(debouncedConfigLoad, debouncedUpdateContext, debouncedRefresh)
 
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable, homedir)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
@@ -57,7 +57,7 @@ export function createQuickReplFeature(input: {
 
   async function refresh() {
     quickReplTreeDataProvider.refresh()
-    await tryUpdateContext()
+    await updateContext()
   }
 
   function getReplsPathOrFail() {
@@ -84,7 +84,7 @@ export function createQuickReplFeature(input: {
   }
 
   // Update context to show/hide "Run" command for active text editor
-  async function tryUpdateContext() {
+  async function updateContext() {
     try {
       await vscode.commands.executeCommand(
         'setContext',
@@ -750,8 +750,8 @@ export function createQuickReplFeature(input: {
   })
 
   // Continuously update context, because not all VS Code events can be reliably detected
-  const continuousTryContextUpdate = createContinuousFunction(() => tryUpdateContext(), { minMs: 1000, maxMs: 5000 })
-  context.subscriptions.push(continuousTryContextUpdate)
+  const continuousContextUpdate = createContinuousFunction(() => updateContext(), { minMs: 1000, maxMs: 5000 })
+  context.subscriptions.push(continuousContextUpdate)
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
@@ -762,12 +762,12 @@ export function createQuickReplFeature(input: {
       }
     }),
     // Note: Not triggered when file language changes (manually or by VS Code)
-    vscode.window.onDidChangeActiveTextEditor(() => tryUpdateContext()),
-    vscode.window.onDidChangeTextEditorOptions(() => tryUpdateContext()),
+    vscode.window.onDidChangeActiveTextEditor(() => updateContext()),
+    vscode.window.onDidChangeTextEditorOptions(() => updateContext()),
     // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => debouncedTryUpdateContext.schedule()),
+    vscode.window.onDidChangeTextEditorSelection(() => debouncedUpdateContext.schedule()),
   )
 
   debouncedRefresh.schedule()
-  continuousTryContextUpdate.schedule()
+  continuousContextUpdate.schedule()
 }

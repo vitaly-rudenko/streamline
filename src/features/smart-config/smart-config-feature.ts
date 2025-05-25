@@ -50,7 +50,7 @@ export function createSmartConfigFeature(input: {
     clearCache()
 
     updateStatusBarItems()
-    await tryApplyMatchingConfigs()
+    await applyMatchingConfigs()
   }
 
   function clearCache() {
@@ -98,7 +98,7 @@ export function createSmartConfigFeature(input: {
   }
 
   /** Applies matching configs for each configuration target */
-  async function tryApplyMatchingConfigs() {
+  async function applyMatchingConfigs() {
     try {
       const conditionContext = generateConditionContext(vscode.window.activeTextEditor)
       const matchingConfigNames = getMatchingConfigNames(conditionContext, config.getMergedRules(), config.getMergedToggles())
@@ -199,7 +199,7 @@ export function createSmartConfigFeature(input: {
   const continuousCachedRefresh = createContinuousFunction(
     async () => {
       updateStatusBarItems()
-      await tryApplyMatchingConfigs()
+      await applyMatchingConfigs()
     },
     { minMs: 1000, maxMs: 5000 }
   )

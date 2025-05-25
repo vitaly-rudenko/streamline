@@ -21,18 +21,18 @@ export function createRelatedFilesFeature(input: {
   bestMatchStatusBarItem.tooltip = 'Open Best Match to Side'
   bestMatchStatusBarItem.hide()
 
-  const debouncedTryUpdateStatusBarItems = createDebouncedFunction(() => tryUpdateStatusBarItems(), 50)
+  const debouncedUpdateStatusBarItems = createDebouncedFunction(() => updateStatusBarItems(), 50)
   const debouncedRefresh = createDebouncedFunction(() => refresh(), 250)
   const debouncedConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
     await refresh()
   }, 500)
 
-  context.subscriptions.push(debouncedTryUpdateStatusBarItems, debouncedRefresh, debouncedConfigLoad)
+  context.subscriptions.push(debouncedUpdateStatusBarItems, debouncedRefresh, debouncedConfigLoad)
 
   async function refresh() {
     bestMatchCache.clear()
-    await tryUpdateStatusBarItems()
+    await updateStatusBarItems()
   }
 
   type BestMatchResult = { bestMatch: vscode.Uri | undefined }
@@ -48,7 +48,7 @@ export function createRelatedFilesFeature(input: {
     return { bestMatch }
   }
 
-  async function tryUpdateStatusBarItems() {
+  async function updateStatusBarItems() {
     try {
       bestMatchStatusBarItem.hide()
 
@@ -210,9 +210,9 @@ export function createRelatedFilesFeature(input: {
       }
     }),
     // Reload "Related files" panel when currently opened file changes
-    vscode.window.onDidChangeActiveTextEditor(() => debouncedTryUpdateStatusBarItems.schedule()),
+    vscode.window.onDidChangeActiveTextEditor(() => debouncedUpdateStatusBarItems.schedule()),
     // Refresh when window state changes (e.g. focused, minimized)
-    vscode.window.onDidChangeWindowState(() => debouncedTryUpdateStatusBarItems.schedule()),
+    vscode.window.onDidChangeWindowState(() => debouncedUpdateStatusBarItems.schedule()),
     // Clear files cache when files are created/deleted/renamed
     vscode.workspace.onDidCreateFiles(() => debouncedRefresh.schedule()),
     vscode.workspace.onDidDeleteFiles(() => debouncedRefresh.schedule()),
