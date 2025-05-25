@@ -1,17 +1,14 @@
 import * as vscode from 'vscode'
 import { RegisterCommand } from '../../register-command'
-
-type Highlight = {
-  uri: vscode.Uri
-  range: vscode.Range
-  type: 'selection' | 'line'
-}
+import { Highlight } from './common'
+import { DynamicHighlightsProvider } from './dynamic-highlights-provider'
 
 export function createHighlightsFeature(input: {
   context: vscode.ExtensionContext
   registerCommand: RegisterCommand
+  dynamicHighlightsProviders: DynamicHighlightsProvider[]
 }) {
-  const { context, registerCommand } = input
+  const { context, registerCommand, dynamicHighlightsProviders } = input
 
   let highlights: Highlight[] = []
 
@@ -24,6 +21,11 @@ export function createHighlightsFeature(input: {
   const selectionDecoration = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(67, 222, 239, 0.15)',
     overviewRulerColor: 'rgba(67, 222, 239, 0.15)',
+  })
+
+  const dynamicDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: 'rgba(239, 133, 67, 0.15)',
+    overviewRulerColor: 'rgba(239, 133, 67, 0.15)',
   })
 
   function updateDecorations() {
@@ -44,6 +46,14 @@ export function createHighlightsFeature(input: {
         .filter(highlight => highlight.type === 'selection')
         .filter(highlight => highlight.uri.path === activeTextEditor.document.uri.path)
         .map(highlight => highlight.range)
+    )
+
+    const dynamicHighlights = dynamicHighlightsProviders
+      .flatMap(dynamicHighlightsProvider => dynamicHighlightsProvider.getHighlights(activeTextEditor.document.uri))
+
+    activeTextEditor.setDecorations(
+      dynamicDecoration,
+      mergeHighlights(dynamicHighlights).map(highlight => highlight.range)
     )
   }
 
@@ -66,10 +76,11 @@ export function createHighlightsFeature(input: {
     }
   }
 
+  // TODO: Make non-mutable
   /** Recursively merge intersecting highlights */
-  function mergeHighlights() {
-    for (const [i, highlight1] of highlights.entries()) {
-      for (const [j, highlight2] of highlights.entries()) {
+  function mergeHighlights(source = highlights) {
+    for (const [i, highlight1] of source.entries()) {
+      for (const [j, highlight2] of source.entries()) {
         if (i === j) continue
         if (highlight1.type !== highlight2.type) continue
 
@@ -85,12 +96,14 @@ export function createHighlightsFeature(input: {
             ? highlight1.range.end
             : highlight2.range.end
 
-          highlights[i].range = new vscode.Range(start, end)
-          highlights.splice(j, 1)
-          return mergeHighlights()
+          source[i].range = new vscode.Range(start, end)
+          source.splice(j, 1)
+          return mergeHighlights(source)
         }
       }
     }
+
+    return source
   }
 
   registerCommand('streamline.highlights.addSelection', async () => {
@@ -174,6 +187,16 @@ export function createHighlightsFeature(input: {
       await updateContext()
     }),
   )
+
+  console.log({ dynamicHighlightsProviders })
+  for (const dynamicHighlightsProvider of dynamicHighlightsProviders) {
+    if (dynamicHighlightsProvider.subscribe) {
+      dynamicHighlightsProvider.subscribe(async () => {
+        updateDecorations()
+        await updateContext()
+      })
+    }
+  }
 
   updateContext()
   updateDecorations()

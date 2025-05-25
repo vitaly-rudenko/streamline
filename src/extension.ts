@@ -13,6 +13,7 @@ import { GenerateConditionContextInput } from './generate-condition-context'
 import { DynamicScopeProvider } from './features/scoped-paths/dynamic-scope-provider'
 import { uriToPath } from './utils/uri-to-path'
 import { createHighlightsFeature } from './features/highlights/highlights-feature'
+import { DynamicHighlightsProvider } from './features/highlights/dynamic-highlights-provider'
 
 const featureSchema = z.enum([
   'bookmarks',
@@ -86,6 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
   let smartConfigFeature: ReturnType<typeof createSmartConfigFeature> | undefined
   let scopedPathsFeature: ReturnType<typeof createScopedPathsFeature> | undefined
   let bookmarksFeature: ReturnType<typeof createBookmarksFeature> | undefined
+  let highlightsFeature: ReturnType<typeof createHighlightsFeature> | undefined
 
 	highlightedPathsFeature = isFeatureEnabled('highlightedPaths')
 		? createHighlightedPathsFeature({
@@ -116,6 +118,8 @@ export function activate(context: vscode.ExtensionContext) {
     : undefined
 
   const dynamicScopeProviders: DynamicScopeProvider[] = []
+  const dynamicHighlightsProviders: DynamicHighlightsProvider[] = []
+
   if (bookmarksFeature) {
     dynamicScopeProviders.push({
       name: 'Bookmarks',
@@ -126,6 +130,21 @@ export function activate(context: vscode.ExtensionContext) {
         bookmarksFeature.getCachedBookmarksInCurrentBookmarksList()
           .map(b => uriToPath(b.uri))
           .filter((path): path is string => path !== undefined)
+      ),
+      subscribe: (callback: Function) => onDidChangeBookmarksEmitter.event(() => callback())
+    })
+
+    dynamicHighlightsProviders.push({
+      name: 'Bookmarks',
+      getHighlights: (uri) => (
+        bookmarksFeature.getCachedBookmarksInCurrentBookmarksList()
+          .filter(bookmark => bookmark.type === 'selection')
+          .filter(bookmark => bookmark.uri.path === uri.path)
+          .map(bookmark => ({
+            uri,
+            type: 'selection',
+            range: bookmark.selection,
+          }))
       ),
       subscribe: (callback: Function) => onDidChangeBookmarksEmitter.event(() => callback())
     })
@@ -143,10 +162,17 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 		: undefined
 
+  highlightsFeature = isFeatureEnabled('highlights')
+    ? createHighlightsFeature({
+      context,
+      registerCommand,
+      dynamicHighlightsProviders,
+    })
+    : undefined
+
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context, registerCommand })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context, registerCommand })
   if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, registerCommand, generateConditionContext })
-  if (isFeatureEnabled('highlights')) createHighlightsFeature({ context, registerCommand })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
     const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
