@@ -159,6 +159,7 @@
       {
         "command": "streamline.scopedPaths.enableQuickUnscope",
         "title": "Scoped Paths: Quick Unscope",
+        "shortTitle": "Quick Unscope",
         "icon": "$(stop-circle)"
       },
       {
@@ -545,13 +546,18 @@
       ],
       "view/title": [
         {
-          "command": "streamline.scopedPaths.changeCurrentScope",
+          "command": "streamline.scopedPaths.enableQuickUnscope",
           "group": "info@1",
+          "when": "view == 'workbench.explorer.fileView' && streamline.scopedPaths.enabled"
+        },
+        {
+          "command": "streamline.scopedPaths.changeCurrentScope",
+          "group": "info@2",
           "when": "view == 'workbench.explorer.fileView'"
         },
         {
           "command": "streamline.scopedPaths.clearCurrentScope",
-          "group": "info@2",
+          "group": "info@3",
           "when": "view == 'workbench.explorer.fileView'"
         },
         {
