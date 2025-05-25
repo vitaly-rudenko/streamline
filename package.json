@@ -456,36 +456,32 @@
       {
         "command": "streamline.highlights.addSelection",
         "title": "Highlight Selection",
-        "icon": "$(symbol-color)",
-        "category": "Highlights",
-        "enablement": "editor.hasSelection"
+        "icon": "$(selection)",
+        "category": "Highlights"
       },
       {
         "command": "streamline.highlights.addLines",
         "title": "Highlight Lines",
-        "icon": "$(symbol-color)",
+        "icon": "$(selection)",
         "category": "Highlights"
       },
       {
         "command": "streamline.highlights.removeInSelection",
         "title": "Remove Highlights in Selection",
         "icon": "$(trash)",
-        "category": "Highlights",
-        "enablement": "streamline.highlights.hasHighlightInFile"
+        "category": "Highlights"
       },
       {
         "command": "streamline.highlights.removeInFile",
         "title": "Remove All Highlights in File",
         "icon": "$(trash)",
-        "category": "Highlights",
-        "enablement": "streamline.highlights.hasHighlightInFile"
+        "category": "Highlights"
       },
       {
         "command": "streamline.highlights.removeAll",
         "title": "Remove All Highlights in All Files",
         "icon": "$(trash)",
-        "category": "Highlights",
-        "enablement": "streamline.highlights.hasHighlight"
+        "category": "Highlights"
       }
     ],
     "keybindings": [
@@ -899,30 +895,36 @@
       ],
       "editor/title": [
         {
+          "command": "streamline.highlights.addLines",
+          "alt": "streamline.highlights.removeInFile",
+          "when": "resourceScheme == file",
+          "group": "navigation@1"
+        },
+        {
           "command": "streamline.quickRepl.quickSave",
           "when": "streamline.quickRepl.isActiveTextEditorRunnable && resourceScheme == untitled",
-          "group": "navigation@1"
+          "group": "navigation@2"
         },
         {
           "command": "streamline.quickRepl.run",
           "when": "streamline.quickRepl.isActiveTextEditorRunnable",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "streamline.relatedFiles.quickOpen",
           "alt": "streamline.relatedFiles.openBestMatchToSide",
           "when": "resourceScheme == file",
-          "group": "navigation@3"
+          "group": "navigation@4"
         },
         {
           "command": "streamline.bookmarks.addFile",
           "when": "resourceScheme == file && !streamline.bookmarks.isActiveTextEditorBookmarked",
-          "group": "navigation@4"
+          "group": "navigation@5"
         },
         {
           "command": "streamline.bookmarks.deleteFile",
           "when": "resourceScheme == file && streamline.bookmarks.isActiveTextEditorBookmarked",
-          "group": "navigation@4"
+          "group": "navigation@5"
         }
       ]
     },

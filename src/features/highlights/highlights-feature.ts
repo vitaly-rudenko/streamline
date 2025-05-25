@@ -35,7 +35,7 @@ export function createHighlightsFeature(input: {
       highlights
         .filter(highlight => highlight.type === 'line')
         .filter(highlight => highlight.uri.path === activeTextEditor.document.uri.path)
-        .map(highlight => ({ range: highlight.range }))
+        .map(highlight => highlight.range)
     )
 
     activeTextEditor.setDecorations(
@@ -43,7 +43,7 @@ export function createHighlightsFeature(input: {
       highlights
         .filter(highlight => highlight.type === 'selection')
         .filter(highlight => highlight.uri.path === activeTextEditor.document.uri.path)
-        .map(highlight => ({ range: highlight.range }))
+        .map(highlight => highlight.range)
     )
   }
 
@@ -61,8 +61,35 @@ export function createHighlightsFeature(input: {
             : false
         ),
       ])
-    } catch (err) {
-      // TODO: err
+    } catch (error) {
+      console.warn('[Highlights] Could not update context', error)
+    }
+  }
+
+  /** Recursively merge intersecting highlights */
+  function mergeHighlights() {
+    for (const [i, highlight1] of highlights.entries()) {
+      for (const [j, highlight2] of highlights.entries()) {
+        if (i === j) continue
+        if (highlight1.type !== highlight2.type) continue
+
+        if (
+          highlight1.range.contains(highlight2.range) ||
+          highlight2.range.contains(highlight1.range) ||
+          highlight1.range.intersection(highlight2.range) !== undefined
+        ) {
+          const start = highlight1.range.start.isBefore(highlight2.range.start)
+            ? highlight1.range.start
+            : highlight2.range.start
+          const end = highlight1.range.end.isAfter(highlight2.range.end)
+            ? highlight1.range.end
+            : highlight2.range.end
+
+          highlights[i].range = new vscode.Range(start, end)
+          highlights.splice(j, 1)
+          return mergeHighlights()
+        }
+      }
     }
   }
 
@@ -76,11 +103,13 @@ export function createHighlightsFeature(input: {
       range: activeTextEditor.selection,
     })
 
+    mergeHighlights()
+
     updateDecorations()
     await updateContext()
   })
 
-    registerCommand('streamline.highlights.addLines', async () => {
+  registerCommand('streamline.highlights.addLines', async () => {
     const activeTextEditor = vscode.window.activeTextEditor
     if (!activeTextEditor) return
 
@@ -94,6 +123,8 @@ export function createHighlightsFeature(input: {
       uri: activeTextEditor.document.uri,
       range: new vscode.Range(startLine.range.start, endLine.range.end),
     })
+
+    mergeHighlights()
 
     updateDecorations()
     await updateContext()
