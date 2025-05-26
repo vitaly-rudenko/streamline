@@ -5,6 +5,10 @@ import { DynamicHighlightsProvider } from './dynamic-highlights-provider'
 import { formatPaths } from '../../utils/format-paths'
 import { formatSelectionValue } from '../bookmarks/bookmarks-tree-data-provider'
 
+// TODO: More permanent storage (workspaceState)
+// TODO: Debouncing & performance improvements
+// TODO: Color customization
+
 export function createHighlightsFeature(input: {
   context: vscode.ExtensionContext
   registerCommand: RegisterCommand
