@@ -203,10 +203,16 @@ export function createHighlightsFeature(input: {
     }),
     // Sometimes Highlights get unintentionally modified due to changing code inside of them (automatically by VS Code),
     // so we need to refresh decorations to ensure that they match reality
-    vscode.window.onDidChangeTextEditorSelection(() => updateDecorations())
+    vscode.window.onDidChangeTextEditorSelection(() => updateDecorations()),
+    // When Untitled file is closed, we need to remove its Highlights to prevent them from unintentionally transferring
+    // to a new Untitled file with the same name (path)
+    vscode.workspace.onDidCloseTextDocument((textDocument) => {
+      if (textDocument.uri.scheme === 'untitled') {
+        highlights = highlights.filter(highlight => highlight.uri.path !== textDocument.uri.path)
+      }
+    })
   )
 
-  console.log({ dynamicHighlightsProviders })
   for (const dynamicHighlightsProvider of dynamicHighlightsProviders) {
     if (dynamicHighlightsProvider.subscribe) {
       dynamicHighlightsProvider.subscribe(async () => {
