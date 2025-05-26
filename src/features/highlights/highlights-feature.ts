@@ -13,28 +13,28 @@ export function createHighlightsFeature(input: {
   let highlights: Highlight[] = []
 
   const lineDecoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: 'rgba(67, 222, 239, 0.15)',
-    overviewRulerColor: 'rgba(67, 222, 239, 0.15)',
+    backgroundColor: 'rgba(67, 222, 239, 0.1)',
+    overviewRulerColor: 'rgba(67, 222, 239, 0.1)',
     rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
     isWholeLine: true,
   })
 
   const selectionDecoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: 'rgba(67, 222, 239, 0.15)',
-    overviewRulerColor: 'rgba(67, 222, 239, 0.15)',
+    backgroundColor: 'rgba(67, 222, 239, 0.1)',
+    overviewRulerColor: 'rgba(67, 222, 239, 0.1)',
     rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
   })
 
   const dynamicLineDecoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: 'rgba(239, 133, 67, 0.15)',
-    overviewRulerColor: 'rgba(239, 133, 67, 0.15)',
+    backgroundColor: 'rgba(239, 133, 67, 0.1)',
+    overviewRulerColor: 'rgba(239, 133, 67, 0.1)',
     rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
     isWholeLine: true,
   })
 
   const dynamicSelectionDecoration = vscode.window.createTextEditorDecorationType({
-    backgroundColor: 'rgba(239, 133, 67, 0.15)',
-    overviewRulerColor: 'rgba(239, 133, 67, 0.15)',
+    backgroundColor: 'rgba(239, 133, 67, 0.1)',
+    overviewRulerColor: 'rgba(239, 133, 67, 0.1)',
     rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
   })
 
