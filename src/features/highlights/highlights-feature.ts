@@ -15,12 +15,14 @@ export function createHighlightsFeature(input: {
   const lineDecoration = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(67, 222, 239, 0.15)',
     overviewRulerColor: 'rgba(67, 222, 239, 0.15)',
+    rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
     isWholeLine: true,
   })
 
   const selectionDecoration = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(67, 222, 239, 0.15)',
     overviewRulerColor: 'rgba(67, 222, 239, 0.15)',
+    rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
   })
 
   const dynamicLineDecoration = vscode.window.createTextEditorDecorationType({
@@ -199,6 +201,9 @@ export function createHighlightsFeature(input: {
       updateDecorations()
       await updateContext()
     }),
+    // Sometimes Highlights get unintentionally modified due to changing code inside of them (automatically by VS Code),
+    // so we need to refresh decorations to ensure that they match reality
+    vscode.window.onDidChangeTextEditorSelection(() => updateDecorations())
   )
 
   console.log({ dynamicHighlightsProviders })
