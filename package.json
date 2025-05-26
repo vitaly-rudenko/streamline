@@ -897,7 +897,7 @@
         {
           "command": "streamline.highlights.addLines",
           "alt": "streamline.highlights.removeInFile",
-          "when": "resourceScheme =~ /^untitled$|^file$/",
+          "when": "resourceScheme =~ /^untitled$|^file$|^vscode-userdata$/",
           "group": "navigation@1"
         },
         {
@@ -918,12 +918,12 @@
         },
         {
           "command": "streamline.bookmarks.addFile",
-          "when": "resourceScheme == file && !streamline.bookmarks.isActiveTextEditorBookmarked",
+          "when": "resourceScheme =~ /^file$|^vscode-userdata$/ && !streamline.bookmarks.isActiveTextEditorBookmarked",
           "group": "navigation@5"
         },
         {
           "command": "streamline.bookmarks.deleteFile",
-          "when": "resourceScheme == file && streamline.bookmarks.isActiveTextEditorBookmarked",
+          "when": "resourceScheme =~ /^file$|^vscode-userdata$/ && streamline.bookmarks.isActiveTextEditorBookmarked",
           "group": "navigation@5"
         }
       ]
