@@ -142,7 +142,7 @@ export function activate(context: vscode.ExtensionContext) {
           .filter(bookmark => bookmark.uri.path === uri.path)
           .map(bookmark => ({
             uri,
-            type: 'selection',
+            type: bookmark.selection.isEmpty ? 'line' : 'selection',
             range: bookmark.selection,
           }))
       ),

@@ -23,9 +23,17 @@ export function createHighlightsFeature(input: {
     overviewRulerColor: 'rgba(67, 222, 239, 0.15)',
   })
 
-  const dynamicDecoration = vscode.window.createTextEditorDecorationType({
+  const dynamicLineDecoration = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(239, 133, 67, 0.15)',
     overviewRulerColor: 'rgba(239, 133, 67, 0.15)',
+    rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+    isWholeLine: true,
+  })
+
+  const dynamicSelectionDecoration = vscode.window.createTextEditorDecorationType({
+    backgroundColor: 'rgba(239, 133, 67, 0.15)',
+    overviewRulerColor: 'rgba(239, 133, 67, 0.15)',
+    rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
   })
 
   function updateDecorations() {
@@ -52,8 +60,13 @@ export function createHighlightsFeature(input: {
       .flatMap(dynamicHighlightsProvider => dynamicHighlightsProvider.getHighlights(activeTextEditor.document.uri))
 
     activeTextEditor.setDecorations(
-      dynamicDecoration,
-      mergeHighlights(dynamicHighlights).map(highlight => highlight.range)
+      dynamicSelectionDecoration,
+      mergeHighlights(dynamicHighlights.filter(highlight => highlight.type === 'selection')).map(highlight => highlight.range)
+    )
+
+    activeTextEditor.setDecorations(
+      dynamicLineDecoration,
+      mergeHighlights(dynamicHighlights.filter(highlight => highlight.type === 'line')).map(highlight => highlight.range)
     )
   }
 
