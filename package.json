@@ -482,6 +482,12 @@
         "title": "Remove All Highlights in All Files",
         "icon": "$(trash)",
         "category": "Highlights"
+      },
+      {
+        "command": "streamline.highlights.quickOpen",
+        "title": "Quick Open...",
+        "icon": "$(selection)",
+        "category": "Highlights"
       }
     ],
     "keybindings": [

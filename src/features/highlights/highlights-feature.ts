@@ -2,6 +2,8 @@ import * as vscode from 'vscode'
 import { RegisterCommand } from '../../register-command'
 import { Highlight } from './common'
 import { DynamicHighlightsProvider } from './dynamic-highlights-provider'
+import { formatPaths } from '../../utils/format-paths'
+import { formatSelectionValue } from '../bookmarks/bookmarks-tree-data-provider'
 
 export function createHighlightsFeature(input: {
   context: vscode.ExtensionContext
@@ -194,6 +196,89 @@ export function createHighlightsFeature(input: {
 
     updateDecorations()
     await updateContext()
+  })
+
+  registerCommand('streamline.highlights.quickOpen', async () => {
+    const highlightsToSelectFrom = highlights
+      // Sort by line number
+      .sort((a, b) => a.range.start.line - b.range.start.line)
+      // Sort by path
+      .sort((a, b) => a.uri.path.localeCompare(b.uri.path))
+
+    if (highlightsToSelectFrom.length === 0) {
+      vscode.window.showInformationMessage('You don\'t have any Highlights yet')
+      return
+    }
+
+    const uris = highlightsToSelectFrom.map(highlight => highlight.uri)
+    const formattedPaths = formatPaths(uris.map(uri => uri.path))
+
+    type QuickPickItem = vscode.QuickPickItem & ({ highlight?: Highlight; uri: vscode.Uri })
+
+    const quickPick = vscode.window.createQuickPick<QuickPickItem>()
+    quickPick.items = highlightsToSelectFrom.flatMap((highlight, i) => {
+      const label = formattedPaths.get(highlight.uri.path)!
+      const results: QuickPickItem[] = []
+
+      if (i === 0 || highlights[i - 1].uri.path !== highlight.uri.path) {
+        results.push({
+          label,
+          description: vscode.workspace.asRelativePath(highlight.uri.path),
+          iconPath: new vscode.ThemeIcon('file'),
+          uri: highlight.uri,
+          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+        })
+      }
+
+      const preview = formatSelectionValue(highlight.range, highlight.value)
+      results.push({
+        label: `${highlight.note ? highlight.note : preview}`,
+        description: highlight.note ? preview : undefined,
+        uri: highlight.uri,
+        highlight,
+        iconPath: new vscode.ThemeIcon('indent'),
+        buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+      })
+
+      return results
+    })
+
+    quickPick.onDidAccept(async () => {
+      const [selected] = quickPick.selectedItems
+      if (!selected) return quickPick.dispose()
+
+      await vscode.window.showTextDocument(
+        selected.uri,
+        {
+          preview: false,
+          ...selected.highlight && {
+            selection: selected.highlight.range,
+          }
+        }
+      )
+
+      quickPick.dispose()
+    })
+
+    quickPick.onDidTriggerItemButton(async ({ item }) => {
+      if (!item) return quickPick.dispose()
+
+      await vscode.window.showTextDocument(
+        item.uri,
+        {
+          preview: false,
+          viewColumn: vscode.ViewColumn.Beside,
+          ...item.highlight && {
+            selection: item.highlight.range,
+          }
+        }
+      )
+
+      quickPick.dispose()
+    })
+
+    quickPick.onDidHide(() => quickPick.dispose())
+    quickPick.show()
   })
 
   context.subscriptions.push(
