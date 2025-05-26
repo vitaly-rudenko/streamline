@@ -144,7 +144,7 @@ export function activate(context: vscode.ExtensionContext) {
             uri,
             type: bookmark.selection.isEmpty ? 'line' : 'selection',
             range: bookmark.selection,
-            preview: bookmark.value,
+            value: bookmark.value,
             note: bookmark.note,
           }))
       ),
