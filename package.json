@@ -897,7 +897,7 @@
         {
           "command": "streamline.highlights.addLines",
           "alt": "streamline.highlights.removeInFile",
-          "when": "resourceScheme == file",
+          "when": "resourceScheme =~ /^untitled$|^file$/",
           "group": "navigation@1"
         },
         {
