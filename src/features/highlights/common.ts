@@ -4,4 +4,6 @@ export type Highlight = {
   uri: Uri
   range: Range
   type: 'selection' | 'line'
+  value: string
+  note?: string
 }

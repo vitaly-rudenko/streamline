@@ -129,6 +129,7 @@ export function createHighlightsFeature(input: {
       type: 'selection',
       uri: activeTextEditor.document.uri,
       range: activeTextEditor.selection,
+      value: activeTextEditor.document.getText(activeTextEditor.selection),
     })
 
     mergeHighlights()
@@ -145,11 +146,13 @@ export function createHighlightsFeature(input: {
     // Does not impact rendering, but can impact context menu commands
     const startLine = activeTextEditor.document.lineAt(activeTextEditor.selection.start.line)
     const endLine = activeTextEditor.document.lineAt(activeTextEditor.selection.end.line)
+    const range = new vscode.Range(startLine.range.start, endLine.range.end)
 
     highlights.push({
       type: 'line',
       uri: activeTextEditor.document.uri,
-      range: new vscode.Range(startLine.range.start, endLine.range.end),
+      range,
+      value: activeTextEditor.document.getText(range),
     })
 
     mergeHighlights()
@@ -187,9 +190,6 @@ export function createHighlightsFeature(input: {
   })
 
   registerCommand('streamline.highlights.removeAll', async () => {
-    const activeTextEditor = vscode.window.activeTextEditor
-    if (!activeTextEditor) return
-
     highlights = []
 
     updateDecorations()
