@@ -194,7 +194,7 @@
       {
         "command": "streamline.relatedFiles.openBestMatchToSide",
         "title": "Open Best Match to Side",
-        "icon": "$(sparkle)",
+        "icon": "$(split-horizontal)",
         "category": "Related Files"
       },
       {
