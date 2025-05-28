@@ -9,16 +9,19 @@ export function createHighlightedPathsFeature(input: {
   const { context, onChange } = input
 
   const config = new HighlightedPathsConfig()
-  const scheduleConfigLoad = createDebouncedFunction(() => {
+
+  const debouncedConfigLoad = createDebouncedFunction(() => {
     if (!config.load()) return
     onChange()
   }, 500)
 
+  context.subscriptions.push(debouncedConfigLoad)
+
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.highlightedPaths')) {
-        if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+        if (!config.isSaving) {
+          debouncedConfigLoad.schedule()
         }
       }
     }),

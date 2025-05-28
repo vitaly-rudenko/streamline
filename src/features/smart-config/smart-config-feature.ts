@@ -10,6 +10,7 @@ import { getInspectKeyFromConfigurationTarget } from '../../config'
 import { GenerateConditionContext } from '../../generate-condition-context'
 import { RegisterCommand } from '../../register-command'
 import { UnsupportedTogglesError } from '../../common/when'
+import { createContinuousFunction } from '../../utils/create-continuous-function'
 
 export function createSmartConfigFeature(input: {
   context: vscode.ExtensionContext
@@ -21,35 +22,38 @@ export function createSmartConfigFeature(input: {
   const config = new SmartConfigConfig()
   const workspaceState = new SmartConfigWorkspaceState(context.workspaceState)
 
-  const scheduleConfigLoad = createDebouncedFunction(() => {
+  const debouncedHandleConfigChanged = createDebouncedFunction(async () => {
     if (!config.load()) return
-    clearCache()
-    applyMatchingConfigsInBackground()
-    updateStatusBarItems()
+    currentMergedToggles = ['']
+    currentEnabledToggles = ['']
+    currentMatchingConfigNames = ['']
+
+    await refresh()
   }, 500)
 
-  const scheduleSoftRefresh = createDebouncedFunction(() => {
-    applyMatchingConfigsInBackground()
-    updateStatusBarItems()
-  }, 100)
+  const debouncedRefresh = createDebouncedFunction(() => refresh(), 250)
+  const debouncedDelayedRefresh = createDebouncedFunction(() => refresh(), 750)
 
-  const scheduleHardRefresh = createDebouncedFunction(() => {
-    applyMatchingConfigsInBackground()
-    updateStatusBarItems()
-  }, 500)
+  context.subscriptions.push(debouncedHandleConfigChanged, debouncedRefresh)
 
   /** Stores currently created toggle buttons in the status bar to be able to update them */
   let toggleItems: vscode.StatusBarItem[] = []
 
   // Cache to avoid unnecessary updates to status bar items and configuration
-  let cachedMergedToggles: string[] = []
-  let cachedEnabledToggles: string[] = []
-  let cachedMatchingConfigNames: string[] = []
+  // Empty string is used so that areArraysShallowEqual() always returns false on first run and configs are updated at least once
+  let currentMergedToggles: string[] = ['']
+  let currentEnabledToggles: string[] = ['']
+  let currentMatchingConfigNames: string[] = ['']
 
-  function clearCache() {
-    cachedMergedToggles = []
-    cachedEnabledToggles = []
-    cachedMatchingConfigNames = []
+  async function saveAndRefresh() {
+    await Promise.all([workspaceState.save(), config.saveInQueue()])
+
+    await refresh()
+  }
+
+  async function refresh() {
+    updateStatusBarItems()
+    await applyMatchingConfigs()
   }
 
   // Creates toggle buttons in the status bar
@@ -58,12 +62,12 @@ export function createSmartConfigFeature(input: {
     const enabledToggles = workspaceState.getEnabledToggles()
 
     if (
-      areArraysShallowEqual(cachedEnabledToggles, enabledToggles)
-      && areArraysShallowEqual(cachedMergedToggles, mergedToggles)
+      areArraysShallowEqual(currentEnabledToggles, enabledToggles) &&
+      areArraysShallowEqual(currentMergedToggles, mergedToggles)
     ) return
 
-    cachedMergedToggles = mergedToggles
-    cachedEnabledToggles = enabledToggles
+    currentMergedToggles = mergedToggles
+    currentEnabledToggles = enabledToggles
 
     // Delete all current toggle buttons
     for (const item of toggleItems) item.dispose()
@@ -91,13 +95,14 @@ export function createSmartConfigFeature(input: {
   }
 
   /** Applies matching configs for each configuration target */
-  async function applyMatchingConfigsInBackground() {
+  async function applyMatchingConfigs() {
     try {
       const conditionContext = generateConditionContext(vscode.window.activeTextEditor)
       const matchingConfigNames = getMatchingConfigNames(conditionContext, config.getMergedRules(), config.getMergedToggles())
 
-      if (areArraysShallowEqual(cachedMatchingConfigNames, matchingConfigNames)) return
-      cachedMatchingConfigNames = matchingConfigNames
+      if (areArraysShallowEqual(currentMatchingConfigNames, matchingConfigNames)) return
+
+      currentMatchingConfigNames = matchingConfigNames
 
       await applyMatchingConfigsForConfigurationTarget(
         config.getInspectedDefaults()?.globalValue,
@@ -185,32 +190,42 @@ export function createSmartConfigFeature(input: {
       workspaceState.setEnabledToggles([...workspaceState.getEnabledToggles(), toggle])
     }
 
-    scheduleSoftRefresh()
-    await workspaceState.save()
+    await saveAndRefresh()
   })
+
+  // Continuously re-evaluate all matching configs and update status bar items, because not all events can be reliably detected
+  const continuousCachedRefresh = createContinuousFunction(
+    async () => {
+      updateStatusBarItems()
+      await applyMatchingConfigs()
+    },
+    { minMs: 1000, maxMs: 5000 }
+  )
+  context.subscriptions.push(continuousCachedRefresh)
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.smartConfig')) {
-        if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+        if (!config.isSaving) {
+          debouncedHandleConfigChanged.schedule()
         }
       }
     }),
     // Context to match rules against relies on currently active document and color theme
-    vscode.window.onDidChangeActiveTextEditor(() => scheduleSoftRefresh()),
-    vscode.window.onDidChangeActiveColorTheme(() => scheduleSoftRefresh()),
-    vscode.window.onDidChangeWindowState(() => scheduleSoftRefresh()),
-    vscode.window.onDidChangeTextEditorVisibleRanges(() => scheduleSoftRefresh()),
-    vscode.debug.onDidChangeBreakpoints(() => scheduleSoftRefresh()),
-    // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => scheduleHardRefresh()),
+    vscode.window.onDidChangeActiveTextEditor(() => debouncedRefresh.schedule()),
+    vscode.window.onDidChangeActiveColorTheme(() => debouncedRefresh.schedule()),
+    vscode.window.onDidChangeWindowState(() => debouncedRefresh.schedule()),
+    vscode.window.onDidChangeTextEditorVisibleRanges(() => debouncedRefresh.schedule()),
+    vscode.debug.onDidChangeBreakpoints(() => debouncedRefresh.schedule()),
+    // Slower refresh rate to avoid performance issues, because this event fires frequently
+    vscode.window.onDidChangeTextEditorSelection(() => debouncedDelayedRefresh.schedule()),
   )
 
-  scheduleSoftRefresh()
+  debouncedRefresh.schedule()
+  continuousCachedRefresh.schedule()
 
   return {
-    scheduleRefresh: scheduleSoftRefresh,
+    debouncedRefresh,
     getEnabledToggles: () => workspaceState.getEnabledToggles(),
   }
 }

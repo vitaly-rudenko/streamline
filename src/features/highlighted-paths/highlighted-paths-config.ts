@@ -19,9 +19,7 @@ export class HighlightedPathsConfig extends FeatureConfig {
 
     let hasChanged = false
 
-    if (
-      !areArraysShallowEqual(this._patterns, patterns)
-    ) {
+    if (!areArraysShallowEqual(this._patterns, patterns)) {
       this._patterns = patterns
 
       hasChanged = true

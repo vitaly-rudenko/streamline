@@ -20,7 +20,8 @@ Minor features:
 Quickly scope into selected files and folders, hiding everything else.  
 Useful in large projects and monorepos to focus on modules that you're currently working on.
 
-> Use `Scoped Paths: Change Current Scope...` to manage your scopes.
+> Use `Scoped Paths: Change Current Scope...` command to manage your scopes.  
+> To temporarily disable Current Scope, use `Scoped Paths: Quick Unscope` command.
 
 > When scoped, Workspace Folder is removed if it does not contain any scoped files.
 
