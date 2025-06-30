@@ -8,6 +8,7 @@ import { Bookmark, defaultCurrentList } from './common'
 import { getTargetItemsForCommand } from './toolkit/get-target-items-for-command'
 import { formatPaths } from '../../utils/format-paths'
 import { RegisterCommand } from '../../register-command'
+import { uniqueUris } from '../../utils/unique-uris'
 
 const UNDO_HISTORY_SIZE = 50
 
@@ -630,6 +631,38 @@ export function createBookmarksFeature(input: {
 
     quickPick.onDidHide(() => quickPick.dispose())
     quickPick.show()
+  })
+
+  registerCommand('streamline.bookmarks.openAllFilesInCurrentList', async () => {
+    await vscode.commands.executeCommand('streamline.bookmarks.openAllFilesInList', workspaceState.getCurrentList())
+  })
+
+  registerCommand('streamline.bookmarks.openAllFilesInList', async (arg: unknown) => {
+    let list: string | undefined
+    if (!arg) {
+      list = await promptListSelection()
+    } else if (typeof arg === 'string') {
+      list = arg
+    } else if (arg instanceof ListTreeItem) {
+      list = arg.list
+    }
+
+    if (!list) return
+
+    const bookmarks = config.getBookmarks().filter(b => b.list === list)
+    const uris = uniqueUris(bookmarks.map(b => b.uri))
+    if (uris.length === 0) return
+
+    const results = await Promise.allSettled(
+      uris.map(
+        uri => vscode.window.showTextDocument(uri, { preview: false })
+      )
+    )
+
+    const failedCount = results.filter(r => r.status === 'rejected').length
+    if (failedCount > 0) {
+      vscode.window.showErrorMessage(`Failed to open ${failedCount} files in "${list}" list`)
+    }
   })
 
   context.subscriptions.push(
