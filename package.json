@@ -400,6 +400,12 @@
         "category": "Quick Repl"
       },
       {
+        "command": "streamline.quickRepl.addReplsAsWorkspaceFolder",
+        "title": "Add Repls as Workspace Folder",
+        "icon": "$(folder)",
+        "category": "Quick Repl"
+      },
+      {
         "command": "streamline.quickRepl.revealInOS",
         "title": "Reveal in OS",
         "icon": "$(eye)",

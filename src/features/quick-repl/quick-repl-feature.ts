@@ -616,6 +616,16 @@ export function createQuickReplFeature(input: {
     }
   })
 
+  registerCommand('streamline.quickRepl.addReplsAsWorkspaceFolder', async () => {
+    const workspaceFolders = vscode.workspace.workspaceFolders
+    if (!workspaceFolders) return // TODO: warn
+
+    await vscode.workspace.updateWorkspaceFolders(
+      workspaceFolders.length, 0,
+      { uri: vscode.Uri.file(getReplsPathOrFail()) }
+    )
+  })
+
   // Reveal specific file or folder in OS
   registerCommand('streamline.quickRepl.revealInOS', async (argument: unknown) => {
     if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
