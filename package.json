@@ -900,8 +900,7 @@
               "relatedFiles",
               "scopedPaths",
               "smartConfig",
-              "quickRepl",
-              "highlights"
+              "quickRepl"
             ]
           },
           "default": [],
