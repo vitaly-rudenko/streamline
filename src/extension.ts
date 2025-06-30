@@ -12,8 +12,6 @@ import { ConditionContext } from './common/when'
 import { GenerateConditionContextInput } from './generate-condition-context'
 import { DynamicScopeProvider } from './features/scoped-paths/dynamic-scope-provider'
 import { uriToPath } from './utils/uri-to-path'
-import { createHighlightsFeature } from './features/highlights/highlights-feature'
-import { DynamicHighlightsProvider } from './features/highlights/dynamic-highlights-provider'
 
 const featureSchema = z.enum([
   'bookmarks',
@@ -23,7 +21,6 @@ const featureSchema = z.enum([
   'scopedPaths',
   'smartConfig',
   'quickRepl',
-  'highlights',
 ])
 
 type Feature = z.infer<typeof featureSchema>
@@ -87,7 +84,6 @@ export function activate(context: vscode.ExtensionContext) {
   let smartConfigFeature: ReturnType<typeof createSmartConfigFeature> | undefined
   let scopedPathsFeature: ReturnType<typeof createScopedPathsFeature> | undefined
   let bookmarksFeature: ReturnType<typeof createBookmarksFeature> | undefined
-  let highlightsFeature: ReturnType<typeof createHighlightsFeature> | undefined
 
 	highlightedPathsFeature = isFeatureEnabled('highlightedPaths')
 		? createHighlightedPathsFeature({
@@ -118,7 +114,6 @@ export function activate(context: vscode.ExtensionContext) {
     : undefined
 
   const dynamicScopeProviders: DynamicScopeProvider[] = []
-  const dynamicHighlightsProviders: DynamicHighlightsProvider[] = []
 
   if (bookmarksFeature) {
     dynamicScopeProviders.push({
@@ -134,24 +129,6 @@ export function activate(context: vscode.ExtensionContext) {
       subscribe: (callback: Function) => onDidChangeBookmarksEmitter.event(() => callback())
     })
 
-    dynamicHighlightsProviders.push({
-      name: 'Bookmarks',
-      getHighlights: (uri) => (
-        bookmarksFeature.getCachedBookmarksInCurrentBookmarksList()
-          .filter(bookmark => bookmark.type === 'selection')
-          .filter(bookmark => bookmark.uri.path === uri.path)
-          .map(bookmark => ({
-            uri,
-            type: bookmark.selection.isEmpty ? 'line' : 'selection',
-            range: bookmark.selection,
-            value: bookmark.value,
-            note: bookmark.note,
-          }))
-      ),
-      subscribe: (callback: Function) => onDidChangeBookmarksEmitter.event(() => callback())
-    })
-  }
-
   scopedPathsFeature = isFeatureEnabled('scopedPaths')
 		? createScopedPathsFeature({
 			context,
@@ -164,20 +141,11 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 		: undefined
 
-  highlightsFeature = isFeatureEnabled('highlights')
-    ? createHighlightsFeature({
-      context,
-      registerCommand,
-      dynamicHighlightsProviders,
-    })
-    : undefined
-
 	if (isFeatureEnabled('relatedFiles')) createRelatedFilesFeature({ context, registerCommand })
 	if (isFeatureEnabled('currentPath')) createCurrentPathFeature({ context, registerCommand })
   if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, registerCommand, generateConditionContext })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
-    const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
     const fileDecorationProvider: vscode.FileDecorationProvider = {
       onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,
       provideFileDecoration: (uri: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> => {
@@ -191,13 +159,13 @@ export function activate(context: vscode.ExtensionContext) {
         const isBookmarked = bookmarksFeature ? bookmarksFeature.isPathBookmarkedInCurrentBookmarksList(uri.path) : false
 
         if (isHighlighted || isParentOfScopedAndExcluded || isScoped || isExcluded || isBookmarked) {
-          const badge = isScoped ? '•' : isExcluded ? '⨯' : isParentOfScopedAndExcluded ? '›' : undefined
-          const prefix = isBookmarked ? '⭑' : undefined
-
           return new vscode.FileDecoration(
-            (badge && prefix) ? `${prefix}${badge}` : badge ?? prefix,
+            [
+              isBookmarked ? '⭑' : undefined,
+              isScoped ? '•' : isExcluded ? '⨯' : isParentOfScopedAndExcluded ? '›' : undefined
+            ].filter(Boolean).join(' '),
             undefined,
-            isHighlighted ? highlightThemeColor : undefined
+            isHighlighted ? new vscode.ThemeColor('editorHint.foreground') : undefined
           )
         }
 

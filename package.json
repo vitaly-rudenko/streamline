@@ -452,42 +452,6 @@
         "title": "Quick Save...",
         "icon": "$(file-add)",
         "category": "Quick Repl"
-      },
-      {
-        "command": "streamline.highlights.addSelection",
-        "title": "Highlight Selection",
-        "icon": "$(symbol-color)",
-        "category": "Highlights"
-      },
-      {
-        "command": "streamline.highlights.addLines",
-        "title": "Highlight Lines",
-        "icon": "$(symbol-color)",
-        "category": "Highlights"
-      },
-      {
-        "command": "streamline.highlights.removeInSelection",
-        "title": "Remove Highlights in Selection",
-        "icon": "$(trash)",
-        "category": "Highlights"
-      },
-      {
-        "command": "streamline.highlights.removeInFile",
-        "title": "Remove All Highlights in File",
-        "icon": "$(trash)",
-        "category": "Highlights"
-      },
-      {
-        "command": "streamline.highlights.removeAll",
-        "title": "Remove All Highlights in All Files",
-        "icon": "$(trash)",
-        "category": "Highlights"
-      },
-      {
-        "command": "streamline.highlights.quickOpen",
-        "title": "Quick Open...",
-        "icon": "$(selection)",
-        "category": "Highlights"
       }
     ],
     "keybindings": [
@@ -883,54 +847,34 @@
         {
           "command": "streamline.bookmarks.addNoteToList",
           "group": "1_context@4"
-        },
-        {
-          "command": "streamline.highlights.addLines",
-          "group": "2_context@1"
-        },
-        {
-          "command": "streamline.highlights.addSelection",
-          "group": "2_context@2",
-          "when": "editor.hasSelection"
-        },
-        {
-          "command": "streamline.highlights.removeInSelection",
-          "group": "2_context@3",
-          "when": "streamline.highlights.hasHighlightInFile"
         }
       ],
       "editor/title": [
         {
-          "command": "streamline.highlights.addLines",
-          "alt": "streamline.highlights.removeInFile",
-          "when": "resourceScheme =~ /^untitled$|^file$|^vscode-userdata$/",
-          "group": "navigation@1"
-        },
-        {
           "command": "streamline.quickRepl.quickSave",
           "when": "streamline.quickRepl.isActiveTextEditorRunnable && resourceScheme == untitled",
-          "group": "navigation@2"
+          "group": "navigation@1"
         },
         {
           "command": "streamline.quickRepl.run",
           "when": "streamline.quickRepl.isActiveTextEditorRunnable",
-          "group": "navigation@3"
+          "group": "navigation@2"
         },
         {
           "command": "streamline.relatedFiles.quickOpen",
           "alt": "streamline.relatedFiles.openBestMatchToSide",
           "when": "resourceScheme == file",
-          "group": "navigation@4"
+          "group": "navigation@3"
         },
         {
           "command": "streamline.bookmarks.addFile",
           "when": "resourceScheme =~ /^file$|^vscode-userdata$/ && !streamline.bookmarks.isActiveTextEditorBookmarked",
-          "group": "navigation@5"
+          "group": "navigation@4"
         },
         {
           "command": "streamline.bookmarks.deleteFile",
           "when": "resourceScheme =~ /^file$|^vscode-userdata$/ && streamline.bookmarks.isActiveTextEditorBookmarked",
-          "group": "navigation@5"
+          "group": "navigation@4"
         }
       ]
     },
