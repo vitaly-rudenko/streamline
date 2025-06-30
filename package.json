@@ -353,6 +353,18 @@
         "category": "Bookmarks"
       },
       {
+        "command": "streamline.bookmarks.addFilesFromCurrentListToCopilot",
+        "title": "Add Files from Current List to Copilot",
+        "icon": "$(copilot)",
+        "category": "Bookmarks"
+      },
+      {
+        "command": "streamline.bookmarks.addFilesFromListToCopilot",
+        "title": "Add Files from List to Copilot",
+        "icon": "$(copilot)",
+        "category": "Bookmarks"
+      },
+      {
         "command": "streamline.currentPath.copy",
         "title": "Copy Relative Path",
         "icon": "$(copy)",
@@ -722,33 +734,38 @@
         {
           "command": "streamline.bookmarks.openAllFilesInList",
           "when": "view == bookmarks && (viewItem == list || viewItem == archivedList || viewItem == activeList || viewItem == archivedActiveList)",
-          "group": "info@1"
+          "group": "1_info@1"
+        },
+        {
+          "command": "streamline.bookmarks.addFilesFromListToCopilot",
+          "when": "view == bookmarks && (viewItem == list || viewItem == archivedList || viewItem == activeList || viewItem == archivedActiveList)",
+          "group": "1_info@2"
         },
         {
           "command": "streamline.bookmarks.renameList",
           "when": "view == bookmarks && (viewItem == list || viewItem == archivedList || viewItem == activeList || viewItem == archivedActiveList)",
-          "group": "info@2"
+          "group": "2_info@1"
         },
         {
           "command": "streamline.bookmarks.archiveList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList)",
-          "group": "info@3"
+          "group": "2_info@2"
         },
         {
           "command": "streamline.bookmarks.unarchiveList",
           "when": "view == bookmarks && (viewItem == archivedList || viewItem == archivedActiveList)",
-          "group": "info@3"
+          "group": "2_info@2"
         },
         {
           "command": "streamline.bookmarks.clearList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
-          "group": "info@4",
+          "group": "2_info@3",
           "title": "Clear"
         },
         {
           "command": "streamline.bookmarks.deleteList",
           "when": "view == bookmarks && (viewItem == list || viewItem == activeList || viewItem == archivedList || viewItem == archivedActiveList)",
-          "group": "info@5"
+          "group": "2_info@4"
         },
         {
           "command": "streamline.quickRepl.create",

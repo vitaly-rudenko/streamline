@@ -665,6 +665,38 @@ export function createBookmarksFeature(input: {
     }
   })
 
+  registerCommand('streamline.bookmarks.addFilesFromCurrentListToCopilot', async () => {
+    await vscode.commands.executeCommand('streamline.bookmarks.addFilesFromListToCopilot', workspaceState.getCurrentList())
+  })
+
+  registerCommand('streamline.bookmarks.addFilesFromListToCopilot', async (arg: unknown) => {
+    let list: string | undefined
+    if (!arg) {
+      list = await promptListSelection()
+    } else if (typeof arg === 'string') {
+      list = arg
+    } else if (arg instanceof ListTreeItem) {
+      list = arg.list
+    }
+
+    if (!list) return
+
+    const bookmarks = config.getBookmarks().filter(b => b.list === list)
+    const uris = uniqueUris(bookmarks.map(b => b.uri))
+    if (uris.length === 0) return
+
+    const results = await Promise.allSettled(
+      uris.map(
+        uri => vscode.commands.executeCommand('github.copilot.chat.attachFile', uri)
+      )
+    )
+
+    const failedCount = results.filter(r => r.status === 'rejected').length
+    if (failedCount > 0) {
+      vscode.window.showErrorMessage(`Failed to add ${failedCount} files in "${list}" list to Copilot`)
+    }
+  })
+
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.bookmarks')) {
