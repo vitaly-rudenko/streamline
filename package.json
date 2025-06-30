@@ -885,11 +885,13 @@
         },
         {
           "command": "streamline.bookmarks.addFile",
+          "alt": "streamline.bookmarks.quickOpen",
           "when": "resourceScheme =~ /^file$|^vscode-userdata$/ && !streamline.bookmarks.isActiveTextEditorBookmarked",
           "group": "navigation@4"
         },
         {
           "command": "streamline.bookmarks.deleteFile",
+          "alt": "streamline.bookmarks.quickOpen",
           "when": "resourceScheme =~ /^file$|^vscode-userdata$/ && streamline.bookmarks.isActiveTextEditorBookmarked",
           "group": "navigation@4"
         }
