@@ -497,22 +497,6 @@
           "when": "false"
         },
         {
-          "command": "streamline.scopedPaths.addPathToCurrentScope",
-          "when": "false"
-        },
-        {
-          "command": "streamline.scopedPaths.deletePathFromCurrentScope",
-          "when": "false"
-        },
-        {
-          "command": "streamline.scopedPaths.excludePathFromCurrentScope",
-          "when": "false"
-        },
-        {
-          "command": "streamline.scopedPaths.includePathIntoCurrentScope",
-          "when": "false"
-        },
-        {
           "command": "streamline.scopedPaths.disableQuickUnscope",
           "when": "false"
         },
