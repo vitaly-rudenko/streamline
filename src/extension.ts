@@ -146,6 +146,7 @@ export function activate(context: vscode.ExtensionContext) {
   if (isFeatureEnabled('quickRepl')) createQuickReplFeature({ context, registerCommand, generateConditionContext })
 
   if (scopedPathsFeature || highlightedPathsFeature) {
+    const highlightThemeColor = new vscode.ThemeColor('textLink.foreground')
     const fileDecorationProvider: vscode.FileDecorationProvider = {
       onDidChangeFileDecorations: onDidChangeFileDecorationsEmitter.event,
       provideFileDecoration: (uri: vscode.Uri): vscode.ProviderResult<vscode.FileDecoration> => {
@@ -159,13 +160,13 @@ export function activate(context: vscode.ExtensionContext) {
         const isBookmarked = bookmarksFeature ? bookmarksFeature.isPathBookmarkedInCurrentBookmarksList(uri.path) : false
 
         if (isHighlighted || isParentOfScopedAndExcluded || isScoped || isExcluded || isBookmarked) {
+          const badge = isScoped ? '•' : isExcluded ? '⨯' : isParentOfScopedAndExcluded ? '›' : undefined
+          const prefix = isBookmarked ? '⭑' : undefined
+
           return new vscode.FileDecoration(
-            [
-              isBookmarked ? '⭑' : undefined,
-              isScoped ? '•' : isExcluded ? '⨯' : isParentOfScopedAndExcluded ? '›' : undefined
-            ].filter(Boolean).join(' '),
+            (badge && prefix) ? `${prefix}${badge}` : badge ?? prefix,
             undefined,
-            isHighlighted ? new vscode.ThemeColor('editorHint.foreground') : undefined
+            isHighlighted ? highlightThemeColor : undefined
           )
         }
 
