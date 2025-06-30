@@ -128,6 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
       ),
       subscribe: (callback: Function) => onDidChangeBookmarksEmitter.event(() => callback())
     })
+  }
 
   scopedPathsFeature = isFeatureEnabled('scopedPaths')
 		? createScopedPathsFeature({
