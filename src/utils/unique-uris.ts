@@ -1,4 +1,4 @@
-import { Uri } from 'vscode';
+import { Uri } from 'vscode'
 
 export function uniqueUris(uris: Uri[]): Uri[] {
   const paths = new Set<string>()
