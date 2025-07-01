@@ -13,6 +13,11 @@
 
 > Quick Unscope resets automatically when Current Scope changes, or when Quick Scope is used, or when "Streamline: Disable Current Scope" command is executed.
 
+### Bookmarks
+
+- Added "Bookmarks: Open All Files from List" command
+- Added "Bookmarks: Add Files from List to Copilot" command
+
 ## 0.52
 
 ### General
