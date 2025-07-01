@@ -649,7 +649,7 @@ export function createBookmarksFeature(input: {
 
     if (!list) return
 
-    const bookmarks = config.getBookmarks().filter(b => b.list === list)
+    const bookmarks = config.getBookmarks().filter(b => b.list === list && b.type !== 'folder')
     const uris = uniqueUris(bookmarks.map(b => b.uri))
     if (uris.length === 0) return
 
@@ -681,7 +681,7 @@ export function createBookmarksFeature(input: {
 
     if (!list) return
 
-    const bookmarks = config.getBookmarks().filter(b => b.list === list)
+    const bookmarks = config.getBookmarks().filter(b => b.list === list && b.type !== 'folder')
     const uris = uniqueUris(bookmarks.map(b => b.uri))
     if (uris.length === 0) return
 
