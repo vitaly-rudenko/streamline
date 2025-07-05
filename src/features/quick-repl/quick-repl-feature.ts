@@ -15,8 +15,8 @@ import { substitute } from './toolkit/substitute'
 import { expandHomedir } from '../../utils/expand-homedir'
 import { collapseHomedir } from '../../utils/collapse-homedir'
 import { RegisterCommand } from '../../register-command'
+import { createContinuousFunction } from '../../utils/create-continuous-function'
 
-// TODO: Quickly saved current untitled file to the repls folder
 // TODO: Somehow automatically reveal created file/directory in the Quick Repl view
 
 export function createQuickReplFeature(input: {
@@ -27,17 +27,17 @@ export function createQuickReplFeature(input: {
   const { context, registerCommand, generateConditionContext } = input
 
   const homedir = os.homedir()
-
   const config = new QuickReplConfig()
-  const scheduleConfigLoad = createDebouncedFunction(async () => {
+
+  const debouncedConfigLoad = createDebouncedFunction(async () => {
     if (!config.load()) return
-    quickReplTreeDataProvider.refresh()
-    await updateContextInBackground()
+    await refresh()
   }, 500)
 
-  const scheduleUpdateContextInBackground = createDebouncedFunction(async () => {
-    await updateContextInBackground()
-  }, 500)
+  const debouncedRefresh = createDebouncedFunction(() => refresh(), 250)
+  const debouncedUpdateContext = createDebouncedFunction(() => updateContext(), 500)
+
+  context.subscriptions.push(debouncedConfigLoad, debouncedUpdateContext, debouncedRefresh)
 
   const quickReplTreeDataProvider = new QuickReplTreeDataProvider(config, isRunnable, homedir)
   const quickReplTreeView = vscode.window.createTreeView('quickRepl', {
@@ -47,9 +47,23 @@ export function createQuickReplFeature(input: {
     canSelectMany: true,
   })
 
+  context.subscriptions.push(quickReplTreeView)
+
+  async function saveAndRefresh() {
+    await config.saveInQueue()
+
+    await refresh()
+  }
+
+  async function refresh() {
+    quickReplTreeDataProvider.refresh()
+    await updateContext()
+  }
+
   function getReplsPathOrFail() {
     const shortReplsPath = config.getShortReplsPath()
     if (!shortReplsPath) throw new QuickReplNotSetUpError()
+
     return expandHomedir(shortReplsPath, homedir)
   }
 
@@ -66,24 +80,21 @@ export function createQuickReplFeature(input: {
   // Whether file or folder is runnable (used in context and view)
   function isRunnable(input: GenerateConditionContextInput): boolean {
     const conditionContext = generateConditionContext(input)
-    return config.getCommands()
-      .some(command => !command.when || testWhen(conditionContext, command.when))
+    return config.getCommands().some(command => !command.when || testWhen(conditionContext, command.when))
   }
 
   // Update context to show/hide "Run" command for active text editor
-  async function updateContextInBackground() {
+  async function updateContext() {
     try {
       await vscode.commands.executeCommand(
         'setContext',
         'streamline.quickRepl.isActiveTextEditorRunnable',
-        vscode.window.activeTextEditor && isRunnable(vscode.window.activeTextEditor)
+        vscode.window.activeTextEditor ? isRunnable(vscode.window.activeTextEditor) : false
       )
     } catch (error) {
       console.warn('[QuickRepl] Could not update context', error)
     }
   }
-
-  context.subscriptions.push(quickReplTreeView)
 
   // Runs selected command against File, Folder or Active Text Editor
   registerCommand('streamline.quickRepl.run', async (argument: unknown) => {
@@ -190,6 +201,7 @@ export function createQuickReplFeature(input: {
 
     console.debug('streamline.quickRepl.run', { terminalName, terminalCwd, terminalIconPath, terminalColor })
 
+    // If terminals with the same name, icon, color and cwd already exist, reuse it
     const existingTerminal = vscode.window.terminals
       .find(t => (
         t.creationOptions.name === terminalName
@@ -216,6 +228,10 @@ export function createQuickReplFeature(input: {
     )
 
     console.debug('streamline.quickRepl.run', { terminal })
+
+    // Small quality-of-life improvement to refresh the tree view after running a command
+    // Can be useful if script creates or modifies files
+    setTimeout(() => refresh(), 1000)
   })
 
   // For Command Palette (Cmd+P)
@@ -258,7 +274,7 @@ export function createQuickReplFeature(input: {
       await vscode.workspace.fs.writeFile(fileUri, new Uint8Array())
       await vscode.window.showTextDocument(fileUri, { preview: false })
 
-      quickReplTreeDataProvider.refresh()
+      await refresh()
     }
 
     if (option === 'createDirectory') {
@@ -268,7 +284,7 @@ export function createQuickReplFeature(input: {
       const directoryUri = vscode.Uri.joinPath(parentUri, basename)
       await vscode.workspace.fs.createDirectory(directoryUri)
 
-      quickReplTreeDataProvider.refresh()
+      await refresh()
     }
   })
 
@@ -407,12 +423,12 @@ export function createQuickReplFeature(input: {
       }
     }
 
-    quickReplTreeDataProvider.refresh()
+    await refresh()
   }
 
   // Delete file or folder
-  registerCommand('streamline.quickRepl.delete', async (arg: unknown, alernativeArg: unknown) => {
-    const args = Array.isArray(alernativeArg) ? alernativeArg : [arg]
+  registerCommand('streamline.quickRepl.delete', async (arg: unknown, alternativeArg: unknown) => {
+    const args = Array.isArray(alternativeArg) ? alternativeArg : [arg]
     const treeItems = args.filter(arg => arg instanceof FileTreeItem || arg instanceof FolderTreeItem)
     if (treeItems.length === 0) return
 
@@ -430,12 +446,12 @@ export function createQuickReplFeature(input: {
       }
     }
 
-    quickReplTreeDataProvider.refresh()
+    await refresh()
   })
 
   // Refresh tree view
   registerCommand('streamline.quickRepl.refresh', async () => {
-    quickReplTreeDataProvider.refresh()
+    await refresh()
   })
 
   // Start setup wizard
@@ -479,8 +495,7 @@ export function createQuickReplFeature(input: {
     )
 
     config.setShortReplsPath(collapseHomedir(shortReplsPath, homedir))
-    quickReplTreeDataProvider.refresh()
-    await config.save()
+    await saveAndRefresh()
 
     vscode.window.showInformationMessage(`Your Quick Repls will now be stored in ${shortReplsPath}`)
 
@@ -524,7 +539,7 @@ export function createQuickReplFeature(input: {
       await waitUntil(() => templatesEditor.document.isClosed)
 
       config.setTemplates(setupTemplates)
-      await config.save()
+      await saveAndRefresh()
 
       vscode.window.showInformationMessage('Default templates have been added to your settings')
     }
@@ -569,7 +584,7 @@ export function createQuickReplFeature(input: {
       await waitUntil(() => commandsEditor.document.isClosed)
 
       config.setCommands(setupCommands)
-      await config.save()
+      await saveAndRefresh()
 
       vscode.window.showInformationMessage('Default commands have been added to your settings')
     }
@@ -601,6 +616,16 @@ export function createQuickReplFeature(input: {
     }
   })
 
+  registerCommand('streamline.quickRepl.addReplsAsWorkspaceFolder', async () => {
+    const workspaceFolders = vscode.workspace.workspaceFolders
+    if (!workspaceFolders) return // TODO: warn
+
+    await vscode.workspace.updateWorkspaceFolders(
+      workspaceFolders.length, 0,
+      { uri: vscode.Uri.file(getReplsPathOrFail()) }
+    )
+  })
+
   // Reveal specific file or folder in OS
   registerCommand('streamline.quickRepl.revealInOS', async (argument: unknown) => {
     if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
@@ -610,40 +635,40 @@ export function createQuickReplFeature(input: {
 
   // Duplicate file or folder
   registerCommand('streamline.quickRepl.duplicate', async (argument: unknown) => {
-    if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
-      const originalBasename = basename(argument.uri.path)
-      const copyBasename = await vscode.window.showInputBox({
-        placeHolder: originalBasename,
-        value: originalBasename,
-      })
-      if (!copyBasename) return
-      if (copyBasename === originalBasename) {
-        vscode.window.showWarningMessage('Please provide a different name')
-        await vscode.commands.executeCommand('streamline.quickRepl.duplicate', argument)
-        return
-      }
+    if (!(argument instanceof FileTreeItem) && !(argument instanceof FolderTreeItem)) return
 
-      const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
-      await vscode.workspace.fs.copy(argument.uri, vscode.Uri.joinPath(directoryUri, copyBasename), { overwrite: false })
-
-      quickReplTreeDataProvider.refresh()
+    const originalBasename = basename(argument.uri.path)
+    const copyBasename = await vscode.window.showInputBox({
+      placeHolder: originalBasename,
+      value: originalBasename,
+    })
+    if (!copyBasename) return
+    if (copyBasename === originalBasename) {
+      vscode.window.showWarningMessage('Please provide a different name')
+      await vscode.commands.executeCommand('streamline.quickRepl.duplicate', argument)
+      return
     }
+
+    const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
+    await vscode.workspace.fs.copy(argument.uri, vscode.Uri.joinPath(directoryUri, copyBasename), { overwrite: false })
+
+    await refresh()
   })
 
   // Rename file or folder
   registerCommand('streamline.quickRepl.rename', async (argument: unknown) => {
-    if (argument instanceof FileTreeItem || argument instanceof FolderTreeItem) {
-      const newBasename = await vscode.window.showInputBox({
-        placeHolder: basename(argument.uri.path),
-        value: basename(argument.uri.path),
-      })
-      if (!newBasename) return
+    if (!(argument instanceof FileTreeItem) && !(argument instanceof FolderTreeItem)) return
 
-      const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
-      await vscode.workspace.fs.rename(argument.uri, vscode.Uri.joinPath(directoryUri, newBasename))
+    const newBasename = await vscode.window.showInputBox({
+      placeHolder: basename(argument.uri.path),
+      value: basename(argument.uri.path),
+    })
+    if (!newBasename) return
 
-      quickReplTreeDataProvider.refresh()
-    }
+    const directoryUri = vscode.Uri.file(dirname(argument.uri.path))
+    await vscode.workspace.fs.rename(argument.uri, vscode.Uri.joinPath(directoryUri, newBasename))
+
+    await refresh()
   })
 
   // Copy file's or folder's absolute path to clipboard
@@ -655,53 +680,53 @@ export function createQuickReplFeature(input: {
 
   // Open folder in terminal
   registerCommand('streamline.quickRepl.openFolderInTerminal', async (argument: unknown) => {
-    if (argument instanceof FolderTreeItem) {
-      const terminalName = generateTerminalName({ path: argument.uri.path })
-      const terminal = vscode.window.createTerminal({
-        name: terminalName,
-        iconPath: new vscode.ThemeIcon('play'),
-        cwd: argument.uri,
-      })
+    if (!(argument instanceof FolderTreeItem)) return
 
-      terminal.show()
-    }
+    const terminalName = generateTerminalName({ path: argument.uri.path })
+    const terminal = vscode.window.createTerminal({
+      name: terminalName,
+      iconPath: new vscode.ThemeIcon('play'),
+      cwd: argument.uri,
+    })
+
+    terminal.show()
   })
 
   // Create template from a folder
   registerCommand('streamline.quickRepl.createTemplateFromFolder', async (argument: unknown) => {
-    if (argument instanceof FolderTreeItem) {
-      const templateName = await vscode.window.showInputBox({
-        value: basename(argument.uri.path),
-        placeHolder: 'Enter template name',
-      })
-      if (!templateName) return
+    if (!(argument instanceof FolderTreeItem)) return
 
-      if (config.getTemplates().some(template => template.name === templateName)) {
-        vscode.window.showWarningMessage(`Template with name "${templateName}" already exists`)
-        await vscode.commands.executeCommand('streamline.quickRepl.createTemplateFromFolder', argument)
-        return
-      }
+    const templateName = await vscode.window.showInputBox({
+      value: basename(argument.uri.path),
+      placeHolder: 'Enter template name',
+    })
+    if (!templateName) return
 
-      const replsPath = getReplsPathOrFail()
-      const templatePath = argument.uri.path
-      const templateTemplatePath = templatePath.startsWith(replsPath + '/')
-        ? ('$replsPath' + templatePath.slice(replsPath.length))
-        : templatePath
-
-      const template: Template = {
-        name: templateName,
-        type: 'directory',
-        defaultPath: '$replsPath/$datetime_$randomAdjective_$randomNoun',
-        template: {
-          path: templateTemplatePath,
-        }
-      }
-
-      config.setTemplates([...config.getTemplates(), template])
-      await config.save()
-
-      vscode.window.showInformationMessage(`Template "${templateName}" has been created`)
+    if (config.getTemplates().some(template => template.name === templateName)) {
+      vscode.window.showWarningMessage(`Template with name "${templateName}" already exists`)
+      await vscode.commands.executeCommand('streamline.quickRepl.createTemplateFromFolder', argument)
+      return
     }
+
+    const replsPath = getReplsPathOrFail()
+    const templatePath = argument.uri.path
+    const templateTemplatePath = templatePath.startsWith(replsPath + '/')
+      ? ('$replsPath' + templatePath.slice(replsPath.length))
+      : templatePath
+
+    const template: Template = {
+      name: templateName,
+      type: 'directory',
+      defaultPath: '$replsPath/$datetime_$randomAdjective_$randomNoun',
+      template: {
+        path: templateTemplatePath,
+      }
+    }
+
+    config.setTemplates([...config.getTemplates(), template])
+    await saveAndRefresh()
+
+    vscode.window.showInformationMessage(`Template "${templateName}" was created`)
   })
 
   // Quickly save current file to the repls folder
@@ -727,27 +752,32 @@ export function createQuickReplFeature(input: {
 
     const fileUri = vscode.Uri.joinPath(vscode.Uri.file(defaultDirectory), basename)
     await vscode.workspace.fs.writeFile(fileUri, new TextEncoder().encode(activeTextEditor.document.getText()))
-    quickReplTreeDataProvider.refresh()
+    await refresh()
 
     // Use 'workbench.action.revertAndCloseActiveEditor' instead of 'workbench.action.closeActiveEditor' to avoid confirmation dialog
     await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor')
     await vscode.window.showTextDocument(fileUri, { preview: false, selection: activeTextEditor.selection })
   })
 
+  // Continuously update context, because not all VS Code events can be reliably detected
+  const continuousContextUpdate = createContinuousFunction(() => updateContext(), { minMs: 1000, maxMs: 5000 })
+  context.subscriptions.push(continuousContextUpdate)
+
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration('streamline.quickRepl')) {
-        if (!config.isSavingInBackground) {
-          scheduleConfigLoad()
+        if (!config.isSaving) {
+          debouncedConfigLoad.schedule()
         }
       }
     }),
     // Note: Not triggered when file language changes (manually or by VS Code)
-    vscode.window.onDidChangeActiveTextEditor(() => updateContextInBackground()),
-    vscode.window.onDidChangeTextEditorOptions(() => updateContextInBackground()),
+    vscode.window.onDidChangeActiveTextEditor(() => updateContext()),
+    vscode.window.onDidChangeTextEditorOptions(() => updateContext()),
     // Slower refresh rate to avoid performance issues
-    vscode.window.onDidChangeTextEditorSelection(() => scheduleUpdateContextInBackground()),
+    vscode.window.onDidChangeTextEditorSelection(() => debouncedUpdateContext.schedule()),
   )
 
-  updateContextInBackground()
+  debouncedRefresh.schedule()
+  continuousContextUpdate.schedule()
 }

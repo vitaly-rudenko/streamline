@@ -67,7 +67,7 @@ describe('testWhen()', () => {
       },
       {
         apply: ['folded-mode'],
-        when: [{ hasFoldedRegions: true }]
+        when: [{ hasVisibleFoldedRegions: true }]
       }
     ]
 
@@ -165,7 +165,7 @@ describe('testWhen()', () => {
         languageId: 'ruby',
         scopeSelected: 'Minimal',
         scopeEnabled: false,
-        hasFoldedRegions: true,
+        hasVisibleFoldedRegions: true,
       }, rules)
     ).toEqual(['light-theme', 'minimal-mode', 'folded-mode'])
 

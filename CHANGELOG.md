@@ -1,5 +1,58 @@
 # Change Log
 
+## 0.53
+
+### Scoped Paths
+
+- Added "Scoped Paths: Quick Unscope" feature that temporarily disables the Current Scope until one of these conditions is met:
+  - A new unscoped file has been opened opened
+  - A new path was added to the Current Scope
+  - Current Scope has been re-enabled manually
+- Dynamic Scopes (such as Quick Scopes and Bookmarks Scope) can now be modified, which creates an editable copy
+- Added "Duplicate..." button in "Scoped Paths: Change Current Scope..." menu
+
+> Quick Unscope resets automatically when Current Scope changes, or when Quick Scope is used, or when "Streamline: Disable Current Scope" command is executed.
+
+### Bookmarks
+
+- Added "Bookmarks: Open All Files from List" command
+- Added "Bookmarks: Add Files from List to Copilot" command
+
+## 0.52
+
+### General
+
+- Added `hasBreakpoints` and `hasVisibleFoldedRegions` conditions in `when` syntax
+
+### Quick Repl
+
+- Added "Quick Repl: Quick Save..." command (experimental)
+- Quick save path can be modified by changing `streamline.quickRepl.quickSavePath` config section
+
+### Scoped Paths
+
+- Added a small workaround to fix current scope status rendering in Explorer view
+
+### Bookmarks
+
+- Added "Bookmarks: Clear Current List" command
+- Added "Clear List" context menu command in Bookmarks List
+
+## 0.51
+
+### Bookmarks
+
+- Added bookmark count to each list in Bookmarks View
+
+### Current Path
+
+- Added "Total Characters" and "Selections" stats
+- Improved documentation when hovering over Current Selection status bar icon
+
+### Scoped Paths
+
+- Improved Scope stats in "Change Current Scope" command
+
 ## 0.50
 
 ### General
