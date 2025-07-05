@@ -23,8 +23,6 @@ const SCOPED_PATHS_KEY = '__set_by_streamline__'
 /** Safely save workspace folders snapshot while this cooldown is active */
 const APPLY_WORKSPACE_FOLDERS_COOLDOWN_MS = 3000
 
-// TODO: Quick unscope is not disabled when workspace folder is added
-
 /**
  * From VS Code documentation:
  * - "Note: it is not valid to call updateWorkspaceFolders() multiple times without waiting for the onDidChangeWorkspaceFolders() to fire."
