@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.53.0",
+  "version": "0.53.901",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -263,6 +263,12 @@
         "category": "Bookmarks"
       },
       {
+        "command": "streamline.bookmarks.openToSide",
+        "title": "Open to Side",
+        "icon": "$(split-horizontal)",
+        "category": "Bookmarks"
+      },
+      {
         "command": "streamline.bookmarks.revealInExplorer",
         "title": "Reveal in Explorer",
         "icon": "$(eye)",
@@ -515,6 +521,10 @@
           "when": "false"
         },
         {
+          "command": "streamline.bookmarks.openToSide",
+          "when": "false"
+        },
+        {
           "command": "streamline.bookmarks.revealInExplorer",
           "when": "false"
         },
@@ -697,9 +707,14 @@
       ],
       "view/item/context": [
         {
+          "command": "streamline.bookmarks.openToSide",
+          "when": "view == bookmarks && (viewItem == file || viewItem == virtualFile || viewItem == selection)",
+          "group": "inline@1"
+        },
+        {
           "command": "streamline.bookmarks.revealInExplorer",
           "when": "view == bookmarks && (viewItem == file || viewItem == virtualFile || viewItem == folder)",
-          "group": "inline@1"
+          "group": "inline@2"
         },
         {
           "command": "streamline.bookmarks.addFile",

@@ -355,6 +355,19 @@ export function createBookmarksFeature(input: {
     await saveAndRefresh()
   })
 
+  registerCommand('streamline.bookmarks.openToSide', async (item: FileTreeItem | SelectionTreeItem) => {
+    await vscode.window.showTextDocument(
+      item.uri,
+      {
+        preview: false,
+        viewColumn: vscode.ViewColumn.Beside,
+        ...item.type === 'selection' && {
+          selection: item.selection,
+        },
+      }
+    )
+  })
+
   // Reveal bookmark (file) in the file tree
   registerCommand('streamline.bookmarks.revealInExplorer', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
     await vscode.commands.executeCommand('revealInExplorer', item.uri)
