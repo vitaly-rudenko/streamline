@@ -347,6 +347,12 @@
         "category": "Bookmarks"
       },
       {
+        "command": "streamline.bookmarks.quickOpenToSide",
+        "title": "Quick Open to Side...",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
+      },
+      {
         "command": "streamline.bookmarks.openAllFilesInCurrentList",
         "title": "Open All Files in Current List",
         "icon": "$(files)",
