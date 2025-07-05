@@ -66,7 +66,7 @@ export class BookmarksConfig extends FeatureConfig {
     console.debug('[Bookmarks] Config has been saved')
   }
 
-  getArchivedLists() {
+  getArchivedLists(): readonly string[] {
     return this._archivedLists
   }
 
@@ -75,11 +75,11 @@ export class BookmarksConfig extends FeatureConfig {
     this.onChange?.()
   }
 
-  getSerializedBookmarks() {
+  getSerializedBookmarks(): readonly SerializedBookmark[] {
     return this._serializedBookmarks
   }
 
-  getBookmarks() {
+  getBookmarks(): readonly Bookmark[] {
     return this._bookmarks
   }
 

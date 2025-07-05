@@ -9,6 +9,7 @@ import { getTargetItemsForCommand } from './toolkit/get-target-items-for-command
 import { formatPaths } from '../../utils/format-paths'
 import { RegisterCommand } from '../../register-command'
 import { uniqueUris } from '../../utils/unique-uris'
+import { BookmarksDragAndDropController } from './bookmarks-drag-and-drop-controller'
 
 const UNDO_HISTORY_SIZE = 50
 
@@ -38,6 +39,7 @@ export function createBookmarksFeature(input: {
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(cache, config, workspaceState)
   const bookmarksTreeView = vscode.window.createTreeView('bookmarks', {
     treeDataProvider: bookmarksTreeDataProvider,
+    dragAndDropController: new BookmarksDragAndDropController(config, bookmarksTreeDataProvider),
     showCollapseAll: true,
     canSelectMany: true,
   })
@@ -355,6 +357,19 @@ export function createBookmarksFeature(input: {
     await saveAndRefresh()
   })
 
+  registerCommand('streamline.bookmarks.openToSide', async (item: FileTreeItem | SelectionTreeItem) => {
+    await vscode.window.showTextDocument(
+      item.uri,
+      {
+        preview: false,
+        viewColumn: vscode.ViewColumn.Beside,
+        ...item.type === 'selection' && {
+          selection: item.selection,
+        },
+      }
+    )
+  })
+
   // Reveal bookmark (file) in the file tree
   registerCommand('streamline.bookmarks.revealInExplorer', async (item: FileTreeItem | FolderTreeItem | SelectionTreeItem) => {
     await vscode.commands.executeCommand('revealInExplorer', item.uri)
@@ -526,8 +541,12 @@ export function createBookmarksFeature(input: {
     await vscode.window.showTextDocument(document)
   })
 
+  registerCommand('streamline.bookmarks.quickOpenToSide', async () => {
+    await vscode.commands.executeCommand('streamline.bookmarks.quickOpen', { openToSide: true })
+  })
+
   // Quickly open bookmark from the current bookmarks list
-  registerCommand('streamline.bookmarks.quickOpen', async () => {
+  registerCommand('streamline.bookmarks.quickOpen', async (options?: { openToSide?: boolean }) => {
     const currentList = workspaceState.getCurrentList()
 
     const bookmarks = config.getBookmarks()
@@ -551,6 +570,8 @@ export function createBookmarksFeature(input: {
     const formattedPaths = formatPaths(uris.map(uri => uri.path))
 
     const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { bookmark: Bookmark }>()
+    const buttons = options?.openToSide ? [] : [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+
     quickPick.items = bookmarks.flatMap((bookmark, i) => {
       const label = formattedPaths.get(bookmark.uri.path)!
       const results: (vscode.QuickPickItem & { bookmark: Bookmark })[] = []
@@ -568,7 +589,7 @@ export function createBookmarksFeature(input: {
             list: bookmark.list,
             uri: bookmark.uri,
           },
-          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+          buttons,
         })
       }
 
@@ -580,7 +601,7 @@ export function createBookmarksFeature(input: {
           description: bookmark.note ? preview : undefined,
           bookmark,
           iconPath: new vscode.ThemeIcon('indent'),
-          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+          buttons,
         })
       } else {
         results.push({
@@ -588,7 +609,7 @@ export function createBookmarksFeature(input: {
           description: vscode.workspace.asRelativePath(bookmark.uri.path),
           iconPath: new vscode.ThemeIcon('file'),
           bookmark,
-          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+          buttons,
         })
       }
 
@@ -603,6 +624,7 @@ export function createBookmarksFeature(input: {
         selected.bookmark.uri,
         {
           preview: false,
+          ...options?.openToSide && { viewColumn: vscode.ViewColumn.Beside },
           ...selected.bookmark.type === 'selection' && {
             selection: selected.bookmark.selection,
           },
