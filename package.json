@@ -461,7 +461,7 @@
       },
       {
         "command": "streamline.quickRepl.createQuickRepl",
-        "title": "Quick Repl: Create a Repl...",
+        "title": "Create a Repl...",
         "icon": "$(plus)",
         "category": "Quick Repl"
       },
