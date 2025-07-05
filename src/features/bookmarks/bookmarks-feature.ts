@@ -9,6 +9,7 @@ import { getTargetItemsForCommand } from './toolkit/get-target-items-for-command
 import { formatPaths } from '../../utils/format-paths'
 import { RegisterCommand } from '../../register-command'
 import { uniqueUris } from '../../utils/unique-uris'
+import { BookmarksDragAndDropController } from './bookmarks-drag-and-drop-controller'
 
 const UNDO_HISTORY_SIZE = 50
 
@@ -38,6 +39,7 @@ export function createBookmarksFeature(input: {
   const bookmarksTreeDataProvider = new BookmarksTreeDataProvider(cache, config, workspaceState)
   const bookmarksTreeView = vscode.window.createTreeView('bookmarks', {
     treeDataProvider: bookmarksTreeDataProvider,
+    dragAndDropController: new BookmarksDragAndDropController(config, bookmarksTreeDataProvider),
     showCollapseAll: true,
     canSelectMany: true,
   })
