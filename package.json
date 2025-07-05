@@ -182,6 +182,12 @@
       {
         "command": "streamline.relatedFiles.quickOpen",
         "title": "Quick Open...",
+        "icon": "$(split-horizontal)",
+        "category": "Related Files"
+      },
+      {
+        "command": "streamline.relatedFiles.quickOpenToSide",
+        "title": "Quick Open to Side...",
         "icon": "$(sparkle)",
         "category": "Related Files"
       },

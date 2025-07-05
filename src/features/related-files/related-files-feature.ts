@@ -72,6 +72,10 @@ export function createRelatedFilesFeature(input: {
     }
   }
 
+  registerCommand('streamline.relatedFiles.quickOpenToSide', async () => {
+    await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { openToSide: true })
+  })
+
   // Open "Quick Open" modal with list of all potentially related files
   registerCommand('streamline.relatedFiles.quickOpen', async (argument: unknown) => {
     const activeTextEditor = vscode.window.activeTextEditor
@@ -83,7 +87,15 @@ export function createRelatedFilesFeature(input: {
       'searchAllWorkspaceFolders' in argument &&
       typeof argument.searchAllWorkspaceFolders === 'boolean' &&
       argument.searchAllWorkspaceFolders
-    )
+    ) as boolean
+
+    const openToSide = (
+      argument &&
+      typeof argument === 'object' &&
+      'openToSide' in argument &&
+      typeof argument.openToSide === 'boolean' &&
+      argument.openToSide
+    ) as boolean
 
     const workspaceFolder = searchAllWorkspaceFolders
       ? undefined
@@ -97,9 +109,12 @@ export function createRelatedFilesFeature(input: {
       if (!selected) return quickPick.dispose()
 
       if (selected.searchAllWorkspaceFolders) {
-        await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true })
+        await vscode.commands.executeCommand('streamline.relatedFiles.quickOpen', { searchAllWorkspaceFolders: true, openToSide })
       } else if (selected.match) {
-        await vscode.window.showTextDocument(selected.match, { preview: false })
+        await vscode.window.showTextDocument(selected.match, {
+          preview: false,
+          ...openToSide && { viewColumn: vscode.ViewColumn.Beside },
+        })
       } else {
         await vscode.commands.executeCommand('workbench.action.quickOpen')
       }
@@ -137,7 +152,7 @@ export function createRelatedFilesFeature(input: {
           label: formattedPaths.get(match.path)!,
           description: vscode.workspace.asRelativePath(match, searchAllWorkspaceFolders ? true : false),
           iconPath: new vscode.ThemeIcon('sparkle'),
-          buttons: [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
+          buttons: openToSide ? [] : [{ iconPath: new vscode.ThemeIcon('split-horizontal') , tooltip: 'Open to Side' }]
         })),
         ...loadingState === 'loading-first-batch' ? [{
           label: 'Searching...',
