@@ -3,8 +3,6 @@ import { TreeItem, ListTreeItem, FolderTreeItem, FileTreeItem, BookmarksTreeData
 import type { BookmarksConfig } from './bookmarks-config'
 import { Bookmark } from './common'
 
-// TODO: moving bookmarks between lists
-
 export class BookmarksDragAndDropController implements vscode.TreeDragAndDropController<TreeItem> {
   // MIMEs for dropping items into Bookmarks view
   dropMimeTypes = ['text/uri-list']
@@ -20,12 +18,7 @@ export class BookmarksDragAndDropController implements vscode.TreeDragAndDropCon
   async handleDrag(source: readonly TreeItem[], treeDataTransfer: vscode.DataTransfer): Promise<void> {
     const movableTreeItems = source.filter(item => item instanceof FileTreeItem || item instanceof FolderTreeItem)
     if (movableTreeItems.length > 0) {
-      if (new Set(movableTreeItems.map(i => i.list)).size > 1) {
-        treeDataTransfer.set(
-          'text/bookmarks-list',
-          new vscode.DataTransferItem(movableTreeItems[0].list)
-        )
-      }
+      treeDataTransfer.set('streamline/feature', new vscode.DataTransferItem('bookmarks'))
 
       treeDataTransfer.set(
         'text/uri-list',
@@ -37,6 +30,11 @@ export class BookmarksDragAndDropController implements vscode.TreeDragAndDropCon
   async handleDrop(target: TreeItem | undefined, dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
     const uriList = dataTransfer.get('text/uri-list')?.value as string | undefined
     if (!uriList) return
+
+    // Do not allow drag-n-drop between bookmark lists in bookmarks view
+    if (dataTransfer.get('streamline/feature')?.value === 'bookmarks') {
+      return
+    }
 
     const targetUris = uriList.split(/[\r\n]+/g).filter(Boolean).map(p => vscode.Uri.parse(p))
 
@@ -65,5 +63,7 @@ export class BookmarksDragAndDropController implements vscode.TreeDragAndDropCon
 
     this.config.setBookmarks([...this.config.getBookmarks(), ...bookmarks])
     this.treeDataProvider.refresh()
+
+    await this.config.saveInQueue()
   }
 }
