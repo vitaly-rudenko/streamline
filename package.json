@@ -2,7 +2,7 @@
   "name": "streamline",
   "displayName": "Streamline",
   "description": "Productivity-oriented VS Code extension packed with features for working on large projects",
-  "version": "0.53.903",
+  "version": "0.53.904",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -182,13 +182,13 @@
       {
         "command": "streamline.relatedFiles.quickOpen",
         "title": "Quick Open...",
-        "icon": "$(split-horizontal)",
+        "icon": "$(sparkle)",
         "category": "Related Files"
       },
       {
         "command": "streamline.relatedFiles.quickOpenToSide",
         "title": "Quick Open to Side...",
-        "icon": "$(sparkle)",
+        "icon": "$(split-horizontal)",
         "category": "Related Files"
       },
       {
@@ -355,7 +355,7 @@
       {
         "command": "streamline.bookmarks.quickOpenToSide",
         "title": "Quick Open to Side...",
-        "icon": "$(bookmark)",
+        "icon": "$(split-horizontal)",
         "category": "Bookmarks"
       },
       {
